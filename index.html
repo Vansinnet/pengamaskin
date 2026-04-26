@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investeringsplan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #2c1f0f 0%, #1a1209 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            color: #2c1f0f;
+        }
+
+        .page-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1400px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .container {
+            background: linear-gradient(135deg, #f4d03f 0%, #f9e79f 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.3);
+            padding: 40px;
+            max-width: 550px;
+            width: 100%;
+            border: 3px solid #d4a600;
+            position: relative;
+        }
+
+        .container::before {
+            content: '💰';
+            position: absolute;
+            top: -15px;
+            right: 30px;
+            font-size: 40px;
+            opacity: 0.7;
+        }
+
+        .container::after {
+            content: '💎';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            font-size: 40px;
+            opacity: 0.6;
+        }
+
+        h1 {
+            color: #6b4423;
+            margin-bottom: 5px;
+            font-size: 32px;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+        }
+
+        .subtitle {
+            color: #8b5a2b;
+            margin-bottom: 25px;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #d4a600;
+        }
+
+        .tab-button {
+            padding: 10px 15px;
+            background: transparent;
+            border: none;
+            color: #8b5a2b;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #6b4423;
+            border-bottom-color: #6b4423;
+        }
+
+        .tab-button:hover {
+            color: #6b4423;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #6b4423;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d4a600;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c1f0f;
+            transition: all 0.3s;
+            font-family: 'Arial', sans-serif;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #8b5a2b;
+            background: white;
+            box-shadow: 0 0 10px rgba(139, 90, 43, 0.3);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e5c158;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5a2b;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #8b5a2b;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .currency {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            border: 2px solid #d4a600;
+            font-weight: 500;
+            color: #8b5a2b;
+        }
+
+        .slider-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            color: #8b5a2b;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .results {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: none;
+            border: 2px solid #d4a600;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #d4a600;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-label {
+            color: #8b5a2b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-weight: 700;
+            color: #6b4423;
+            font-size: 14px;
+        }
+
+        .total-invested {
+            color: #8b5a2b;
+        }
+
+        .interest-earned {
+            color: #d4a600;
+        }
+
+        .taxes {
+            color: #c41e3a;
+        }
+
+        .net-value {
+            color: #2d5016;
+        }
+
+        .final-value {
+            background: linear-gradient(135deg, #e5c158 0%, #f4d03f 100%);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #d4a600;
+        }
+
+        .final-value .result-label {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .final-value .result-value {
+            font-size: 24px;
+            color: #6b4423;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8b5a2b 0%, #6b4423 100%);
+            color: #f4d03f;
+            border: 2px solid #d4a600;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            font-family: 'Georgia', serif;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(107, 68, 35, 0.6);
+            background: linear-gradient(135deg, #6b4423 0%, #4a2f1a 100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.8);
+            border-left: 4px solid #8b5a2b;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #6b4423;
+            border-radius: 8px;
+        }
+
+        .breakdown {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #d4a600;
+        }
+
+        .breakdown-title {
+            font-weight: 600;
+            color: #6b4423;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .chart-container {
+            margin-top: 15px;
+            height: 40px;
+            background: #e5c158;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            border: 2px solid #d4a600;
+        }
+
+        .chart-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-invested {
+            background: #8b5a2b;
+        }
+
+        .chart-interest {
+            background: #d4a600;
+        }
+
+        .chart-taxes {
+            background: #c41e3a;
+        }
+
+        .chart-net {
+            background: #2d5016;
+        }
+
+        .chart-fees {
+            background: #e07b00;
+        }
+
+        .legend {
+            font-size: 12px;
+            margin-top: 12px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 2px solid #d4a600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table thead {
+            background: #8b5a2b;
+            color: #f4d03f;
+        }
+
+        table th {
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #d4a600;
+            color: #6b4423;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .scenario-box {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #d4a600;
+        }
+
+        .scenario-box h4 {
+            color: #6b4423;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .scenario-value {
+            color: #8b5a2b;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .success {
+            color: #2d5016;
+        }
+
+        .warning {
+            color: #c41e3a;
+        }
+
+        .error-message {
+            color: #c41e3a;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .calculation-error {
+            background: #ffe6e6;
+            border: 2px solid #c41e3a;
+            color: #c41e3a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .warning-message {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .page-container {
+                flex-direction: column;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="container">
+            <h1>💰 Investeringsplan 💰</h1>
+            <p class="subtitle">— Där pengar förökar sig själva —</p>
+
+            <div class="info-box">
+                ℹ️ "Pengar är väl använd tid!" - Joakim von Anka
+            </div>
+
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('advanced')">Pengamaskin</button>
+                <button class="tab-button" onclick="switchTab('comparison')">Jämföring</button>
+                <button class="tab-button" onclick="switchTab('goal')">Sparmål</button>
+            </div>
+
+            <!-- FLIKEN: PENGAMASKIN -->
+            <div id="advanced" class="tab-content active">
+                <form id="advancedForm">
+                    <div class="form-group">
+                        <label for="advInitialCapital">Startkapital</label>
+                        <div class="input-group">
+                            <input type="number" id="advInitialCapital" value="10000" min="0" max="100000000" step="100">
+                            <div class="currency">kr</div>
+                        </div>
+                        <div class="error-message" id="advInitialCapitalError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="advMonthlyAmount">Månadligt sparande</label>
+                        <div class="input-group">
+                            <input type="number" id="advMonthlyAmount" value="500" min="0" max="1000000" step="50">
+                            <div class="currency">kr</div>
+                        </div>
+                        <div class="error-message" id="advMonthlyAmountError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="advRate">Årlig avkastning (%)</label>
+                        <input type="number" id="advRate" value="5" min="0" max="100" step="0.01">
+                        <div class="error-message" id="advRateError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="advYears">Tidsperiod (år)</label>
+                        <input type="number" id="advYears" value="10" min="1" max="100" step="1">
+                        <div class="error-message" id="advYearsError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Förvaltningsavgifter per år (%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="fees" value="0.5" min="0" max="5" step="0.05">
+                            <span class="slider-value" id="feesValue">0.50%</span>
+                        </div>
+                        <div class="error-message" id="feesError"></div>
+                    </div>
+
+                    <div id="taxRateGroup" class="form-group">
+                        <label id="taxRateLabel">Skatt på ränteinkomst (%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="taxRate" value="30" min="0" max="100" step="0.1">
+                            <span class="slider-value" id="taxRateValue">30%</span>
+                        </div>
+                        <div class="error-message" id="taxRateError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Inflation (%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="advInflation" value="2" min="0" max="10" step="0.1">
+                            <span class="slider-value" id="advInflationValue">2%</span>
+                        </div>
+                        <div class="error-message" id="advInflationError"></div>
+                    </div>
+
+                    <!-- ISK-SEKTION -->
+                    <div class="form-group" style="border-top:2px solid #d4a600; padding-top:15px; margin-top:5px;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px;">
+                            <input type="checkbox" id="iskEnabled"
+                                style="width:18px; height:18px; cursor:pointer; accent-color:#8b5a2b; flex-shrink:0;">
+                            ISK-konto (Investeringssparkonto)
+                        </label>
+                        <div style="font-size:12px; color:#8b5a2b; margin-top:6px; line-height:1.5;">
+                            Schablonbeskattning på kontovärdet varje år — ingen reavinstskatt vid uttag.
+                            Skatten på ränteinkomst sätts automatiskt till 0%.
+                        </div>
+                    </div>
+
+                    <div id="iskRateGroup" class="form-group" style="display:none;">
+                        <label>ISK schablonränta 2026 (%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="iskRate" value="3.55" min="0" max="5" step="0.05">
+                            <span class="slider-value" id="iskRateValue">3.55%</span>
+                        </div>
+                        <div style="font-size:11px; color:#8b5a2b; margin-top:4px; line-height:1.5;">
+                            2026: statslåneränta 2,55% + 1% = <strong>3,55%</strong> · Effektiv skatt = schablonränta × 30%<br>
+                            De första <strong>300 000 kr</strong> av kapitalunderlaget är skattefria (fr.o.m. 2026).
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="calculateAdvanced()">Beräkna</button>
+                </form>
+
+                <div id="advancedResults" class="results">
+                    <h2 style="color: #6b4423; margin-bottom: 15px; font-size: 18px;">Detaljerade Resultat</h2>
+
+                    <div class="result-row">
+                        <span class="result-label">Totalt investerat:</span>
+                        <span class="result-value total-invested" id="advTotalInvested">0 kr</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Bruttovärde:</span>
+                        <span class="result-value interest-earned" id="advGrossValue">0 kr</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Förvaltningsavgifter:</span>
+                        <span class="result-value" id="advTotalFees" style="color: #c41e3a;">0 kr</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label" id="advTaxesLabel">Skatt på avkastning:</span>
+                        <span class="result-value taxes" id="advTaxes">0 kr</span>
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Realvärde (efter inflation):</span>
+                        <span class="result-value" id="advRealValue">0 kr</span>
+                    </div>
+
+                    <div id="advWarning" class="warning-message" style="display: none;">
+                        ⚠️ Mycket stora tal kan ha begränsad precision
+                    </div>
+
+                    <div class="final-value">
+                        <div class="result-row">
+                            <span class="result-label">Slutvärde efter skatt & avgifter:</span>
+                            <span class="result-value net-value" id="advNetValue">0 kr</span>
+                        </div>
+                    </div>
+
+                    <div class="breakdown">
+                        <div class="breakdown-title">Fördelning av slutvärdet</div>
+                        <div class="chart-container" id="advChart"></div>
+                        <div class="legend" id="advLegend"></div>
+                    </div>
+
+                    <div class="breakdown" style="margin-top:25px; padding-top:20px; border-top:2px solid #d4a600;">
+                        <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Tidslinje — Årlig tillväxt</div>
+                        <div style="position:relative; margin-bottom:15px;">
+                            <canvas id="timelineChart" width="470" height="260"
+                                style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
+                            <div id="chartTooltip" style="
+                                display:none; position:absolute; background:#6b4423; color:#f4d03f;
+                                padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
+                                pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+                                border:1px solid #d4a600; z-index:10;"></div>
+                        </div>
+                        <div class="table-container">
+                            <table id="timelineTable">
+                                <thead>
+                                    <tr>
+                                        <th>År</th>
+                                        <th>Investerat</th>
+                                        <th>Avkastning</th>
+                                        <th>Totalt värde</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="timelineBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FLIKEN: JÄMFÖRING -->
+            <div id="comparison" class="tab-content">
+                <div class="info-box">
+                    Jämför två olika sparplaner eller räntesatser sida vid sida
+                </div>
+
+                <h3 style="color: #6b4423; margin-top: 20px; margin-bottom: 15px;">Scenario 1</h3>
+                <div class="form-group">
+                    <label for="comp1Initial">Startkapital</label>
+                    <div class="input-group">
+                        <input type="number" id="comp1Initial" value="10000" min="0" max="100000000" step="100">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="comp1InitialError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp1Monthly">Månadligt sparande</label>
+                    <div class="input-group">
+                        <input type="number" id="comp1Monthly" value="500" min="0" max="1000000" step="50">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="comp1MonthlyError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp1Rate">Årlig avkastning (%)</label>
+                    <input type="number" id="comp1Rate" value="5" min="0" max="100" step="0.01">
+                    <div class="error-message" id="comp1RateError"></div>
+                </div>
+
+                <h3 style="color: #6b4423; margin-top: 20px; margin-bottom: 15px;">Scenario 2</h3>
+                <div class="form-group">
+                    <label for="comp2Initial">Startkapital</label>
+                    <div class="input-group">
+                        <input type="number" id="comp2Initial" value="10000" min="0" max="100000000" step="100">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="comp2InitialError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp2Monthly">Månadligt sparande</label>
+                    <div class="input-group">
+                        <input type="number" id="comp2Monthly" value="1000" min="0" max="1000000" step="50">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="comp2MonthlyError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comp2Rate">Årlig avkastning (%)</label>
+                    <input type="number" id="comp2Rate" value="7" min="0" max="100" step="0.01">
+                    <div class="error-message" id="comp2RateError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="compYears">Tidsperiod (år)</label>
+                    <input type="number" id="compYears" value="10" min="1" max="100" step="1">
+                    <div class="error-message" id="compYearsError"></div>
+                </div>
+
+                <button type="button" onclick="calculateComparison()">Jämför scenarier</button>
+
+                <div id="comparisonResults" class="results">
+                    <h2 style="color: #6b4423; margin-bottom: 20px; font-size: 18px;">Jämförelsesresultat</h2>
+                    <div class="comparison-grid" id="comparisonGrid"></div>
+                </div>
+            </div>
+
+            <!-- FLIKEN: SPARMÅL -->
+            <div id="goal" class="tab-content">
+                <h2 style="color:#6b4423; font-size:20px; margin-bottom:6px;">Såhär mycket pengar vill jag ha</h2>
+                <p style="color:#8b5a2b; font-size:13px; margin-bottom:20px; font-style:italic;">
+                    Fyll i ditt mål — så räknar vi ut hur mycket du behöver spara varje månad.
+                </p>
+
+                <div class="form-group">
+                    <label for="goalTarget">Jag vill ha</label>
+                    <div class="input-group">
+                        <input type="number" id="goalTarget" value="1000000" min="1" max="1000000000" step="10000">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="goalTargetError"></div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:500;">
+                        <input type="checkbox" id="goalRealTerms" style="width:16px; height:16px; cursor:pointer; accent-color:#8b5a2b;">
+                        Beloppet är i <em>dagens pengar</em> (justerat för inflation)
+                    </label>
+                    <div style="font-size:12px; color:#8b5a2b; margin-top:4px; margin-left:26px;">
+                        Avmarkerat = du anger det belopp du faktiskt vill ha i framtiden (nominellt).
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalInitial">Startkapital (befintliga besparingar)</label>
+                    <div class="input-group">
+                        <input type="number" id="goalInitial" value="10000" min="0" max="100000000" step="100">
+                        <div class="currency">kr</div>
+                    </div>
+                    <div class="error-message" id="goalInitialError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalYears">Tidsperiod (år)</label>
+                    <input type="number" id="goalYears" value="20" min="1" max="100" step="1">
+                    <div class="error-message" id="goalYearsError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="goalRate">Årlig avkastning (%)</label>
+                    <input type="number" id="goalRate" value="5" min="0" max="100" step="0.01">
+                    <div class="error-message" id="goalRateError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Förvaltningsavgifter per år (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="goalFees" value="0.5" min="0" max="5" step="0.05">
+                        <span class="slider-value" id="goalFeesValue">0.50%</span>
+                    </div>
+                </div>
+
+                <div id="goalTaxGroup" class="form-group">
+                    <label id="goalTaxLabel">Skatt på kapitalvinst (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="goalTax" value="30" min="0" max="100" step="0.1">
+                        <span class="slider-value" id="goalTaxValue">30%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Inflation (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="goalInflation" value="2" min="0" max="10" step="0.1">
+                        <span class="slider-value" id="goalInflationValue">2%</span>
+                    </div>
+                </div>
+
+                <!-- ISK -->
+                <div class="form-group" style="border-top:2px solid #d4a600; padding-top:15px; margin-top:5px;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px;">
+                        <input type="checkbox" id="goalIskEnabled"
+                            style="width:18px; height:18px; cursor:pointer; accent-color:#8b5a2b; flex-shrink:0;">
+                        ISK-konto (Investeringssparkonto)
+                    </label>
+                    <div style="font-size:12px; color:#8b5a2b; margin-top:6px; line-height:1.5;">
+                        Schablonbeskattning kvartalsvis — ingen reavinstskatt. Skatten sätts automatiskt till 0%.
+                    </div>
+                </div>
+                <div id="goalIskRateGroup" class="form-group" style="display:none;">
+                    <label>ISK schablonränta (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="goalIskRate" value="3.55" min="0" max="5" step="0.05">
+                        <span class="slider-value" id="goalIskRateValue">3.55%</span>
+                    </div>
+                    <div style="font-size:11px; color:#8b5a2b; margin-top:4px; line-height:1.5;">
+                        2026: statslåneränta 2,55% + 1% = <strong>3,55%</strong> · Effektiv skatt = schablonränta × 30%<br>
+                        De första <strong>300 000 kr</strong> av kapitalunderlaget är skattefria (fr.o.m. 2026).
+                    </div>
+                </div>
+
+                <button type="button" onclick="calculateGoal()">Beräkna månadssparande</button>
+
+                <div id="goalResults" class="results">
+                    <!-- Stor ruta för månadsbeloppet -->
+                    <div style="background:linear-gradient(135deg,#6b4423 0%,#4a2f1a 100%); border-radius:12px; padding:20px; margin-bottom:20px; border:2px solid #d4a600; text-align:center;">
+                        <div style="color:#f4d03f; font-size:13px; font-weight:600; margin-bottom:6px;">DU BEHÖVER SPARA</div>
+                        <div style="color:#f4d03f; font-size:36px; font-weight:700;" id="goalMonthly">— kr/mån</div>
+                        <div style="color:#e5c158; font-size:12px; margin-top:6px;" id="goalMonthlyNote"></div>
+                    </div>
+
+                    <div id="goalNoSavingsNeeded" class="info-box" style="display:none; background:#d4edda; border-left-color:#2d5016; color:#2d5016;">
+                        ✅ Ditt startkapital räcker! Du behöver inte spara något extra månadsvis.
+                    </div>
+
+                    <div class="result-row">
+                        <span class="result-label">Målbelopp (nominellt):</span>
+                        <span class="result-value" id="goalNominalTarget">—</span>
+                    </div>
+                    <div class="result-row" id="goalRealRow">
+                        <span class="result-label">Motsvarar i dagens pengar:</span>
+                        <span class="result-value" id="goalRealEquiv">—</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Totalt du sätter in:</span>
+                        <span class="result-value total-invested" id="goalTotalIn">—</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Avkastning:</span>
+                        <span class="result-value interest-earned" id="goalGain">—</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label" id="goalTaxResultLabel">Skatt:</span>
+                        <span class="result-value taxes" id="goalTaxResult">—</span>
+                    </div>
+
+                    <div class="breakdown" style="margin-top:20px;">
+                        <div class="breakdown-title">Fördelning</div>
+                        <div class="chart-container" id="goalChart"></div>
+                        <div class="legend" id="goalLegend"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Validering av input
+        function validateInput(id, min = 0, max = 100000000, isRequired = true) {
+            const element = document.getElementById(id);
+            if (!element) return true;
+
+            const value = parseFloat(element.value);
+            const errorElement = document.getElementById(id + 'Error');
+
+            if (!errorElement) return true;
+
+            if (isNaN(value) || value === '' || value === null) {
+                if (isRequired) {
+                    errorElement.textContent = '⚠️ Obligatoriskt fält';
+                    errorElement.classList.add('show');
+                    return false;
+                } else {
+                    errorElement.classList.remove('show');
+                    return true;
+                }
+            }
+
+            if (value < min) {
+                errorElement.textContent = `⚠️ Minimumvärde: ${min}`;
+                errorElement.classList.add('show');
+                return false;
+            }
+
+            if (value > max) {
+                errorElement.textContent = `⚠️ Maxvärde: ${max.toLocaleString('sv-SE')}`;
+                errorElement.classList.add('show');
+                return false;
+            }
+
+            // Rensa felmeddelande när validering passar
+            errorElement.classList.remove('show');
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function isValidNumber(value) {
+            return !isNaN(value) && isFinite(value);
+        }
+
+        // Uppdatera slider-värden och validera
+        document.getElementById('fees').addEventListener('input', function() {
+            const val = parseFloat(this.value);
+            const rateVal = parseFloat(document.getElementById('advRate').value) || 0;
+            const feesError = document.getElementById('feesError');
+
+            if (val < 0) this.value = 0;
+            if (val > 5) this.value = 5;
+
+            // Validera att avgifter inte är större än ränta
+            if (val > rateVal) {
+                feesError.textContent = '⚠️ Kan inte vara större än avkastningen';
+                feesError.classList.add('show');
+            } else {
+                feesError.classList.remove('show');
+            }
+
+            document.getElementById('feesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+            clearTimeout(window.advTimeout);
+            window.advTimeout = setTimeout(calculateAdvanced, 300);
+        });
+
+        document.getElementById('taxRate').addEventListener('input', function() {
+            const val = parseFloat(this.value);
+            if (val < 0) this.value = 0;
+            if (val > 100) this.value = 100;
+            document.getElementById('taxRateValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+            clearTimeout(window.advTimeout);
+            window.advTimeout = setTimeout(calculateAdvanced, 300);
+        });
+
+        document.getElementById('advInflation').addEventListener('input', function() {
+            const val = parseFloat(this.value);
+            if (val < 0) this.value = 0;
+            if (val > 10) this.value = 10;
+            document.getElementById('advInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+            clearTimeout(window.advTimeout);
+            window.advTimeout = setTimeout(calculateAdvanced, 300);
+        });
+
+        // ISK-toggle
+        document.getElementById('iskEnabled').addEventListener('change', function() {
+            const iskOn = this.checked;
+            const taxSlider = document.getElementById('taxRate');
+            const taxGroup = document.getElementById('taxRateGroup');
+            document.getElementById('iskRateGroup').style.display = iskOn ? 'block' : 'none';
+
+            if (iskOn) {
+                taxSlider.value = 0;
+                document.getElementById('taxRateValue').textContent = '0%';
+                taxGroup.style.opacity = '0.4';
+                taxGroup.style.pointerEvents = 'none';
+            } else {
+                taxSlider.value = 30;
+                document.getElementById('taxRateValue').textContent = '30%';
+                taxGroup.style.opacity = '1';
+                taxGroup.style.pointerEvents = 'auto';
+            }
+            clearTimeout(window.advTimeout);
+            window.advTimeout = setTimeout(calculateAdvanced, 150);
+        });
+
+        document.getElementById('iskRate').addEventListener('input', function() {
+            const val = parseFloat(this.value);
+            document.getElementById('iskRateValue').textContent = val.toFixed(2) + '%';
+            clearTimeout(window.advTimeout);
+            window.advTimeout = setTimeout(calculateAdvanced, 300);
+        });
+
+        // Tab-hantering
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Formatera valuta
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('sv-SE', {
+                style: 'currency',
+                currency: 'SEK',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        // PENGAMASKIN — BERÄKNING
+        function calculateAdvanced() {
+            // Validera input
+            if (!validateInput('advInitialCapital', 0, 100000000, false) ||
+                !validateInput('advMonthlyAmount', 0, 1000000, false) ||
+                !validateInput('advRate', 0, 100, true) ||
+                !validateInput('advYears', 1, 100, true)) {
+                document.getElementById('advancedResults').classList.remove('show');
+                return;
+            }
+
+            const initialCapital = parseFloat(document.getElementById('advInitialCapital').value) || 0;
+            const monthlyAmount  = parseFloat(document.getElementById('advMonthlyAmount').value)  || 0;
+            const annualRate     = parseFloat(document.getElementById('advRate').value)             || 0;
+            const years          = parseFloat(document.getElementById('advYears').value)            || 0;
+            const fees           = parseFloat(document.getElementById('fees').value)                || 0;
+            const taxRate        = parseFloat(document.getElementById('taxRate').value)             || 0;
+            const inflation      = parseFloat(document.getElementById('advInflation').value)        || 0;
+            const iskOn          = document.getElementById('iskEnabled').checked;
+            const iskSchablonRate = parseFloat(document.getElementById('iskRate').value) || 0;
+            // Effektiv ISK-skattesats per år = schablonränta × 30%
+            const iskEffRate = (iskSchablonRate / 100) * 0.30;
+
+            // Validera avgifter
+            const feesError = document.getElementById('feesError');
+            if (fees > annualRate) {
+                feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
+                feesError.classList.add('show');
+                document.getElementById('advancedResults').classList.remove('show');
+                return;
+            } else {
+                feesError.classList.remove('show');
+            }
+
+            const monthlyRateGross = annualRate / 100 / 12;
+            const monthlyRateNet   = (annualRate - fees) / 100 / 12;
+            const months           = years * 12;
+
+            // Bruttovärde (full avkastning, inga avgifter, ingen ISK — referensvärde)
+            const gvInit = initialCapital * Math.pow(1 + monthlyRateGross, months);
+            const gvMonthly = monthlyRateGross === 0
+                ? monthlyAmount * months
+                : monthlyAmount * (Math.pow(1 + monthlyRateGross, months) - 1) / monthlyRateGross;
+            const grossValue = gvInit + gvMonthly;
+
+            const totalInvested = initialCapital + (monthlyAmount * months);
+
+            let netValue, taxesOwed, totalFees;
+
+            if (iskOn) {
+                // ISK: Skatteverkets metod — kapitalunderlag = snitt av kvartalsingångsvärden
+                // Schablonintäkt = kapitalunderlag × schablonränta
+                // ISK-skatt per år = schablonintäkt × 30%
+                let balance = initialCapital;
+                let totalISKtax = 0;
+                for (let yr = 1; yr <= years; yr++) {
+                    // Registrera kontovärdet vid ingången av varje kvartal
+                    const q1 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q2 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q3 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q4 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    // Kapitalunderlag = genomsnitt av de fyra kvartalsingångarna
+                    // De första 300 000 kr är skattefria fr.o.m. 2026
+                    const kapitalunderlag  = (q1 + q2 + q3 + q4) / 4;
+                    const skattatKapunder  = Math.max(0, kapitalunderlag - 300000);
+                    const schablonintakt   = skattatKapunder * (iskSchablonRate / 100);
+                    const iskTaxThisYear   = schablonintakt * 0.30;
+                    balance    -= iskTaxThisYear;
+                    totalISKtax += iskTaxThisYear;
+                }
+                // Beräkna avgifter (netAfterFees utan ISK)
+                let netAfterFeesInitial = initialCapital * Math.pow(1 + monthlyRateNet, months);
+                let netAfterFeesMonthly = monthlyRateNet === 0
+                    ? monthlyAmount * months
+                    : monthlyAmount * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
+                const netAfterFees = netAfterFeesInitial + netAfterFeesMonthly;
+                totalFees  = grossValue - netAfterFees;
+                taxesOwed  = totalISKtax;
+                netValue   = balance;
+            } else {
+                // Standard: kapitalvinstskatt på vinsten vid uttag
+                let netAfterFeesInitial = initialCapital * Math.pow(1 + monthlyRateNet, months);
+                let netAfterFeesMonthly = monthlyRateNet === 0
+                    ? monthlyAmount * months
+                    : monthlyAmount * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
+                const netAfterFees = netAfterFeesInitial + netAfterFeesMonthly;
+                totalFees  = grossValue - netAfterFees;
+                const gain = netAfterFees - totalInvested;
+                taxesOwed  = gain > 0 ? gain * (taxRate / 100) : 0;
+                netValue   = netAfterFees - taxesOwed;
+            }
+
+            if (!isValidNumber(grossValue) || !isValidNumber(netValue) || !isValidNumber(taxesOwed)) {
+                document.getElementById('advancedResults').classList.remove('show');
+                return;
+            }
+
+            const inflationFactor = Math.pow(1 + inflation / 100, years);
+            const realValue = netValue / inflationFactor;
+            if (!isValidNumber(realValue)) {
+                document.getElementById('advancedResults').classList.remove('show');
+                return;
+            }
+
+            // Uppdatera etiketter beroende på ISK
+            document.getElementById('advTaxesLabel').textContent = iskOn
+                ? 'ISK-skatt (schablon, totalt):'
+                : 'Skatt på avkastning:';
+
+            document.getElementById('advTotalInvested').textContent = formatCurrency(totalInvested);
+            document.getElementById('advGrossValue').textContent    = formatCurrency(grossValue);
+            document.getElementById('advTotalFees').textContent     = formatCurrency(totalFees);
+            document.getElementById('advTaxes').textContent         = formatCurrency(taxesOwed);
+            document.getElementById('advNetValue').textContent      = formatCurrency(netValue);
+            document.getElementById('advRealValue').textContent     = formatCurrency(realValue);
+
+            document.getElementById('advWarning').style.display = netValue > 1e9 ? 'block' : 'none';
+
+            // Fördelningsdiagram
+            const investedPercent = (totalInvested / grossValue) * 100;
+            const netGain         = Math.max(netValue - totalInvested, 0);
+            const gainNetPercent  = (netGain / grossValue) * 100;
+            const feesPercent     = (totalFees / grossValue) * 100;
+            const taxPercent      = (taxesOwed / grossValue) * 100;
+
+            document.getElementById('advChart').innerHTML = `
+                <div class="chart-segment chart-invested" style="width:${investedPercent}%">
+                    ${investedPercent > 5 ? Math.round(investedPercent) + '%' : ''}</div>
+                <div class="chart-segment chart-interest" style="width:${gainNetPercent}%">
+                    ${gainNetPercent > 5 ? Math.round(gainNetPercent) + '%' : ''}</div>
+                <div class="chart-segment chart-fees" style="width:${feesPercent}%">
+                    ${feesPercent > 5 ? Math.round(feesPercent) + '%' : ''}</div>
+                <div class="chart-segment chart-taxes" style="width:${taxPercent}%">
+                    ${taxPercent > 5 ? Math.round(taxPercent) + '%' : ''}</div>
+            `;
+            document.getElementById('advLegend').innerHTML = `
+                <div class="legend-item"><div class="legend-color chart-invested"></div><span>Investerat</span></div>
+                <div class="legend-item"><div class="legend-color chart-interest"></div><span>Nettovinst</span></div>
+                <div class="legend-item"><div class="legend-color chart-fees"></div><span>Avgifter</span></div>
+                <div class="legend-item"><div class="legend-color chart-taxes"></div>
+                    <span>${iskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
+            `;
+
+            document.getElementById('advancedResults').classList.add('show');
+
+            // Tidslinje — år-för-år med korrekt ISK-beräkning
+            const tbody = document.getElementById('timelineBody');
+            tbody.innerHTML = '';
+            const chartData = [];
+            let tlBalance  = initialCapital;
+            let tlInvested = initialCapital;
+            for (let year = 1; year <= years; year++) {
+                if (iskOn) {
+                    // ISK: kvartalsvis kapitalunderlag (Skatteverkets metod)
+                    const tq1 = tlBalance;
+                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
+                    const tq2 = tlBalance;
+                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
+                    const tq3 = tlBalance;
+                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
+                    const tq4 = tlBalance;
+                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
+                    const kapunderlag      = (tq1 + tq2 + tq3 + tq4) / 4;
+                    const skattatKapTl     = Math.max(0, kapunderlag - 300000);
+                    const iskSkattÅr       = skattatKapTl * (iskSchablonRate / 100) * 0.30;
+                    tlBalance -= iskSkattÅr;
+                } else {
+                    for (let m = 0; m < 12; m++) {
+                        tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount;
+                        tlInvested += monthlyAmount;
+                    }
+                }
+                const tlGain = tlBalance - tlInvested;
+                chartData.push({ year, invested: tlInvested, gain: tlGain, total: tlBalance });
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${year}</td>
+                    <td>${formatCurrency(tlInvested)}</td>
+                    <td>${formatCurrency(tlGain)}</td>
+                    <td><strong>${formatCurrency(tlBalance)}</strong></td>
+                `;
+            }
+            requestAnimationFrame(() => drawTimelineChart(chartData));
+        }
+
+        // JÄMFÖRING
+        function calculateComparison() {
+            // Validera input
+            if (!validateInput('comp1Initial', 0, 100000000, false) ||
+                !validateInput('comp1Monthly', 0, 1000000, false) ||
+                !validateInput('comp1Rate', 0, 100, true) ||
+                !validateInput('comp2Initial', 0, 100000000, false) ||
+                !validateInput('comp2Monthly', 0, 1000000, false) ||
+                !validateInput('comp2Rate', 0, 100, true) ||
+                !validateInput('compYears', 1, 100, true)) {
+                document.getElementById('comparisonResults').classList.remove('show');
+                return;
+            }
+
+            const comp1Initial = parseFloat(document.getElementById('comp1Initial').value) || 0;
+            const comp1Monthly = parseFloat(document.getElementById('comp1Monthly').value) || 0;
+            const comp1Rate = parseFloat(document.getElementById('comp1Rate').value) || 0;
+
+            const comp2Initial = parseFloat(document.getElementById('comp2Initial').value) || 0;
+            const comp2Monthly = parseFloat(document.getElementById('comp2Monthly').value) || 0;
+            const comp2Rate = parseFloat(document.getElementById('comp2Rate').value) || 0;
+
+            const compYears = parseFloat(document.getElementById('compYears').value) || 0;
+
+            function calcScenario(initial, monthly, rate, years) {
+                const monthlyRate = rate / 100 / 12;
+                const months = years * 12;
+                let finalValueInitial = initial * Math.pow(1 + monthlyRate, months);
+                let finalValueMonthly = 0;
+
+                if (monthlyRate === 0) {
+                    finalValueMonthly = monthly * months;
+                } else {
+                    finalValueMonthly = monthly * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+                }
+
+                const finalValue = finalValueInitial + finalValueMonthly;
+                const totalInvested = initial + (monthly * months);
+                const gain = finalValue - totalInvested;
+
+                // Validera resultat
+                if (!isValidNumber(finalValue) || !isValidNumber(gain)) {
+                    return null;
+                }
+
+                return { finalValue, totalInvested, gain };
+            }
+
+            const s1 = calcScenario(comp1Initial, comp1Monthly, comp1Rate, compYears);
+            const s2 = calcScenario(comp2Initial, comp2Monthly, comp2Rate, compYears);
+
+            if (!s1 || !s2) {
+                document.getElementById('comparisonResults').classList.remove('show');
+                return;
+            }
+
+            const difference = s2.finalValue - s1.finalValue;
+
+            const grid = document.getElementById('comparisonGrid');
+            grid.innerHTML = `
+                <div class="scenario-box">
+                    <h4>Scenario 1</h4>
+                    <div style="margin-bottom: 8px;">
+                        <div class="result-label">Slutvärde:</div>
+                        <div class="scenario-value">${formatCurrency(s1.finalValue)}</div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div class="result-label">Investerat:</div>
+                        <div>${formatCurrency(s1.totalInvested)}</div>
+                    </div>
+                    <div>
+                        <div class="result-label">Avkastning:</div>
+                        <div class="scenario-value success">${formatCurrency(s1.gain)}</div>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 2</h4>
+                    <div style="margin-bottom: 8px;">
+                        <div class="result-label">Slutvärde:</div>
+                        <div class="scenario-value">${formatCurrency(s2.finalValue)}</div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <div class="result-label">Investerat:</div>
+                        <div>${formatCurrency(s2.totalInvested)}</div>
+                    </div>
+                    <div>
+                        <div class="result-label">Avkastning:</div>
+                        <div class="scenario-value success">${formatCurrency(s2.gain)}</div>
+                    </div>
+                </div>
+
+                <div class="scenario-box" style="grid-column: 1 / -1; background: linear-gradient(135deg, #e5c158 0%, #f4d03f 100%);">
+                    <h4>Skillnad</h4>
+                    <div class="result-label">Scenario 2 är ${difference >= 0 ? 'bättre' : 'sämre'} med:</div>
+                    <div class="scenario-value ${difference >= 0 ? 'success' : 'warning'}">${formatCurrency(Math.abs(difference))}</div>
+                </div>
+            `;
+
+            document.getElementById('comparisonResults').classList.add('show');
+        }
+
+        // TIDSLINJE — DIAGRAM
+        function drawTimelineChart(dataPoints) {
+            const canvas = document.getElementById('timelineChart');
+            if (!canvas) return;
+
+            // Anpassa till faktisk pixelstorlek
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = 260 * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = rect.width;
+            const H = 260;
+            const PAD = { top: 20, right: 20, bottom: 50, left: 70 };
+            const plotW = W - PAD.left - PAD.right;
+            const plotH = H - PAD.top - PAD.bottom;
+
+            const maxVal = Math.max(...dataPoints.map(d => d.total)) * 1.05;
+            const minVal = 0;
+
+            function xPos(i) { return PAD.left + (i / (dataPoints.length - 1)) * plotW; }
+            function yPos(v) { return PAD.top + plotH - ((v - minVal) / (maxVal - minVal)) * plotH; }
+
+            // Bakgrund
+            ctx.clearRect(0, 0, W, H);
+
+            // Rutnät
+            const gridLines = 5;
+            ctx.strokeStyle = 'rgba(212,166,0,0.25)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= gridLines; i++) {
+                const v = minVal + (i / gridLines) * maxVal;
+                const y = yPos(v);
+                ctx.beginPath();
+                ctx.moveTo(PAD.left, y);
+                ctx.lineTo(PAD.left + plotW, y);
+                ctx.stroke();
+
+                // Y-axel etiketter
+                ctx.fillStyle = '#8b5a2b';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'right';
+                const label = v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' :
+                              v >= 1000    ? (v / 1000).toFixed(0) + 'k' :
+                              v.toFixed(0);
+                ctx.fillText(label + ' kr', PAD.left - 6, y + 4);
+            }
+
+            // Fyllt område — investerat
+            ctx.beginPath();
+            ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
+            dataPoints.forEach((d, i) => ctx.lineTo(xPos(i), yPos(d.invested)));
+            ctx.lineTo(xPos(dataPoints.length - 1), yPos(0));
+            ctx.lineTo(xPos(0), yPos(0));
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(139,90,43,0.35)';
+            ctx.fill();
+
+            // Investerat linje
+            ctx.beginPath();
+            dataPoints.forEach((d, i) => i === 0 ? ctx.moveTo(xPos(i), yPos(d.invested)) : ctx.lineTo(xPos(i), yPos(d.invested)));
+            ctx.strokeStyle = '#8b5a2b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Fyllt område — avkastning (ovanpå investerat till totalt)
+            ctx.beginPath();
+            ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
+            dataPoints.forEach((d, i) => ctx.lineTo(xPos(i), yPos(d.total)));
+            ctx.lineTo(xPos(dataPoints.length - 1), yPos(dataPoints[dataPoints.length - 1].invested));
+            for (let i = dataPoints.length - 1; i >= 0; i--) ctx.lineTo(xPos(i), yPos(dataPoints[i].invested));
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(212,166,0,0.4)';
+            ctx.fill();
+
+            // Totalt värde linje
+            ctx.beginPath();
+            dataPoints.forEach((d, i) => i === 0 ? ctx.moveTo(xPos(i), yPos(d.total)) : ctx.lineTo(xPos(i), yPos(d.total)));
+            ctx.strokeStyle = '#d4a600';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // X-axel etiketter
+            ctx.fillStyle = '#6b4423';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const step = Math.ceil(dataPoints.length / 10);
+            dataPoints.forEach((d, i) => {
+                if (i === 0 || (i + 1) % step === 0 || i === dataPoints.length - 1) {
+                    const x = xPos(i);
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(107,68,35,0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(x, PAD.top + plotH);
+                    ctx.lineTo(x, PAD.top + plotH + 5);
+                    ctx.stroke();
+                    ctx.fillStyle = '#6b4423';
+                    ctx.fillText('År ' + d.year, x, H - PAD.bottom + 18);
+                }
+            });
+
+            // Axellinjer
+            ctx.beginPath();
+            ctx.strokeStyle = '#d4a600';
+            ctx.lineWidth = 2;
+            ctx.moveTo(PAD.left, PAD.top);
+            ctx.lineTo(PAD.left, PAD.top + plotH);
+            ctx.lineTo(PAD.left + plotW, PAD.top + plotH);
+            ctx.stroke();
+
+            // Teckenförklaring
+            const legY = H - 12;
+            const legItems = [
+                { color: 'rgba(139,90,43,0.7)', label: 'Investerat' },
+                { color: 'rgba(212,166,0,0.8)', label: 'Avkastning' }
+            ];
+            let legX = PAD.left;
+            legItems.forEach(item => {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(legX, legY - 8, 14, 10);
+                ctx.fillStyle = '#6b4423';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(item.label, legX + 18, legY);
+                legX += 100;
+            });
+
+            // Tooltip vid musrörelse
+            const canvasEl = canvas;
+            canvasEl.onmousemove = function(e) {
+                const bRect = canvasEl.getBoundingClientRect();
+                const mouseX = e.clientX - bRect.left;
+                const relX = mouseX - PAD.left;
+                const idx = Math.round((relX / plotW) * (dataPoints.length - 1));
+                if (idx >= 0 && idx < dataPoints.length) {
+                    const d = dataPoints[idx];
+                    const tooltip = document.getElementById('chartTooltip');
+                    tooltip.innerHTML = `År ${d.year}<br>Totalt: ${formatCurrency(d.total)}<br>Investerat: ${formatCurrency(d.invested)}<br>Avkastning: ${formatCurrency(d.gain)}`;
+                    tooltip.style.display = 'block';
+                    const tipX = Math.min(mouseX + 12, bRect.width - 160);
+                    tooltip.style.left = tipX + 'px';
+                    tooltip.style.top = (e.clientY - bRect.top - 20) + 'px';
+                }
+            };
+            canvasEl.onmouseleave = function() {
+                document.getElementById('chartTooltip').style.display = 'none';
+            };
+        }
+
+        // Beräkna direkt vid sidladdning
+        window.addEventListener('load', () => {
+            calculateAdvanced();
+        });
+
+        // Auto-beräkna vid ändringar - PENGAMASKIN
+        const advInputs = ['advInitialCapital', 'advMonthlyAmount', 'advRate', 'advYears', 'fees', 'taxRate', 'advInflation'];
+        advInputs.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', () => {
+                    clearTimeout(window.advTimeout);
+                    window.advTimeout = setTimeout(calculateAdvanced, 300);
+
+                    // Validera avgifter vs ränta vid ändringar
+                    if (id === 'advRate') {
+                        const rateVal = parseFloat(document.getElementById('advRate').value) || 0;
+                        const feesVal = parseFloat(document.getElementById('fees').value) || 0;
+                        const feesError = document.getElementById('feesError');
+                        if (feesVal > rateVal) {
+                            feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
+                            feesError.classList.add('show');
+                        } else {
+                            feesError.classList.remove('show');
+                        }
+                    }
+                });
+                // Validera vid blur
+                element.addEventListener('blur', () => {
+                    if (id === 'advInitialCapital') validateInput(id, 0, 100000000, false);
+                    if (id === 'advMonthlyAmount') validateInput(id, 0, 1000000, false);
+                    if (id === 'advRate') validateInput(id, 0, 100, true);
+                    if (id === 'advYears') validateInput(id, 1, 100, true);
+                });
+            }
+        });
+
+        // Auto-beräkna vid ändringar - JÄMFÖRING
+        const compInputs = ['comp1Initial', 'comp1Monthly', 'comp1Rate', 'comp2Initial', 'comp2Monthly', 'comp2Rate', 'compYears'];
+        compInputs.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', () => {
+                    clearTimeout(window.compTimeout);
+                    window.compTimeout = setTimeout(calculateComparison, 300);
+                });
+                element.addEventListener('blur', () => {
+                    if (id.includes('Initial')) validateInput(id, 0, 100000000, false);
+                    if (id.includes('Monthly')) validateInput(id, 0, 1000000, false);
+                    if (id.includes('Rate')) validateInput(id, 0, 100, true);
+                    if (id.includes('Years')) validateInput(id, 1, 100, true);
+                });
+            }
+        });
+
+        // ─── SPARMÅL ────────────────────────────────────────────────────────────
+
+        // Slider-lyssnare för Sparmål
+        document.getElementById('goalFees').addEventListener('input', function() {
+            document.getElementById('goalFeesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 300);
+        });
+        document.getElementById('goalTax').addEventListener('input', function() {
+            document.getElementById('goalTaxValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 300);
+        });
+        document.getElementById('goalInflation').addEventListener('input', function() {
+            document.getElementById('goalInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 300);
+        });
+        document.getElementById('goalIskRate').addEventListener('input', function() {
+            document.getElementById('goalIskRateValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 300);
+        });
+
+        // ISK-toggle för Sparmål
+        document.getElementById('goalIskEnabled').addEventListener('change', function() {
+            const iskOn = this.checked;
+            const taxGroup = document.getElementById('goalTaxGroup');
+            document.getElementById('goalIskRateGroup').style.display = iskOn ? 'block' : 'none';
+            if (iskOn) {
+                document.getElementById('goalTax').value = 0;
+                document.getElementById('goalTaxValue').textContent = '0%';
+                taxGroup.style.opacity = '0.4';
+                taxGroup.style.pointerEvents = 'none';
+            } else {
+                document.getElementById('goalTax').value = 30;
+                document.getElementById('goalTaxValue').textContent = '30%';
+                taxGroup.style.opacity = '1';
+                taxGroup.style.pointerEvents = 'auto';
+            }
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 150);
+        });
+
+        // Auto-beräkna vid ändringar - SPARMÅL
+        ['goalTarget','goalInitial','goalYears','goalRate'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', () => {
+                clearTimeout(window.goalTimeout);
+                window.goalTimeout = setTimeout(calculateGoal, 300);
+            });
+        });
+        document.getElementById('goalRealTerms').addEventListener('change', () => {
+            clearTimeout(window.goalTimeout);
+            window.goalTimeout = setTimeout(calculateGoal, 150);
+        });
+
+        // Simulera slutvärde givet ett månadssparande (ISK-korrekt)
+        function simulateGoal(initialCapital, monthlyAmount, monthlyRateNet, years, iskOn, iskSchablonRate, taxRate) {
+            if (iskOn) {
+                let balance = initialCapital;
+                for (let yr = 1; yr <= years; yr++) {
+                    const q1 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q2 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q3 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const q4 = balance;
+                    for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthlyAmount;
+                    const kapitalunderlag = (q1 + q2 + q3 + q4) / 4;
+                    const skattatKap      = Math.max(0, kapitalunderlag - 300000);
+                    balance -= skattatKap * (iskSchablonRate / 100) * 0.30;
+                }
+                return balance;
+            } else {
+                const months = years * 12;
+                const fv = monthlyRateNet === 0
+                    ? initialCapital + monthlyAmount * months
+                    : initialCapital * Math.pow(1 + monthlyRateNet, months)
+                      + monthlyAmount * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
+                const totalIn = initialCapital + monthlyAmount * months;
+                const gain    = fv - totalIn;
+                return fv - (gain > 0 ? gain * (taxRate / 100) : 0);
+            }
+        }
+
+        // SPARMÅL — BERÄKNING
+        function calculateGoal() {
+            if (!validateInput('goalTarget', 1, 1000000000, true) ||
+                !validateInput('goalInitial', 0, 100000000, false) ||
+                !validateInput('goalYears',  1, 100, true) ||
+                !validateInput('goalRate',   0, 100, true)) {
+                document.getElementById('goalResults').classList.remove('show');
+                return;
+            }
+
+            const targetRaw    = parseFloat(document.getElementById('goalTarget').value)   || 0;
+            const initialCap   = parseFloat(document.getElementById('goalInitial').value)  || 0;
+            const years        = parseFloat(document.getElementById('goalYears').value)    || 0;
+            const annualRate   = parseFloat(document.getElementById('goalRate').value)     || 0;
+            const fees         = parseFloat(document.getElementById('goalFees').value)     || 0;
+            const taxRate      = parseFloat(document.getElementById('goalTax').value)      || 0;
+            const inflation    = parseFloat(document.getElementById('goalInflation').value)|| 0;
+            const iskOn        = document.getElementById('goalIskEnabled').checked;
+            const iskSchRate   = parseFloat(document.getElementById('goalIskRate').value)  || 0;
+            const realTerms    = document.getElementById('goalRealTerms').checked;
+
+            const monthlyRateNet = (annualRate - fees) / 100 / 12;
+
+            // Konvertera till nominellt målbelopp om realt
+            const inflationFactor = Math.pow(1 + inflation / 100, years);
+            const nominalTarget   = realTerms ? targetRaw * inflationFactor : targetRaw;
+            const realEquiv       = realTerms ? targetRaw : targetRaw / inflationFactor;
+
+            // Kollar om startkapitalet räcker utan månadssparande
+            const netFromZero = simulateGoal(initialCap, 0, monthlyRateNet, years, iskOn, iskSchRate, taxRate);
+
+            const resultsEl = document.getElementById('goalResults');
+            const noSavingsEl = document.getElementById('goalNoSavingsNeeded');
+            const monthlyEl = document.getElementById('goalMonthly');
+            const monthlyNoteEl = document.getElementById('goalMonthlyNote');
+
+            resultsEl.classList.add('show');
+
+            if (netFromZero >= nominalTarget) {
+                noSavingsEl.style.display = 'block';
+                monthlyEl.textContent = '0 kr/mån';
+                monthlyNoteEl.textContent = 'Ditt startkapital räcker på ' + years + ' år.';
+                document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
+                document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
+                document.getElementById('goalTotalIn').textContent       = formatCurrency(initialCap);
+                document.getElementById('goalGain').textContent          = formatCurrency(netFromZero - initialCap);
+                document.getElementById('goalTaxResult').textContent     = formatCurrency(0);
+                return;
+            }
+            noSavingsEl.style.display = 'none';
+
+            // Binsökning: hitta månadssparande som ger nominalTarget
+            let lo = 0, hi = nominalTarget;
+            for (let i = 0; i < 80; i++) {
+                const mid = (lo + hi) / 2;
+                if (simulateGoal(initialCap, mid, monthlyRateNet, years, iskOn, iskSchRate, taxRate) < nominalTarget) {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            const requiredMonthly = (lo + hi) / 2;
+
+            // Beräkna detaljer med det funna månadsbeloppet
+            const totalIn = initialCap + requiredMonthly * years * 12;
+            const finalNet = simulateGoal(initialCap, requiredMonthly, monthlyRateNet, years, iskOn, iskSchRate, taxRate);
+
+            // Beräkna bruttovärde (utan skatt) för att uppskatta skatt betald
+            let grossFinal;
+            if (iskOn) {
+                // Med ISK: skatten är redan inbakad i simulateGoal, räkna ut utan ISK-skatt
+                const monthlyRateGross = annualRate / 100 / 12;
+                grossFinal = monthlyRateGross === 0
+                    ? initialCap + requiredMonthly * years * 12
+                    : initialCap * Math.pow(1 + monthlyRateGross, years * 12)
+                      + requiredMonthly * (Math.pow(1 + monthlyRateGross, years * 12) - 1) / monthlyRateGross;
+            } else {
+                const monthlyRateGross = annualRate / 100 / 12;
+                grossFinal = monthlyRateGross === 0
+                    ? initialCap + requiredMonthly * years * 12
+                    : initialCap * Math.pow(1 + monthlyRateGross, years * 12)
+                      + requiredMonthly * (Math.pow(1 + monthlyRateGross, years * 12) - 1) / monthlyRateGross;
+            }
+            const gainGross  = Math.max(grossFinal - totalIn, 0);
+            const taxPaid    = grossFinal - finalNet - (iskOn ? 0 : 0); // diff between gross net and final
+            const actualTax  = Math.max(grossFinal - totalIn - (finalNet - totalIn), 0);
+
+            // Uppdatera UI
+            monthlyEl.textContent = formatCurrency(Math.ceil(requiredMonthly)) + ' /mån';
+            monthlyNoteEl.textContent = 'Under ' + years + ' år · ' + (iskOn ? 'ISK' : 'vanligt konto');
+
+            document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
+            document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
+            document.getElementById('goalRealRow').style.display     = 'flex';
+            document.getElementById('goalTotalIn').textContent       = formatCurrency(totalIn);
+            document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalNet - totalIn, 0));
+            document.getElementById('goalTaxResultLabel').textContent = iskOn ? 'ISK-skatt (totalt):'  : 'Skatt (kapitalvinst):';
+            document.getElementById('goalTaxResult').textContent     = formatCurrency(actualTax);
+
+            // Fördelningsdiagram
+            const investedPct = Math.min((totalIn / nominalTarget) * 100, 100);
+            const gainPct     = Math.max(((finalNet - totalIn) / nominalTarget) * 100, 0);
+            const taxPct      = Math.max((actualTax / nominalTarget) * 100, 0);
+
+            document.getElementById('goalChart').innerHTML = `
+                <div class="chart-segment chart-invested" style="width:${investedPct}%">
+                    ${investedPct > 8 ? Math.round(investedPct) + '%' : ''}</div>
+                <div class="chart-segment chart-interest" style="width:${gainPct}%">
+                    ${gainPct > 8 ? Math.round(gainPct) + '%' : ''}</div>
+                <div class="chart-segment chart-taxes" style="width:${taxPct}%">
+                    ${taxPct > 8 ? Math.round(taxPct) + '%' : ''}</div>
+            `;
+            document.getElementById('goalLegend').innerHTML = `
+                <div class="legend-item"><div class="legend-color chart-invested"></div><span>Insatt kapital</span></div>
+                <div class="legend-item"><div class="legend-color chart-interest"></div><span>Avkastning</span></div>
+                <div class="legend-item"><div class="legend-color chart-taxes"></div><span>${iskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
+            `;
+        }
+
+    </script>
+</body>
+</html>
