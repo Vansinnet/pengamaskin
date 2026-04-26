@@ -890,6 +890,32 @@
                         <div class="chart-container" id="goalChart"></div>
                         <div class="legend" id="goalLegend"></div>
                     </div>
+
+                    <div class="breakdown" style="margin-top:25px; padding-top:20px; border-top:2px solid #d4a600;">
+                        <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Sparplan — Årlig tillväxt</div>
+                        <div style="position:relative; margin-bottom:15px;">
+                            <canvas id="goalTimelineChart" width="470" height="260"
+                                style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
+                            <div id="goalChartTooltip" style="
+                                display:none; position:absolute; background:#6b4423; color:#f4d03f;
+                                padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
+                                pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+                                border:1px solid #d4a600; z-index:10;"></div>
+                        </div>
+                        <div class="table-container">
+                            <table id="goalTable">
+                                <thead>
+                                    <tr>
+                                        <th>År</th>
+                                        <th>Investerat</th>
+                                        <th>Avkastning</th>
+                                        <th>Kontovärde</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="goalTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1322,9 +1348,9 @@
             document.getElementById('comparisonResults').classList.add('show');
         }
 
-        // TIDSLINJE — DIAGRAM
-        function drawTimelineChart(dataPoints) {
-            const canvas = document.getElementById('timelineChart');
+        // TIDSLINJE — DIAGRAM (generisk, används av både Pengamaskin och Sparmål)
+        function drawTimelineChart(dataPoints, canvasId = 'timelineChart', tooltipId = 'chartTooltip') {
+            const canvas = document.getElementById(canvasId);
             if (!canvas) return;
 
             // Anpassa till faktisk pixelstorlek
@@ -1460,7 +1486,7 @@
                 const idx = Math.round((relX / plotW) * (dataPoints.length - 1));
                 if (idx >= 0 && idx < dataPoints.length) {
                     const d = dataPoints[idx];
-                    const tooltip = document.getElementById('chartTooltip');
+                    const tooltip = document.getElementById(tooltipId);
                     tooltip.innerHTML = `År ${d.year}<br>Totalt: ${formatCurrency(d.total)}<br>Investerat: ${formatCurrency(d.invested)}<br>Avkastning: ${formatCurrency(d.gain)}`;
                     tooltip.style.display = 'block';
                     const tipX = Math.min(mouseX + 12, bRect.width - 160);
@@ -1469,7 +1495,7 @@
                 }
             };
             canvasEl.onmouseleave = function() {
-                document.getElementById('chartTooltip').style.display = 'none';
+                document.getElementById(tooltipId).style.display = 'none';
             };
         }
 
@@ -1732,6 +1758,49 @@
                 <div class="legend-item"><div class="legend-color chart-interest"></div><span>Avkastning</span></div>
                 <div class="legend-item"><div class="legend-color chart-taxes"></div><span>${iskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
             `;
+
+            // ── Bygg år-för-år data för diagram och tabell ──────────────────────
+            const goalChartData = [];
+            const goalTbody = document.getElementById('goalTableBody');
+            goalTbody.innerHTML = '';
+            let glBalance  = initialCap;
+            let glInvested = initialCap;
+
+            for (let year = 1; year <= years; year++) {
+                if (iskOn) {
+                    // ISK: kvartalsvis kapitalunderlag (Skatteverkets metod) + 300 000 kr-undantag
+                    const gq1 = glBalance;
+                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
+                    const gq2 = glBalance;
+                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
+                    const gq3 = glBalance;
+                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
+                    const gq4 = glBalance;
+                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
+                    const gKap     = (gq1 + gq2 + gq3 + gq4) / 4;
+                    const gSkattat = Math.max(0, gKap - 300000);
+                    glBalance -= gSkattat * (iskSchRate / 100) * 0.30;
+                } else {
+                    // Standard: visa kontovärdet före slutlig reavinstskatt (skatt vid uttag)
+                    for (let m = 0; m < 12; m++) {
+                        glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly;
+                        glInvested += requiredMonthly;
+                    }
+                }
+                const glGain = glBalance - glInvested;
+                goalChartData.push({ year, invested: glInvested, gain: glGain, total: glBalance });
+                const row = goalTbody.insertRow();
+                row.innerHTML = `
+                    <td>${year}</td>
+                    <td>${formatCurrency(glInvested)}</td>
+                    <td>${formatCurrency(glGain)}</td>
+                    <td><strong>${formatCurrency(glBalance)}</strong></td>
+                `;
+            }
+
+            requestAnimationFrame(() =>
+                drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip')
+            );
         }
 
     </script>
