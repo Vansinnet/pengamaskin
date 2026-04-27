@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; frame-ancestors 'self'; base-uri 'none';">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23b8860b'/%3E%3Ccircle cx='32' cy='32' r='26' fill='%23d4a600'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23f4d03f' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='7' ry='4' fill='%23f9e79f' opacity='0.45' transform='rotate(-30 24 22)'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='32' font-weight='bold' fill='%236b4423' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
@@ -851,7 +851,7 @@
                     <div class="form-group">
                         <label for="advInitialCapital" class="field-label">Startkapital <span class="info-tip" tabindex="0" data-tip="Pengar du redan har sparat och vill börja med. Har du 0 kr? Skriv 0. Har du ett buffertspar på 50 000 kr du vill räkna på? Skriv 50000.">?</span></label>
                         <div class="input-group">
-                            <input type="number" id="advInitialCapital" value="10000" min="0" max="100000000" step="100">
+                            <input type="number" autocomplete="off" id="advInitialCapital" value="10000" min="0" max="100000000" step="100">
                             <div class="currency">kr</div>
                         </div>
                         <div class="error-message" id="advInitialCapitalError"></div>
@@ -861,7 +861,7 @@
                     <div class="form-group">
                         <label for="advMonthlyAmount" class="field-label">Månadligt sparande <span class="info-tip" tabindex="0" data-tip="Hur mycket du sätter in varje månad. Det behöver inte vara ett jämnt belopp — testa dig fram! Ens 300 kr/mån gör stor skillnad över lång tid.">?</span></label>
                         <div class="input-group">
-                            <input type="number" id="advMonthlyAmount" value="500" min="0" max="1000000" step="50">
+                            <input type="number" autocomplete="off" id="advMonthlyAmount" value="500" min="0" max="1000000" step="50">
                             <div class="currency">kr</div>
                         </div>
                         <div class="error-message" id="advMonthlyAmountError"></div>
@@ -870,14 +870,14 @@
 
                     <div class="form-group">
                         <label for="advRate" class="field-label">Årlig avkastning (%) <span class="info-tip" tabindex="0" data-tip="Hur mycket dina pengar förväntas växa per år. Sparkonto: 2–3 %. Global indexfond (t.ex. Avanza Global): historiskt ~8–10 %. Obligationer/räntefonder: 3–5 %. Ingen kan garantera framtida avkastning.">?</span></label>
-                        <input type="number" id="advRate" value="5" min="0" max="100" step="0.01">
+                        <input type="number" autocomplete="off" id="advRate" value="5" min="0" max="100" step="0.01">
                         <div class="input-hint">Tolkas som nominell årsränta — t.ex. 5 % blir 5/12 % per månad. Effektiv årsavkastning blir då något högre (~5,12 %).</div>
                         <div class="error-message" id="advRateError"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="advYears" class="field-label">Tidsperiod (år) <span class="info-tip" tabindex="0" data-tip="Hur många år du tänker spara innan du tar ut pengarna. Ju längre tid, desto kraftigare ränta-på-ränta-effekt. 10 år är OK, 30 år är kraftfullt.">?</span></label>
-                        <input type="number" id="advYears" value="10" min="1" max="100" step="1">
+                        <input type="number" autocomplete="off" id="advYears" value="10" min="1" max="100" step="1">
                         <div class="error-message" id="advYearsError"></div>
                     </div>
 
@@ -1022,7 +1022,7 @@
                 <div class="form-group">
                     <label for="goalTarget" class="field-label">Jag vill ha <span class="info-tip" tabindex="0" data-tip="Det belopp du vill ha sparat. Tänk på vad du sparar till — kontantinsats till bostad, pension, drömresa, ekonomisk frihet? Skriv in summan i kronor.">?</span></label>
                     <div class="input-group">
-                        <input type="number" id="goalTarget" value="1000000" min="1" max="1000000000" step="10000">
+                        <input type="number" autocomplete="off" id="goalTarget" value="1000000" min="1" max="1000000000" step="10000">
                         <div class="currency">kr</div>
                     </div>
                     <div class="error-message" id="goalTargetError"></div>
@@ -1043,7 +1043,7 @@
                 <div class="form-group">
                     <label for="goalInitial" class="field-label">Startkapital (befintliga besparingar) <span class="info-tip" tabindex="0" data-tip="Pengar du redan har sparat och kan använda som startpunkt. Dessa pengar jobbar direkt mot ditt mål. Har du inget sparat ännu? Skriv 0.">?</span></label>
                     <div class="input-group">
-                        <input type="number" id="goalInitial" value="10000" min="0" max="100000000" step="100">
+                        <input type="number" autocomplete="off" id="goalInitial" value="10000" min="0" max="100000000" step="100">
                         <div class="currency">kr</div>
                     </div>
                     <div class="error-message" id="goalInitialError"></div>
@@ -1052,13 +1052,13 @@
 
                 <div class="form-group">
                     <label for="goalYears" class="field-label">Tidsperiod (år) <span class="info-tip" tabindex="0" data-tip="Hur många år du har på dig att nå ditt mål. Sparar du till pension om 30 år? Skriv 30. Kontantinsats om 5 år? Skriv 5. Kortare tid kräver mer sparande per månad.">?</span></label>
-                    <input type="number" id="goalYears" value="20" min="1" max="100" step="1">
+                    <input type="number" autocomplete="off" id="goalYears" value="20" min="1" max="100" step="1">
                     <div class="error-message" id="goalYearsError"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="goalRate" class="field-label">Årlig avkastning (%) <span class="info-tip" tabindex="0" data-tip="Hur mycket dina pengar förväntas växa per år. Sparkonto: 2–3 %. Global indexfond: historiskt ~8–10 %. Sätt lägre om du är osäker — bättre att bli positivt överraskad.">?</span></label>
-                    <input type="number" id="goalRate" value="5" min="0" max="100" step="0.01">
+                    <input type="number" autocomplete="off" id="goalRate" value="5" min="0" max="100" step="0.01">
                     <div class="input-hint">Tolkas som nominell årsränta (delas med 12 till månadsränta).</div>
                     <div class="error-message" id="goalRateError"></div>
                 </div>
