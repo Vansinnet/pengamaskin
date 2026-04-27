@@ -518,6 +518,15 @@
             display: block;
         }
 
+        .amount-hint {
+            font-size: 12px;
+            color: #6b4423;
+            margin-top: 3px;
+            min-height: 16px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
         .calculation-error {
             background: #ffe6e6;
             border: 2px solid #c41e3a;
@@ -649,6 +658,7 @@
                             <div class="currency">kr</div>
                         </div>
                         <div class="error-message" id="advInitialCapitalError"></div>
+                        <div class="amount-hint" id="advInitialCapitalHint">10 000 kr</div>
                     </div>
 
                     <div class="form-group">
@@ -658,6 +668,7 @@
                             <div class="currency">kr</div>
                         </div>
                         <div class="error-message" id="advMonthlyAmountError"></div>
+                        <div class="amount-hint" id="advMonthlyAmountHint">500 kr</div>
                     </div>
 
                     <div class="form-group">
@@ -817,6 +828,7 @@
                         <div class="currency">kr</div>
                     </div>
                     <div class="error-message" id="goalTargetError"></div>
+                    <div class="amount-hint" id="goalTargetHint">1 miljon kr</div>
                 </div>
 
                 <div class="form-group" style="margin-bottom:8px;">
@@ -836,6 +848,7 @@
                         <div class="currency">kr</div>
                     </div>
                     <div class="error-message" id="goalInitialError"></div>
+                    <div class="amount-hint" id="goalInitialHint">10 000 kr</div>
                 </div>
 
                 <div class="form-group">
@@ -1107,12 +1120,23 @@
         // ============================================================
         //  Tab-hantering — använder explicit btn-referens (inget globalt event)
         // ============================================================
+        let _goalChartData = [];
+        let _advChartData  = [];
+
         function switchTab(tabName, btnElement) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
 
             document.getElementById(tabName).classList.add('active');
             if (btnElement) btnElement.classList.add('active');
+
+            // Rita om diagram när fliken blir synlig (canvas hade bredd 0 när dold)
+            requestAnimationFrame(() => {
+                if (tabName === 'goal' && _goalChartData.length > 0)
+                    drawTimelineChart(_goalChartData, 'goalTimelineChart', 'goalChartTooltip');
+                if (tabName === 'advanced' && _advChartData.length > 0)
+                    drawTimelineChart(_advChartData);
+            });
         }
 
         // ============================================================
@@ -1126,6 +1150,31 @@
                 maximumFractionDigits: 0
             }).format(value);
         }
+
+        function formatAmountHint(value) {
+            if (isNaN(value) || value === '' || value === null) return '';
+            const n = parseFloat(value);
+            if (n === 0) return '0 kr';
+            const grouped = new Intl.NumberFormat('sv-SE').format(Math.round(n));
+            if (n >= 1e9)       return grouped + ' kr (' + (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 2).replace('.',',') + ' miljarder)';
+            if (n >= 1e6) { const m = n / 1e6; return grouped + ' kr (' + m.toFixed(m % 1 === 0 ? 0 : 2).replace('.',',') + (m === 1 ? ' miljon)' : ' miljoner)'); }
+            if (n >= 1e3)       return grouped + ' kr';
+            return grouped + ' kr';
+        }
+
+        function bindAmountHint(inputId, hintId) {
+            const input = document.getElementById(inputId);
+            const hint  = document.getElementById(hintId);
+            if (!input || !hint) return;
+            input.addEventListener('input', () => {
+                hint.textContent = formatAmountHint(input.value);
+            });
+        }
+
+        bindAmountHint('advInitialCapital', 'advInitialCapitalHint');
+        bindAmountHint('advMonthlyAmount',  'advMonthlyAmountHint');
+        bindAmountHint('goalTarget',        'goalTargetHint');
+        bindAmountHint('goalInitial',       'goalInitialHint');
 
         // ============================================================
         //  ISK-beräkning enligt Skatteverkets formel
@@ -1280,6 +1329,7 @@
             const tbody = document.getElementById('timelineBody');
             tbody.innerHTML = '';
             const chartData = [];
+            _advChartData = chartData;
             let tlBalance  = initialCapital;
             let tlInvested = initialCapital;
             const insattningarPerÅr = monthlyAmount * 12;
@@ -1738,6 +1788,7 @@
 
             // ── År-för-år tabell + diagram ─────────────────────────
             const goalChartData = [];
+            _goalChartData = goalChartData;
             const goalTbody = document.getElementById('goalTableBody');
             goalTbody.innerHTML = '';
             let glBalance  = initialCap;
