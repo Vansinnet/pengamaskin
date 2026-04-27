@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:;">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="Swedish">
+    <meta name="revisit-after" content="7 days">
     <title>Investeringskalkylator – Beräkna sparande, ränta-på-ränta & ISK | Gratis verktyg</title>
 
     <!-- SEO: Beskrivning och nyckelord -->
@@ -10,13 +15,15 @@
     <meta name="keywords" content="investeringskalkylator, sparakalkylator, ränta på ränta, ISK kalkylator, investeringsplan, sparmål, förvaltningsavgifter, inflation, kapitalvinst, aktiesparande, fondkalkyl, ekonomisk kalkyl, Sverige">
     <meta name="author" content="Ekonomiska kalkyler">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://shadekred.github.io/ekonomiska-kalkyler/">
+    <link rel="canonical" href="https://pengamaskin.pages.dev">
+    <link rel="alternate" hreflang="sv" href="https://pengamaskin.pages.dev">
+    <link rel="alternate" hreflang="x-default" href="https://pengamaskin.pages.dev">
 
     <!-- Open Graph (Facebook, LinkedIn m.fl.) -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Investeringskalkylator – Beräkna sparande & ISK | Gratis">
     <meta property="og:description" content="Räkna ut hur dina pengar växer med ränta-på-ränta. Stöd för ISK-konto, skatt, inflation och förvaltningsavgifter. Jämför scenarier och sätt sparmål.">
-    <meta property="og:url" content="https://shadekred.github.io/ekonomiska-kalkyler/">
+    <meta property="og:url" content="https://pengamaskin.pages.dev">
     <meta property="og:locale" content="sv_SE">
 
     <!-- Twitter/X Card -->
@@ -29,25 +36,33 @@
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Investeringskalkylator",
-      "description": "Gratis kalkylator för att beräkna ränta-på-ränta, ISK-skatt, förvaltningsavgifter och inflation för svenska sparare.",
-      "url": "https://shadekred.github.io/ekonomiska-kalkyler/",
+      "name": "Pengamaskin – Investeringskalkylator",
+      "alternateName": "Investeringskalkylator för sparande och ISK",
+      "description": "Gratis onlinekalkylator för att beräkna ränta-på-ränta, ISK-skatt enligt Skatteverkets formel, förvaltningsavgifter och inflation för svenska sparare.",
+      "url": "https://pengamaskin.pages.dev",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Any",
       "browserRequirements": "Requires JavaScript",
       "inLanguage": "sv-SE",
+      "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "SEK"
       },
+      "author": {
+        "@type": "Person",
+        "name": "Vansinnet"
+      },
+      "keywords": "investeringskalkylator, sparakalkylator, ränta på ränta, ISK kalkylator, investeringsplan, sparmål, förvaltningsavgifter, inflation, kapitalvinst, aktiesparande, fondkalkyl, ekonomisk kalkyl, Sverige",
       "featureList": [
-        "Ränta-på-ränta-beräkning",
-        "ISK-kontoberäkning enligt Skatteverkets formel med 300 000 kr-undantag",
-        "Förvaltningsavgifter",
-        "Inflationsjustering",
-        "Jämförelse av sparscenarier",
-        "Sparmålsberäkning"
+        "Ränta-på-ränta-beräkning med månadsvis sparande",
+        "ISK-kontoberäkning enligt Skatteverkets officiella formel med 300 000 kr-undantag",
+        "Förvaltningsavgifter (TER) beräkning",
+        "Inflationsjustering för realvärde",
+        "Sparmålsberäkning – räkna ut månadssparande för ditt mål",
+        "År-för-år tidslinje med diagram",
+        "Responsiv design för mobil och dator"
       ]
     }
     </script>
@@ -483,13 +498,6 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
         .scenario-box {
             background: rgba(255, 255, 255, 0.7);
             padding: 15px;
@@ -549,13 +557,84 @@
             font-weight: 600;
         }
 
+        /* ─── Footer ──────────────────────────────────────────── */
+        .footer {
+            flex-basis: 100%;
+            width: 100%;
+            max-width: 550px;
+            margin: 10px auto 10px;
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+        }
+
+        .license-line {
+            color: #d4a600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Georgia', serif;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .license-badge {
+            background: rgba(244, 208, 63, 0.12);
+            color: #f4d03f;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #d4a600;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Arial', sans-serif;
+            text-decoration: none;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .license-badge:hover {
+            background: rgba(244, 208, 63, 0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(212, 166, 0, 0.3);
+        }
+
+        .github-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #2c1f0f 0%, #1a1209 100%);
+            color: #f4d03f;
+            padding: 11px 26px;
+            border-radius: 50px;
+            border: 2px solid #d4a600;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: 'Georgia', serif;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .github-button:hover {
+            background: linear-gradient(135deg, #1a1209 0%, #0a0604 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(212, 166, 0, 0.4);
+            border-color: #f4d03f;
+        }
+
+        .github-button svg {
+            width: 18px;
+            height: 18px;
+            fill: #f4d03f;
+        }
+
         @media (max-width: 768px) {
             .page-container {
                 flex-direction: column;
-            }
-
-            .comparison-grid {
-                grid-template-columns: 1fr;
             }
 
             h1 {
@@ -576,7 +655,6 @@
 
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
-                <button class="tab-button" onclick="switchTab('comparison', this)">Jämföring</button>
                 <button class="tab-button" onclick="switchTab('goal', this)">Sparmål</button>
             </div>
 
@@ -741,76 +819,6 @@
                             </table>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- FLIKEN: JÄMFÖRING -->
-            <div id="comparison" class="tab-content">
-                <div class="info-box">
-                    Jämför två olika sparplaner eller räntesatser sida vid sida
-                </div>
-
-                <h3 style="color: #6b4423; margin-top: 20px; margin-bottom: 15px;">Scenario 1</h3>
-                <div class="form-group">
-                    <label for="comp1Initial">Startkapital</label>
-                    <div class="input-group">
-                        <input type="number" id="comp1Initial" value="10000" min="0" max="100000000" step="100">
-                        <div class="currency">kr</div>
-                    </div>
-                    <div class="error-message" id="comp1InitialError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="comp1Monthly">Månadligt sparande</label>
-                    <div class="input-group">
-                        <input type="number" id="comp1Monthly" value="500" min="0" max="1000000" step="50">
-                        <div class="currency">kr</div>
-                    </div>
-                    <div class="error-message" id="comp1MonthlyError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="comp1Rate">Årlig avkastning (%)</label>
-                    <input type="number" id="comp1Rate" value="5" min="0" max="100" step="0.01">
-                    <div class="error-message" id="comp1RateError"></div>
-                </div>
-
-                <h3 style="color: #6b4423; margin-top: 20px; margin-bottom: 15px;">Scenario 2</h3>
-                <div class="form-group">
-                    <label for="comp2Initial">Startkapital</label>
-                    <div class="input-group">
-                        <input type="number" id="comp2Initial" value="10000" min="0" max="100000000" step="100">
-                        <div class="currency">kr</div>
-                    </div>
-                    <div class="error-message" id="comp2InitialError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="comp2Monthly">Månadligt sparande</label>
-                    <div class="input-group">
-                        <input type="number" id="comp2Monthly" value="1000" min="0" max="1000000" step="50">
-                        <div class="currency">kr</div>
-                    </div>
-                    <div class="error-message" id="comp2MonthlyError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="comp2Rate">Årlig avkastning (%)</label>
-                    <input type="number" id="comp2Rate" value="7" min="0" max="100" step="0.01">
-                    <div class="error-message" id="comp2RateError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="compYears">Tidsperiod (år)</label>
-                    <input type="number" id="compYears" value="10" min="1" max="100" step="1">
-                    <div class="error-message" id="compYearsError"></div>
-                </div>
-
-                <button type="button" onclick="calculateComparison()">Jämför scenarier</button>
-
-                <div id="comparisonResults" class="results">
-                    <h2 style="color: #6b4423; margin-bottom: 20px; font-size: 18px;">Jämförelsesresultat</h2>
-                    <div class="comparison-grid" id="comparisonGrid"></div>
                 </div>
             </div>
 
@@ -984,6 +992,19 @@
             </div>
 
         </div>
+
+        <footer class="footer">
+            <div class="license-line">
+                Öppen källkod —
+                <a href="https://github.com/Vansinnet/pengamaskin/blob/main/LICENSE" class="license-badge" target="_blank" rel="noopener">MIT-licens</a>
+            </div>
+            <a href="https://github.com/Vansinnet/pengamaskin" class="github-button" target="_blank" rel="noopener" aria-label="Visa källkoden på GitHub">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                GitHub
+            </a>
+        </footer>
     </div>
 
     <script>
@@ -1317,93 +1338,6 @@
         // ============================================================
         //  JÄMFÖRING
         // ============================================================
-        function calculateComparison() {
-            if (!validateInput('comp1Initial', 0, 100000000, false) ||
-                !validateInput('comp1Monthly', 0, 1000000, false) ||
-                !validateInput('comp1Rate', 0, 100, true) ||
-                !validateInput('comp2Initial', 0, 100000000, false) ||
-                !validateInput('comp2Monthly', 0, 1000000, false) ||
-                !validateInput('comp2Rate', 0, 100, true) ||
-                !validateInput('compYears', 1, 100, true)) {
-                document.getElementById('comparisonResults').classList.remove('show');
-                return;
-            }
-
-            const comp1Initial = parseFloat(document.getElementById('comp1Initial').value) || 0;
-            const comp1Monthly = parseFloat(document.getElementById('comp1Monthly').value) || 0;
-            const comp1Rate    = parseFloat(document.getElementById('comp1Rate').value)    || 0;
-            const comp2Initial = parseFloat(document.getElementById('comp2Initial').value) || 0;
-            const comp2Monthly = parseFloat(document.getElementById('comp2Monthly').value) || 0;
-            const comp2Rate    = parseFloat(document.getElementById('comp2Rate').value)    || 0;
-            const compYears    = parseFloat(document.getElementById('compYears').value)    || 0;
-
-            function calcScenario(initial, monthly, rate, years) {
-                const monthlyRate = rate / 100 / 12;
-                const months = years * 12;
-                const finalValue = monthlyRate === 0
-                    ? initial + monthly * months
-                    : initial * Math.pow(1 + monthlyRate, months)
-                      + monthly * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
-                const totalInvested = initial + (monthly * months);
-                const gain = finalValue - totalInvested;
-                if (!isValidNumber(finalValue) || !isValidNumber(gain)) return null;
-                return { finalValue, totalInvested, gain };
-            }
-
-            const s1 = calcScenario(comp1Initial, comp1Monthly, comp1Rate, compYears);
-            const s2 = calcScenario(comp2Initial, comp2Monthly, comp2Rate, compYears);
-
-            if (!s1 || !s2) {
-                document.getElementById('comparisonResults').classList.remove('show');
-                return;
-            }
-
-            const difference = s2.finalValue - s1.finalValue;
-
-            const grid = document.getElementById('comparisonGrid');
-            grid.innerHTML = `
-                <div class="scenario-box">
-                    <h4>Scenario 1</h4>
-                    <div style="margin-bottom: 8px;">
-                        <div class="result-label">Slutvärde:</div>
-                        <div class="scenario-value">${formatCurrency(s1.finalValue)}</div>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        <div class="result-label">Investerat:</div>
-                        <div>${formatCurrency(s1.totalInvested)}</div>
-                    </div>
-                    <div>
-                        <div class="result-label">Avkastning:</div>
-                        <div class="scenario-value success">${formatCurrency(s1.gain)}</div>
-                    </div>
-                </div>
-
-                <div class="scenario-box">
-                    <h4>Scenario 2</h4>
-                    <div style="margin-bottom: 8px;">
-                        <div class="result-label">Slutvärde:</div>
-                        <div class="scenario-value">${formatCurrency(s2.finalValue)}</div>
-                    </div>
-                    <div style="margin-bottom: 8px;">
-                        <div class="result-label">Investerat:</div>
-                        <div>${formatCurrency(s2.totalInvested)}</div>
-                    </div>
-                    <div>
-                        <div class="result-label">Avkastning:</div>
-                        <div class="scenario-value success">${formatCurrency(s2.gain)}</div>
-                    </div>
-                </div>
-
-                <div class="scenario-box" style="grid-column: 1 / -1; background: linear-gradient(135deg, #e5c158 0%, #f4d03f 100%);">
-                    <h4>Skillnad</h4>
-                    <div class="result-label">Scenario 2 är ${difference >= 0 ? 'bättre' : 'sämre'} med:</div>
-                    <div class="scenario-value ${difference >= 0 ? 'success' : 'warning'}">${formatCurrency(Math.abs(difference))}</div>
-                </div>
-            `;
-
-            document.getElementById('comparisonResults').classList.add('show');
-        }
-
         // ============================================================
         //  TIDSLINJE — diagram (delas av Pengamaskin & Sparmål)
         // ============================================================
@@ -1584,24 +1518,6 @@
                     if (id === 'advMonthlyAmount') validateInput(id, 0, 1000000, false);
                     if (id === 'advRate') validateInput(id, 0, 100, true);
                     if (id === 'advYears') validateInput(id, 1, 100, true);
-                });
-            }
-        });
-
-        // Auto-beräkna vid ändringar — Jämföring
-        const compInputs = ['comp1Initial', 'comp1Monthly', 'comp1Rate', 'comp2Initial', 'comp2Monthly', 'comp2Rate', 'compYears'];
-        compInputs.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('input', () => {
-                    clearTimeout(window.compTimeout);
-                    window.compTimeout = setTimeout(calculateComparison, 300);
-                });
-                element.addEventListener('blur', () => {
-                    if (id.includes('Initial')) validateInput(id, 0, 100000000, false);
-                    if (id.includes('Monthly')) validateInput(id, 0, 1000000, false);
-                    if (id.includes('Rate')) validateInput(id, 0, 100, true);
-                    if (id.includes('Years')) validateInput(id, 1, 100, true);
                 });
             }
         });
