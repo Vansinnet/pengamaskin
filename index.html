@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://corsproxy.io https://api.riksbank.se https://www.riksbank.se https://api.scb.se https://www.scb.se; form-action 'none'; base-uri 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none';">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23b8860b'/%3E%3Ccircle cx='32' cy='32' r='26' fill='%23d4a600'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23f4d03f' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='7' ry='4' fill='%23f9e79f' opacity='0.45' transform='rotate(-30 24 22)'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='32' font-weight='bold' fill='%236b4423' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
@@ -838,15 +838,6 @@
                 ℹ️ "Pengar är väl använd tid!" - Joakim von Anka
             </div>
 
-            <!-- Datakällor: synlig varning om officiell data inte kunnat hämtas -->
-            <div id="dataSourceWarning" style="display:none; background:#fff3cd; border-left:4px solid #d4a600; color:#6b4423; padding:12px 16px; border-radius:8px; margin:10px 0; font-size:13px; line-height:1.5;">
-                <strong>⚠️ Officiell data kunde inte hämtas.</strong>
-                <span id="dataSourceWarningDetail">Verktyget använder senast kända fallback-värden för statslåneräntan och inflation.</span>
-            </div>
-            <div id="dataSourceInfo" style="display:none; background:rgba(212,166,0,0.1); border-left:3px solid #d4a600; color:#6b4423; padding:8px 12px; border-radius:6px; margin:10px 0; font-size:12px; line-height:1.5;">
-                <strong>📊 Aktuella värden:</strong> <span id="dataSourceInfoDetail"></span>
-            </div>
-
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
                 <button class="tab-button" onclick="switchTab('goal', this)">Sparmål</button>
@@ -1667,135 +1658,14 @@
             };
         }
 
-        // ============================================================
-        //  Datahämtning från officiella källor (SLR + KPI)
-        //  Går via CORS-proxy eftersom Riksbanken/SCB saknar CORS-headers.
-        //  Misslyckas hämtningen används fallback-värden och en synlig
-        //  varning visas.
-        // ============================================================
-        const PROXY_PREFIX  = 'https://corsproxy.io/?';
-        const FALLBACK_SLR  = 2.55;   // statslåneräntan per 30 nov 2025 (för 2026)
-        const FALLBACK_KPI  = 2.0;    // KPI-årstakt, Riksbankens mål
-        const FETCH_TIMEOUT = 5000;
-
-        async function fetchWithTimeout(url, options = {}) {
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
-            const defaults = { signal: ctrl.signal, headers: {} };
-            // Slå ihop options (method/body/headers) med defaults
-            const merged = { ...defaults, ...options, signal: ctrl.signal };
-            if (!merged.headers['Accept'] && !merged.headers['accept']) {
-                merged.headers['Accept'] = 'application/json';
-            }
-            try {
-                const res = await fetch(url, merged);
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return await res.json();
-            } finally {
-                clearTimeout(timer);
-            }
-        }
-
-        // Hämtar senaste statslåneräntan (SEGVB10YC) från Riksbankens SWEA-API.
-        async function fetchSLR() {
-            try {
-                const endpoint = 'https://api.riksbank.se/swea/v1/Observations/Latest/SEGVB10YC';
-                const data = await fetchWithTimeout(PROXY_PREFIX + encodeURIComponent(endpoint));
-                const v = parseFloat(data && (data.value || data.Value));
-                if (!isFinite(v) || v < -2 || v > 15) throw new Error('orimligt SLR-värde: ' + v);
-                return v;
-            } catch (e) {
-                console.warn('[data] SLR kunde inte hämtas:', e.message);
-                return null;
-            }
-        }
-
-        // Hämtar senaste KPI-årstakt från SCB (POST mot PxWeb-API).
-        async function fetchKPI() {
-            try {
-                const endpoint = 'https://api.scb.se/OV0104/v1/doris/sv/ssd/PR/PR0101/PR0101A/KPItotM';
-                const query = {
-                    query: [{
-                        code: 'ContentsCode',
-                        selection: { filter: 'item', values: ['000000Z1'] }  // KPIF årstakt
-                    }],
-                    response: { format: 'json' }
-                };
-                const data = await fetchWithTimeout(PROXY_PREFIX + encodeURIComponent(endpoint), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(query)
-                });
-                // SCB returnerar { columns: [...], data: [{ key: [...], values: [...] }] }
-                const row = data && data.data && data.data[0];
-                const v = row ? parseFloat(row.values[row.values.length - 1]) : NaN;
-                if (!isFinite(v) || v < -10 || v > 25) throw new Error('orimligt KPI-värde: ' + v);
-                return v;
-            } catch (e) {
-                console.warn('[data] KPI kunde inte hämtas:', e.message);
-                return null;
-            }
-        }
-
-        async function loadOfficialData() {
-            const [slr, kpi] = await Promise.all([fetchSLR(), fetchKPI()]);
-            const warnings = [];
-            const infos    = [];
-
-            const slrUsed   = (slr !== null) ? slr : FALLBACK_SLR;
-            const schablon  = Math.max(slrUsed + 1, 1.25);
-            const setSlider = (id, valueId, val, suffix) => {
-                const slider = document.getElementById(id);
-                const label  = document.getElementById(valueId);
-                if (slider) slider.value = val;
-                if (label)  label.textContent = val + suffix;
-            };
-            setSlider('iskRate',     'iskRateValue',     schablon.toFixed(2), '%');
-            setSlider('goalIskRate', 'goalIskRateValue', schablon.toFixed(2), '%');
-
-            if (slr !== null) {
-                infos.push(`SLR ${slr.toFixed(2).replace('.', ',')} % → schablonränta ${schablon.toFixed(2).replace('.', ',')} %`);
-            } else {
-                warnings.push(`Statslåneräntan kunde inte hämtas från Riksbanken — fallback ${FALLBACK_SLR.toString().replace('.', ',')} % används.`);
-            }
-
-            const kpiUsed = (kpi !== null) ? kpi : FALLBACK_KPI;
-            setSlider('advInflation',  'advInflationValue',  kpiUsed.toFixed(1), '%');
-            setSlider('goalInflation', 'goalInflationValue', kpiUsed.toFixed(1), '%');
-            if (kpi !== null) {
-                infos.push(`KPI ${kpi.toFixed(1).replace('.', ',')} %`);
-            } else {
-                warnings.push(`KPI kunde inte hämtas från SCB — fallback ${FALLBACK_KPI.toString().replace('.', ',')} % används.`);
-            }
-
-            if (warnings.length > 0) {
-                const w = document.getElementById('dataSourceWarning');
-                document.getElementById('dataSourceWarningDetail').textContent = ' ' + warnings.join(' ');
-                if (w) w.style.display = 'block';
-            }
-            if (infos.length > 0) {
-                const i = document.getElementById('dataSourceInfo');
-                document.getElementById('dataSourceInfoDetail').textContent = infos.join(' · ');
-                if (i) i.style.display = 'block';
-            }
-
-            // Räkna om med ev. uppdaterade värden
-            calculateAdvanced();
-            calculateGoal();
-        }
-
-        // Initial beräkning + datahämtning
+        // Initial beräkning
         window.addEventListener('load', () => {
             // Synkronisera ISK-flaggorna med aktuella checkbox-states
             iskOn     = document.getElementById('iskEnabled').checked;
             goalIskOn = document.getElementById('goalIskEnabled').checked;
 
-            // Kör en första beräkning direkt (med fallback-värden)
             calculateAdvanced();
             calculateGoal();
-
-            // Försök sedan hämta aktuell SLR/KPI och räkna om
-            loadOfficialData();
 
             // Kör testsuiten lokalt (file:// eller localhost) för att
             // upptäcka regressioner i beräkningslogiken.
