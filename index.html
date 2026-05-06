@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; frame-ancestors 'self'; base-uri 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://api.riksbank.se https://www.riksbank.se https://api.scb.se https://www.scb.se; form-action 'none'; base-uri 'none';">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23b8860b'/%3E%3Ccircle cx='32' cy='32' r='26' fill='%23d4a600'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23f4d03f' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='7' ry='4' fill='%23f9e79f' opacity='0.45' transform='rotate(-30 24 22)'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='32' font-weight='bold' fill='%236b4423' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
@@ -669,16 +669,6 @@
         .info-tip:hover::after,
         .info-tip:focus::after { opacity: 1; }
 
-        .calculation-error {
-            background: #ffe6e6;
-            border: 2px solid #c41e3a;
-            color: #c41e3a;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
         .warning-message {
             background: #fff3cd;
             border: 2px solid #ffc107;
@@ -764,6 +754,13 @@
             fill: #f4d03f;
         }
 
+        .updated-date {
+            color: #b8860b;
+            font-size: 11px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .page-container {
                 flex-direction: column;
@@ -774,6 +771,7 @@
             }
         }
     </style>
+    <script src="calculations.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -840,6 +838,15 @@
                 ℹ️ "Pengar är väl använd tid!" - Joakim von Anka
             </div>
 
+            <!-- Datakällor: synlig varning om officiell data inte kunnat hämtas -->
+            <div id="dataSourceWarning" style="display:none; background:#fff3cd; border-left:4px solid #d4a600; color:#6b4423; padding:12px 16px; border-radius:8px; margin:10px 0; font-size:13px; line-height:1.5;">
+                <strong>⚠️ Officiell data kunde inte hämtas.</strong>
+                <span id="dataSourceWarningDetail">Verktyget använder senast kända fallback-värden för statslåneräntan och inflation.</span>
+            </div>
+            <div id="dataSourceInfo" style="display:none; background:rgba(212,166,0,0.1); border-left:3px solid #d4a600; color:#6b4423; padding:8px 12px; border-radius:6px; margin:10px 0; font-size:12px; line-height:1.5;">
+                <strong>📊 Aktuella värden:</strong> <span id="dataSourceInfoDetail"></span>
+            </div>
+
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
                 <button class="tab-button" onclick="switchTab('goal', this)">Sparmål</button>
@@ -891,13 +898,12 @@
                     </div>
 
                     <div id="taxRateGroup" class="form-group">
-                        <label id="taxRateLabel" class="field-label">Skatt på kapitalvinst (%) <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 %. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
-                        <div class="slider-container">
-                            <input type="range" id="taxRate" value="30" min="0" max="100" step="0.1">
-                            <span class="slider-value" id="taxRateValue">30%</span>
+                        <label id="taxRateLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
+                        <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(139,90,43,0.08); border-radius:8px; border:1px solid rgba(139,90,43,0.2);">
+                            <strong style="font-size:18px; color:#6b4423;">30 %</strong>
+                            <span style="font-size:12px; color:#8b5a2b;">Lagstadgad — gäller AF-konto vid uttag</span>
                         </div>
                         <div class="input-hint">Tillämpas på vinsten vid uttag (engångsbeskattning, inte årlig).</div>
-                        <div class="error-message" id="taxRateError"></div>
                     </div>
 
                     <div class="form-group">
@@ -930,7 +936,7 @@
                             <span class="slider-value" id="iskRateValue">3.55%</span>
                         </div>
                         <div style="font-size:11px; color:#8b5a2b; margin-top:4px; line-height:1.5;">
-                            2026: statslåneränta 2,55 % + 1 % = <strong>3,55 %</strong> · Effektiv skatt = schablonränta × 30 %<br>
+                            2026: statslåneränta 2,55 % + 1 % = <strong>3,55 %</strong> · Effektiv skatt = schablonränta × 30 % · Golv: 1,25 %<br>
                             Kapitalunderlag = (värdet 1/1, 1/4, 1/7, 1/10 + årets insättningar) ÷ 4 (Skatteverkets formel).<br>
                             De första <strong>300 000 kr</strong> av kapitalunderlaget är skattefria (fr.o.m. 2026).
                         </div>
@@ -948,7 +954,7 @@
                     </div>
 
                     <div class="result-row">
-                        <span class="result-label">Bruttovärde (ingen skatt/avgift):</span>
+                        <span class="result-label" id="advGrossLabel">Bruttovärde (ingen skatt/avgift):</span>
                         <span class="result-value interest-earned" id="advGrossValue">0 kr</span>
                     </div>
 
@@ -1073,10 +1079,10 @@
                 </div>
 
                 <div id="goalTaxGroup" class="form-group">
-                    <label id="goalTaxLabel" class="field-label">Skatt på kapitalvinst (%) <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 %. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
-                    <div class="slider-container">
-                        <input type="range" id="goalTax" value="30" min="0" max="100" step="0.1">
-                        <span class="slider-value" id="goalTaxValue">30%</span>
+                    <label id="goalTaxLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
+                    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(139,90,43,0.08); border-radius:8px; border:1px solid rgba(139,90,43,0.2);">
+                        <strong style="font-size:18px; color:#6b4423;">30 %</strong>
+                        <span style="font-size:12px; color:#8b5a2b;">Lagstadgad — gäller AF-konto vid uttag</span>
                     </div>
                 </div>
 
@@ -1107,7 +1113,7 @@
                         <span class="slider-value" id="goalIskRateValue">3.55%</span>
                     </div>
                     <div style="font-size:11px; color:#8b5a2b; margin-top:4px; line-height:1.5;">
-                        2026: statslåneränta 2,55 % + 1 % = <strong>3,55 %</strong> · Effektiv skatt = schablonränta × 30 %<br>
+                        2026: statslåneränta 2,55 % + 1 % = <strong>3,55 %</strong> · Effektiv skatt = schablonränta × 30 % · Golv: 1,25 %<br>
                         Kapitalunderlag = (värdet 1/1, 1/4, 1/7, 1/10 + årets insättningar) ÷ 4 (Skatteverkets formel).<br>
                         De första <strong>300 000 kr</strong> av kapitalunderlaget är skattefria (fr.o.m. 2026).
                     </div>
@@ -1193,6 +1199,7 @@
                 Öppen källkod —
                 <a href="https://github.com/Vansinnet/pengamaskin/blob/main/LICENSE" class="license-badge" target="_blank" rel="noopener">MIT-licens</a>
             </div>
+            <div class="updated-date">Senast uppdaterat: 6 maj 2026</div>
             <a href="https://github.com/Vansinnet/pengamaskin" class="github-button" target="_blank" rel="noopener" aria-label="Visa källkoden på GitHub">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
@@ -1203,6 +1210,17 @@
     </div>
 
     <script>
+        // ============================================================
+        //  Globalt tillstånd — synkat med checkboxar via event-handlers.
+        //  iskOn:     ISK-toggle på Pengamaskin-fliken
+        //  goalIskOn: ISK-toggle på Sparmål-fliken
+        //  Varför globalt: calculateAdvanced/calculateGoal körs både
+        //  vid sidladdning och vid input-events där `this` inte är
+        //  checkboxen — så funktionerna behöver en stabil referens.
+        // ============================================================
+        let iskOn     = false;
+        let goalIskOn = false;
+
         // ============================================================
         //  Validering av input
         // ============================================================
@@ -1243,10 +1261,6 @@
             return true;
         }
 
-        function isValidNumber(value) {
-            return !isNaN(value) && isFinite(value);
-        }
-
         // ============================================================
         //  Slider-lyssnare — Pengamaskin
         // ============================================================
@@ -1259,7 +1273,7 @@
             if (val > 5) this.value = 5;
 
             if (val > rateVal) {
-                feesError.textContent = '⚠️ Kan inte vara större än avkastningen';
+                feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
                 feesError.classList.add('show');
             } else {
                 feesError.classList.remove('show');
@@ -1270,14 +1284,7 @@
             window.advTimeout = setTimeout(calculateAdvanced, 300);
         });
 
-        document.getElementById('taxRate').addEventListener('input', function() {
-            const val = parseFloat(this.value);
-            if (val < 0) this.value = 0;
-            if (val > 100) this.value = 100;
-            document.getElementById('taxRateValue').textContent = parseFloat(this.value).toFixed(1) + '%';
-            clearTimeout(window.advTimeout);
-            window.advTimeout = setTimeout(calculateAdvanced, 300);
-        });
+        // (Skatteslidern borttagen — kapitalvinstskatten är hårdkodad till 30 % enligt lag.)
 
         document.getElementById('advInflation').addEventListener('input', function() {
             const val = parseFloat(this.value);
@@ -1290,19 +1297,16 @@
 
         // ISK-toggle - Pengamaskin
         document.getElementById('iskEnabled').addEventListener('change', function() {
-            const iskOn = this.checked;
-            const taxSlider = document.getElementById('taxRate');
+            iskOn = this.checked;                          // global flagga
             const taxGroup = document.getElementById('taxRateGroup');
             document.getElementById('iskRateGroup').style.display = iskOn ? 'block' : 'none';
 
+            // Skattevisningen är bara informativ nu — gråmarkera när ISK är på
+            // (ISK har egen schablonbeskattning, ingen kapitalvinstskatt).
             if (iskOn) {
-                taxSlider.value = 0;
-                document.getElementById('taxRateValue').textContent = '0%';
                 taxGroup.style.opacity = '0.4';
                 taxGroup.style.pointerEvents = 'none';
             } else {
-                taxSlider.value = 30;
-                document.getElementById('taxRateValue').textContent = '30%';
                 taxGroup.style.opacity = '1';
                 taxGroup.style.pointerEvents = 'auto';
             }
@@ -1349,25 +1353,6 @@
         // ============================================================
         //  Formatering
         // ============================================================
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('sv-SE', {
-                style: 'currency',
-                currency: 'SEK',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-
-        function formatAmountHint(value) {
-            if (isNaN(value) || value === '' || value === null) return '';
-            const n = parseFloat(value);
-            if (n === 0) return '0 kr';
-            const grouped = new Intl.NumberFormat('sv-SE').format(Math.round(n));
-            if (n >= 1e9)       return grouped + ' kr (' + (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 2).replace('.',',') + ' miljarder)';
-            if (n >= 1e6) { const m = n / 1e6; return grouped + ' kr (' + m.toFixed(m % 1 === 0 ? 0 : 2).replace('.',',') + (m === 1 ? ' miljon)' : ' miljoner)'); }
-            if (n >= 1e3)       return grouped + ' kr';
-            return grouped + ' kr';
-        }
 
         function bindAmountHint(inputId, hintId) {
             const input = document.getElementById(inputId);
@@ -1382,38 +1367,6 @@
         bindAmountHint('advMonthlyAmount',  'advMonthlyAmountHint');
         bindAmountHint('goalTarget',        'goalTargetHint');
         bindAmountHint('goalInitial',       'goalInitialHint');
-
-        // ============================================================
-        //  ISK-beräkning enligt Skatteverkets formel
-        //  Kapitalunderlag = (V_jan1 + V_apr1 + V_jul1 + V_okt1 + årets insättningar) / 4
-        //  Returnerar { balance, totalIskTax }
-        // ============================================================
-        function simulateISK(initial, monthly, monthlyRateNet, years, schablonRate) {
-            let balance = initial;
-            let totalISKtax = 0;
-            const insattningarPerÅr = monthly * 12;
-
-            for (let yr = 1; yr <= years; yr++) {
-                const q1 = balance;
-                for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthly;
-                const q2 = balance;
-                for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthly;
-                const q3 = balance;
-                for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthly;
-                const q4 = balance;
-                for (let m = 0; m < 3; m++) balance = balance * (1 + monthlyRateNet) + monthly;
-
-                // Skatteverkets korrekta formel: kvartalsvärden + årets insättningar, sedan dela med 4
-                const kapitalunderlag = (q1 + q2 + q3 + q4 + insattningarPerÅr) / 4;
-                const skattatKapitalunder = Math.max(0, kapitalunderlag - 300000);
-                const schablonintakt = skattatKapitalunder * (schablonRate / 100);
-                const iskTaxThisYear = schablonintakt * 0.30;
-
-                balance -= iskTaxThisYear;
-                totalISKtax += iskTaxThisYear;
-            }
-            return { balance, totalISKtax };
-        }
 
         // ============================================================
         //  PENGAMASKIN — beräkning
@@ -1431,51 +1384,43 @@
             const monthlyAmount   = parseFloat(document.getElementById('advMonthlyAmount').value)  || 0;
             const annualRate      = parseFloat(document.getElementById('advRate').value)            || 0;
             const years           = parseFloat(document.getElementById('advYears').value)           || 0;
-            const fees            = parseFloat(document.getElementById('fees').value)               || 0;
-            const taxRate         = parseFloat(document.getElementById('taxRate').value)            || 0;
-            const inflation       = parseFloat(document.getElementById('advInflation').value)       || 0;
-            const iskOn           = document.getElementById('iskEnabled').checked;
-            const iskSchablonRate = parseFloat(document.getElementById('iskRate').value) || 0;
+            const fees            = Math.max(0, Math.min(5, parseFloat(document.getElementById('fees').value) || 0));
+            const inflation       = Math.max(0, Math.min(10, parseFloat(document.getElementById('advInflation').value) || 0));
+            const iskSchablonRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('iskRate').value) || 0));
 
-            // Validering: avgift ≤ avkastning
+            // Mjuk varning: avgift > avkastning är tekniskt giltigt (kontot
+            // tappar pengar) men ovanligt — beräkningen får ändå fortsätta.
             const feesError = document.getElementById('feesError');
             if (fees > annualRate) {
-                feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
+                feesError.textContent = 'ℹ️ Avgiften är högre än avkastningen — kontot tappar i värde över tid.';
                 feesError.classList.add('show');
-                document.getElementById('advancedResults').classList.remove('show');
-                return;
             } else {
                 feesError.classList.remove('show');
             }
 
             const monthlyRateGross = annualRate / 100 / 12;
             const monthlyRateNet   = (annualRate - fees) / 100 / 12;
-            const months           = years * 12;
+            const months = years * 12;
 
             // Bruttovärde — full avkastning, inga avgifter, ingen skatt (referensvärde)
-            const grossValue = monthlyRateGross === 0
-                ? initialCapital + monthlyAmount * months
-                : initialCapital * Math.pow(1 + monthlyRateGross, months)
-                  + monthlyAmount * (Math.pow(1 + monthlyRateGross, months) - 1) / monthlyRateGross;
+            const grossValue = computeGrossValue(initialCapital, monthlyAmount, annualRate, years);
 
             // Värde med avgifter men ingen skatt
-            const netAfterFees = monthlyRateNet === 0
-                ? initialCapital + monthlyAmount * months
-                : initialCapital * Math.pow(1 + monthlyRateNet, months)
-                  + monthlyAmount * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
+            const netAfterFees = computeNetAfterFees(initialCapital, monthlyAmount, annualRate, fees, years);
 
             const totalInvested = initialCapital + monthlyAmount * months;
             const totalFees     = grossValue - netAfterFees;
 
-            let netValue, taxesOwed;
+            let netValue, taxesOwed, iskAccountValue = null;
 
             if (iskOn) {
                 const iskResult = simulateISK(initialCapital, monthlyAmount, monthlyRateNet, years, iskSchablonRate);
-                netValue  = iskResult.balance;
+                iskAccountValue = iskResult.balance;
+                netValue  = iskResult.balance - iskResult.totalISKtax;
                 taxesOwed = iskResult.totalISKtax;
             } else {
-                const gain = netAfterFees - totalInvested;
-                taxesOwed  = gain > 0 ? gain * (taxRate / 100) : 0;
+                // AF-konto: kapitalvinstskatt 30 % vid uttag (lagstadgat).
+                taxesOwed  = computeCapitalGainsTax(netAfterFees - totalInvested);
                 netValue   = netAfterFees - taxesOwed;
             }
 
@@ -1493,11 +1438,12 @@
 
             // Etiketter
             document.getElementById('advTaxesLabel').textContent = iskOn
-                ? 'ISK-skatt (schablon, totalt):'
+                ? 'ISK-skatt (betalas separat):'
                 : 'Skatt på kapitalvinst:';
 
             document.getElementById('advTotalInvested').textContent = formatCurrency(totalInvested);
-            document.getElementById('advGrossValue').textContent    = formatCurrency(grossValue);
+            document.getElementById('advGrossLabel').textContent    = iskOn ? 'ISK-kontots värde:' : 'Bruttovärde (ingen skatt/avgift):';
+            document.getElementById('advGrossValue').textContent    = iskOn ? formatCurrency(iskAccountValue) : formatCurrency(grossValue);
             document.getElementById('advTotalFees').textContent     = formatCurrency(totalFees);
             document.getElementById('advTaxes').textContent         = formatCurrency(taxesOwed);
             document.getElementById('advNetValue').textContent      = formatCurrency(netValue);
@@ -1516,7 +1462,7 @@
                 const netGain         = Math.max(netValue - totalInvested, 0);
                 const gainNetPercent  = (netGain / grossValue) * 100;
                 const feesPercent     = (totalFees / grossValue) * 100;
-                const taxPercent      = (taxesOwed / grossValue) * 100;
+                const taxPercent      = Math.max(0, 100 - investedPercent - gainNetPercent - feesPercent);
 
                 advChartEl.innerHTML = `
                 <div class="chart-segment chart-invested" style="width:${investedPercent}%">
@@ -1546,27 +1492,15 @@
             _advChartData = chartData;
             let tlBalance  = initialCapital;
             let tlInvested = initialCapital;
-            const insattningarPerÅr = monthlyAmount * 12;
 
             for (let year = 1; year <= years; year++) {
-                if (iskOn) {
-                    const tq1 = tlBalance;
-                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
-                    const tq2 = tlBalance;
-                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
-                    const tq3 = tlBalance;
-                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
-                    const tq4 = tlBalance;
-                    for (let m = 0; m < 3; m++) { tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount; tlInvested += monthlyAmount; }
-                    const kapunderlag = (tq1 + tq2 + tq3 + tq4 + insattningarPerÅr) / 4;
-                    const skattatKap  = Math.max(0, kapunderlag - 300000);
-                    const iskSkattÅr  = skattatKap * (iskSchablonRate / 100) * 0.30;
-                    tlBalance -= iskSkattÅr;
-                } else {
-                    for (let m = 0; m < 12; m++) {
-                        tlBalance = tlBalance * (1 + monthlyRateNet) + monthlyAmount;
-                        tlInvested += monthlyAmount;
-                    }
+                // Både ISK och AF: kontot växer oavkortat varje månad.
+                // ISK-skatten betalas separat via deklarationen.
+                // AF: kapitalvinstskatt betalas BARA vid uttag (sista året),
+                // inte löpande — så tidslinjen visar bruttovärdet.
+                for (let m = 0; m < 12; m++) {
+                    tlBalance  = tlBalance * (1 + monthlyRateNet) + monthlyAmount;
+                    tlInvested += monthlyAmount;
                 }
                 const tlGain = tlBalance - tlInvested;
                 chartData.push({ year, invested: tlInvested, gain: tlGain, total: tlBalance });
@@ -1733,10 +1667,126 @@
             };
         }
 
-        // Initial beräkning
-        window.addEventListener('load', () => {
+        // ============================================================
+        //  Datahämtning från officiella källor (SLR + KPI)
+        //  Misslyckas hämtningen används fallback-värden från
+        //  AGENTS.md och en synlig varning visas för användaren.
+        // ============================================================
+        const FALLBACK_SLR = 2.55;   // statslåneräntan per 30 nov 2025 (för 2026)
+        const FALLBACK_KPI = 2.0;    // KPI-årstakt, Riksbankens mål
+
+        async function fetchWithTimeout(url, ms = 5000) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), ms);
+            try {
+                const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return await res.json();
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        // Försöker hämta SLR via Riksbankens SWEA-API.
+        // Endpoint kan behöva justeras — vid fel returneras null
+        // och kalkylatorn använder fallback-värdet.
+        async function fetchSLR() {
+            try {
+                const data = await fetchWithTimeout(
+                    'https://api.riksbank.se/swea/v1/Observations/Latest/SEGVB10YC'
+                );
+                const v = parseFloat(data && (data.value || data.Value));
+                if (!isFinite(v) || v < -2 || v > 15) throw new Error('orimligt värde: ' + v);
+                return v;
+            } catch (e) {
+                console.warn('[data] SLR kunde inte hämtas:', e.message);
+                return null;
+            }
+        }
+
+        // Försöker hämta senaste KPI-årstakt från SCB.
+        async function fetchKPI() {
+            try {
+                const data = await fetchWithTimeout(
+                    'https://api.scb.se/OV0104/v1/doris/sv/ssd/PR/PR0101/PR0101A/KPItotM'
+                );
+                // SCB:s svar varierar; om vi inte kan parsa det kastar vi.
+                const v = parseFloat(data && data.value);
+                if (!isFinite(v) || v < -10 || v > 25) throw new Error('orimligt värde');
+                return v;
+            } catch (e) {
+                console.warn('[data] KPI kunde inte hämtas:', e.message);
+                return null;
+            }
+        }
+
+        async function loadOfficialData() {
+            const [slr, kpi] = await Promise.all([fetchSLR(), fetchKPI()]);
+            const warnings = [];
+            const infos    = [];
+
+            const slrUsed   = (slr !== null) ? slr : FALLBACK_SLR;
+            const schablon  = Math.max(slrUsed + 1, 1.25);
+            const setSlider = (id, valueId, val, suffix) => {
+                const slider = document.getElementById(id);
+                const label  = document.getElementById(valueId);
+                if (slider) slider.value = val;
+                if (label)  label.textContent = val + suffix;
+            };
+            setSlider('iskRate',     'iskRateValue',     schablon.toFixed(2), '%');
+            setSlider('goalIskRate', 'goalIskRateValue', schablon.toFixed(2), '%');
+
+            if (slr !== null) {
+                infos.push(`SLR ${slr.toFixed(2).replace('.', ',')} % → schablonränta ${schablon.toFixed(2).replace('.', ',')} %`);
+            } else {
+                warnings.push(`Statslåneräntan kunde inte hämtas från Riksbanken — fallback ${FALLBACK_SLR.toString().replace('.', ',')} % används.`);
+            }
+
+            const kpiUsed = (kpi !== null) ? kpi : FALLBACK_KPI;
+            setSlider('advInflation',  'advInflationValue',  kpiUsed.toFixed(1), '%');
+            setSlider('goalInflation', 'goalInflationValue', kpiUsed.toFixed(1), '%');
+            if (kpi !== null) {
+                infos.push(`KPI ${kpi.toFixed(1).replace('.', ',')} %`);
+            } else {
+                warnings.push(`KPI kunde inte hämtas från SCB — fallback ${FALLBACK_KPI.toString().replace('.', ',')} % används.`);
+            }
+
+            if (warnings.length > 0) {
+                const w = document.getElementById('dataSourceWarning');
+                document.getElementById('dataSourceWarningDetail').textContent = ' ' + warnings.join(' ');
+                if (w) w.style.display = 'block';
+            }
+            if (infos.length > 0) {
+                const i = document.getElementById('dataSourceInfo');
+                document.getElementById('dataSourceInfoDetail').textContent = infos.join(' · ');
+                if (i) i.style.display = 'block';
+            }
+
+            // Räkna om med ev. uppdaterade värden
             calculateAdvanced();
             calculateGoal();
+        }
+
+        // Initial beräkning + datahämtning
+        window.addEventListener('load', () => {
+            // Synkronisera ISK-flaggorna med aktuella checkbox-states
+            iskOn     = document.getElementById('iskEnabled').checked;
+            goalIskOn = document.getElementById('goalIskEnabled').checked;
+
+            // Kör en första beräkning direkt (med fallback-värden)
+            calculateAdvanced();
+            calculateGoal();
+
+            // Försök sedan hämta aktuell SLR/KPI och räkna om
+            loadOfficialData();
+
+            // Kör testsuiten lokalt (file:// eller localhost) för att
+            // upptäcka regressioner i beräkningslogiken.
+            if (location.hostname === 'localhost' ||
+                location.hostname === '127.0.0.1' ||
+                location.protocol === 'file:') {
+                try { runTests(); } catch (e) { console.error('runTests fel:', e); }
+            }
         });
 
         // Auto-beräkna vid ändringar — Pengamaskin
@@ -1786,11 +1836,8 @@
             clearTimeout(window.goalTimeout);
             window.goalTimeout = setTimeout(calculateGoal, 300);
         });
-        document.getElementById('goalTax').addEventListener('input', function() {
-            document.getElementById('goalTaxValue').textContent = parseFloat(this.value).toFixed(1) + '%';
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 300);
-        });
+        // (goalTax-slidern borttagen — kapitalvinstskatten är hårdkodad.)
+
         document.getElementById('goalInflation').addEventListener('input', function() {
             document.getElementById('goalInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
             clearTimeout(window.goalTimeout);
@@ -1804,17 +1851,13 @@
 
         // ISK-toggle — Sparmål
         document.getElementById('goalIskEnabled').addEventListener('change', function() {
-            const iskOn = this.checked;
+            goalIskOn = this.checked;                          // global flagga
             const taxGroup = document.getElementById('goalTaxGroup');
-            document.getElementById('goalIskRateGroup').style.display = iskOn ? 'block' : 'none';
-            if (iskOn) {
-                document.getElementById('goalTax').value = 0;
-                document.getElementById('goalTaxValue').textContent = '0%';
+            document.getElementById('goalIskRateGroup').style.display = goalIskOn ? 'block' : 'none';
+            if (goalIskOn) {
                 taxGroup.style.opacity = '0.4';
                 taxGroup.style.pointerEvents = 'none';
             } else {
-                document.getElementById('goalTax').value = 30;
-                document.getElementById('goalTaxValue').textContent = '30%';
                 taxGroup.style.opacity = '1';
                 taxGroup.style.pointerEvents = 'auto';
             }
@@ -1846,27 +1889,6 @@
         });
 
         // ============================================================
-        //  Simulering för sparmål — returnerar { netValue, tax }
-        //  så vi kan särskilja faktiskt betald skatt från avgifter.
-        // ============================================================
-        function simulateGoal(initialCapital, monthlyAmount, monthlyRateNet, years, iskOn, iskSchablonRate, taxRate) {
-            if (iskOn) {
-                const r = simulateISK(initialCapital, monthlyAmount, monthlyRateNet, years, iskSchablonRate);
-                return { netValue: r.balance, tax: r.totalISKtax };
-            } else {
-                const months = years * 12;
-                const fv = monthlyRateNet === 0
-                    ? initialCapital + monthlyAmount * months
-                    : initialCapital * Math.pow(1 + monthlyRateNet, months)
-                      + monthlyAmount * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
-                const totalIn = initialCapital + monthlyAmount * months;
-                const gain = fv - totalIn;
-                const tax = gain > 0 ? gain * (taxRate / 100) : 0;
-                return { netValue: fv - tax, tax: tax };
-            }
-        }
-
-        // ============================================================
         //  SPARMÅL — beräkning
         // ============================================================
         function calculateGoal() {
@@ -1882,19 +1904,16 @@
             const initialCap = parseFloat(document.getElementById('goalInitial').value)  || 0;
             const years      = parseFloat(document.getElementById('goalYears').value)    || 0;
             const annualRate = parseFloat(document.getElementById('goalRate').value)     || 0;
-            const fees       = parseFloat(document.getElementById('goalFees').value)     || 0;
-            const taxRate    = parseFloat(document.getElementById('goalTax').value)      || 0;
-            const inflation  = parseFloat(document.getElementById('goalInflation').value)|| 0;
-            const iskOn      = document.getElementById('goalIskEnabled').checked;
-            const iskSchRate = parseFloat(document.getElementById('goalIskRate').value)  || 0;
+            const fees       = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalFees').value) || 0));
+            const inflation  = Math.max(0, Math.min(10, parseFloat(document.getElementById('goalInflation').value) || 0));
+            const iskSchRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalIskRate').value) || 0));
             const realTerms  = document.getElementById('goalRealTerms').checked;
 
+            // Mjuk varning: avgift > avkastning blockerar inte beräkningen längre.
             const goalFeesError = document.getElementById('goalFeesError');
             if (fees > annualRate) {
-                goalFeesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
+                goalFeesError.textContent = 'ℹ️ Avgiften är högre än avkastningen — målet kan vara svårt eller omöjligt att nå.';
                 goalFeesError.classList.add('show');
-                document.getElementById('goalResults').classList.remove('show');
-                return;
             } else {
                 goalFeesError.classList.remove('show');
             }
@@ -1909,7 +1928,7 @@
             const realEquiv       = realTerms ? targetRaw : targetRaw / inflationFactor;
 
             // Räcker startkapitalet utan månadssparande?
-            const netFromZero = simulateGoal(initialCap, 0, monthlyRateNet, years, iskOn, iskSchRate, taxRate).netValue;
+            const netFromZero = simulateGoal(initialCap, 0, monthlyRateNet, years, goalIskOn, iskSchRate).netValue;
 
             const resultsEl     = document.getElementById('goalResults');
             const noSavingsEl   = document.getElementById('goalNoSavingsNeeded');
@@ -1925,22 +1944,18 @@
                 monthlyNoteEl.textContent = 'Ditt startkapital räcker på ' + years + ' år.';
 
                 // Beräkna avgifter & skatt även i detta fall
-                const grossNoFees = monthlyRateGross === 0
-                    ? initialCap
-                    : initialCap * Math.pow(1 + monthlyRateGross, months);
-                const fvWithFeesNoTax = monthlyRateNet === 0
-                    ? initialCap
-                    : initialCap * Math.pow(1 + monthlyRateNet, months);
+                const grossNoFees = computeFV(initialCap, 0, monthlyRateGross, months);
+                const fvWithFeesNoTax = computeFV(initialCap, 0, monthlyRateNet, months);
                 const totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
 
-                const finalRes = simulateGoal(initialCap, 0, monthlyRateNet, years, iskOn, iskSchRate, taxRate);
+                const finalRes = simulateGoal(initialCap, 0, monthlyRateNet, years, goalIskOn, iskSchRate);
 
                 document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
                 document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
                 document.getElementById('goalTotalIn').textContent       = formatCurrency(initialCap);
                 document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalRes.netValue - initialCap, 0));
                 document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees);
-                document.getElementById('goalTaxResultLabel').textContent = iskOn ? 'ISK-skatt (totalt):' : 'Skatt (kapitalvinst):';
+                document.getElementById('goalTaxResultLabel').textContent = goalIskOn ? 'ISK-skatt (betalas separat):' : 'Skatt (kapitalvinst):';
                 document.getElementById('goalTaxResult').textContent     = formatCurrency(finalRes.tax);
                 return;
             }
@@ -1951,7 +1966,7 @@
             let lo = 0, hi = nominalTarget;
             for (let i = 0; i < 80; i++) {
                 const mid = (lo + hi) / 2;
-                if (simulateGoal(initialCap, mid, monthlyRateNet, years, iskOn, iskSchRate, taxRate).netValue < nominalTarget) {
+                if (simulateGoal(initialCap, mid, monthlyRateNet, years, goalIskOn, iskSchRate).netValue < nominalTarget) {
                     lo = mid;
                 } else {
                     hi = mid;
@@ -1961,24 +1976,18 @@
 
             // Detaljer med funnet månadsbelopp
             const totalIn  = initialCap + requiredMonthly * months;
-            const finalRes = simulateGoal(initialCap, requiredMonthly, monthlyRateNet, years, iskOn, iskSchRate, taxRate);
+            const finalRes = simulateGoal(initialCap, requiredMonthly, monthlyRateNet, years, goalIskOn, iskSchRate);
             const finalNet = finalRes.netValue;
             const actualTax = finalRes.tax;     // <-- KORREKT skatt, inte avgifter+skatt
 
             // Avgifter beräknas som differensen mellan brutto (utan avgifter) och netto-före-skatt
-            const grossNoFees = monthlyRateGross === 0
-                ? totalIn
-                : initialCap * Math.pow(1 + monthlyRateGross, months)
-                  + requiredMonthly * (Math.pow(1 + monthlyRateGross, months) - 1) / monthlyRateGross;
-            const fvWithFeesNoTax = monthlyRateNet === 0
-                ? totalIn
-                : initialCap * Math.pow(1 + monthlyRateNet, months)
-                  + requiredMonthly * (Math.pow(1 + monthlyRateNet, months) - 1) / monthlyRateNet;
+            const grossNoFees = computeFV(initialCap, requiredMonthly, monthlyRateGross, months);
+            const fvWithFeesNoTax = computeFV(initialCap, requiredMonthly, monthlyRateNet, months);
             const totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
 
             // UI
             monthlyEl.textContent = formatCurrency(Math.ceil(requiredMonthly)) + ' /mån';
-            monthlyNoteEl.textContent = 'Under ' + years + ' år · ' + (iskOn ? 'ISK' : 'vanligt konto');
+            monthlyNoteEl.textContent = 'Under ' + years + ' år · ' + (goalIskOn ? 'ISK' : 'vanligt konto');
 
             document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
             document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
@@ -1986,30 +1995,30 @@
             document.getElementById('goalTotalIn').textContent       = formatCurrency(totalIn);
             document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalNet - totalIn, 0));
             document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees);
-            document.getElementById('goalTaxResultLabel').textContent = iskOn ? 'ISK-skatt (totalt):' : 'Skatt (kapitalvinst):';
+            document.getElementById('goalTaxResultLabel').textContent = goalIskOn ? 'ISK-skatt (betalas separat):' : 'Skatt (kapitalvinst):';
             document.getElementById('goalTaxResult').textContent     = formatCurrency(actualTax);
 
             // Fördelningsdiagram (relativt nominalTarget)
             const investedPct = Math.min((totalIn / nominalTarget) * 100, 100);
             const gainPct     = Math.max(((finalNet - totalIn) / nominalTarget) * 100, 0);
             const feesPct     = Math.max((totalFees / nominalTarget) * 100, 0);
-            const taxPct      = Math.max((actualTax / nominalTarget) * 100, 0);
+            const taxPct      = Math.max(0, 100 - investedPct - gainPct - feesPct);
 
             document.getElementById('goalChart').innerHTML = `
                 <div class="chart-segment chart-invested" style="width:${investedPct}%">
-                    ${investedPct > 8 ? Math.round(investedPct) + '%' : ''}</div>
+                    ${investedPct > 5 ? Math.round(investedPct) + '%' : ''}</div>
                 <div class="chart-segment chart-interest" style="width:${gainPct}%">
-                    ${gainPct > 8 ? Math.round(gainPct) + '%' : ''}</div>
+                    ${gainPct > 5 ? Math.round(gainPct) + '%' : ''}</div>
                 <div class="chart-segment chart-fees" style="width:${feesPct}%">
-                    ${feesPct > 8 ? Math.round(feesPct) + '%' : ''}</div>
+                    ${feesPct > 5 ? Math.round(feesPct) + '%' : ''}</div>
                 <div class="chart-segment chart-taxes" style="width:${taxPct}%">
-                    ${taxPct > 8 ? Math.round(taxPct) + '%' : ''}</div>
+                    ${taxPct > 5 ? Math.round(taxPct) + '%' : ''}</div>
             `;
             document.getElementById('goalLegend').innerHTML = `
                 <div class="legend-item"><div class="legend-color chart-invested"></div><span>Insatt kapital</span></div>
                 <div class="legend-item"><div class="legend-color chart-interest"></div><span>Avkastning</span></div>
                 <div class="legend-item"><div class="legend-color chart-fees"></div><span>Avgifter</span></div>
-                <div class="legend-item"><div class="legend-color chart-taxes"></div><span>${iskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
+                <div class="legend-item"><div class="legend-color chart-taxes"></div><span>${goalIskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
             `;
 
             // ── År-för-år tabell + diagram ─────────────────────────
@@ -2019,27 +2028,14 @@
             goalTbody.innerHTML = '';
             let glBalance  = initialCap;
             let glInvested = initialCap;
-            const insattningarPerÅr = requiredMonthly * 12;
 
             for (let year = 1; year <= years; year++) {
-                if (iskOn) {
-                    const gq1 = glBalance;
-                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
-                    const gq2 = glBalance;
-                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
-                    const gq3 = glBalance;
-                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
-                    const gq4 = glBalance;
-                    for (let m = 0; m < 3; m++) { glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly; glInvested += requiredMonthly; }
-                    const gKap     = (gq1 + gq2 + gq3 + gq4 + insattningarPerÅr) / 4;
-                    const gSkattat = Math.max(0, gKap - 300000);
-                    glBalance -= gSkattat * (iskSchRate / 100) * 0.30;
-                } else {
-                    // Visar kontovärdet före slutlig reavinstskatt (skatt vid uttag)
-                    for (let m = 0; m < 12; m++) {
-                        glBalance = glBalance * (1 + monthlyRateNet) + requiredMonthly;
-                        glInvested += requiredMonthly;
-                    }
+                // Tidslinjen visar bruttovärde varje år (oavsett kontotyp).
+                // ISK-skatten respektive kapitalvinstskatten redovisas
+                // separat i resultatpanelen ovan.
+                for (let m = 0; m < 12; m++) {
+                    glBalance  = glBalance * (1 + monthlyRateNet) + requiredMonthly;
+                    glInvested += requiredMonthly;
                 }
                 const glGain = glBalance - glInvested;
                 goalChartData.push({ year, invested: glInvested, gain: glGain, total: glBalance });
