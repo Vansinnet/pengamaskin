@@ -1,0 +1,36 @@
+# ============================================================
+#  Säkerhetsheaders för Pengamaskinen (Cloudflare Pages)
+#
+#  Alla headers sätts på samtliga routes (/*).
+#  Verktyget laddar enbart same-origin-resurser:
+#    index.html, styles.css, calculations.js, app.js
+#  Inga externa skript, fonter, bilder eller API:er.
+# ============================================================
+
+/*
+  # --- Content Security Policy (primär — meta-taggen är fallback) ---
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-OadHFs9E68V4Ppz+Z/IE+vFaitpd5HD9mS1vSLYNK5A='; style-src 'self' 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'; upgrade-insecure-requests
+
+  # --- Förhindra MIME-type-sniffing ---
+  X-Content-Type-Options: nosniff
+
+  # --- Förhindra clickjacking (inbäddning i iframe) ---
+  X-Frame-Options: DENY
+
+  # --- Tvinga HTTPS (HSTS) ---
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # --- Läck ingen referrer-information ---
+  Referrer-Policy: no-referrer
+
+  # --- Blocka ALLA onödiga webbläsar-API:er ---
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()
+
+  # --- Isolera browsing-kontexten (cross-origin-skydd) ---
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+  # --- Äldre skydd (harmlösa, skadar inte) ---
+  X-XSS-Protection: 1; mode=block
+  X-Download-Options: noopen
+  X-Permitted-Cross-Domain-Policies: none

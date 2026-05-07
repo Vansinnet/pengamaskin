@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-OadHFs9E68V4Ppz+Z/IE+vFaitpd5HD9mS1vSLYNK5A='; style-src 'self' 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none';">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23b8860b'/%3E%3Ccircle cx='32' cy='32' r='26' fill='%23d4a600'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23f4d03f' stroke-width='1.5'/%3E%3Cellipse cx='24' cy='22' rx='7' ry='4' fill='%23f9e79f' opacity='0.45' transform='rotate(-30 24 22)'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='32' font-weight='bold' fill='%236b4423' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="googlebot" content="index, follow">
@@ -66,807 +66,11 @@
       ]
     }
     </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: linear-gradient(135deg, #2c1f0f 0%, #1a1209 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            color: #2c1f0f;
-        }
-
-        .page-container {
-            display: flex;
-            gap: 30px;
-            max-width: 1400px;
-            width: 100%;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .container {
-            background: linear-gradient(135deg, #f4d03f 0%, #f9e79f 100%);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.3);
-            padding: 28px;
-            max-width: 550px;
-            width: 100%;
-            border: 3px solid #d4a600;
-            position: relative;
-        }
-
-        h1 {
-            color: #6b4423;
-            margin-bottom: 5px;
-            font-size: 32px;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
-        }
-
-        .subtitle {
-            color: #8b5a2b;
-            margin-bottom: 14px;
-            font-size: 14px;
-            font-style: italic;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 18px;
-            border-bottom: 2px solid #d4a600;
-        }
-
-        .tab-button {
-            padding: 10px 15px;
-            background: transparent;
-            border: none;
-            color: #8b5a2b;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab-button.active {
-            color: #6b4423;
-            border-bottom-color: #6b4423;
-        }
-
-        .tab-button:hover {
-            color: #6b4423;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 13px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #6b4423;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input[type="number"],
-        input[type="text"] {
-            width: 100%;
-            padding: 9px 12px;
-            border: 2px solid #d4a600;
-            border-radius: 8px;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #2c1f0f;
-            transition: all 0.3s;
-            font-family: 'Arial', sans-serif;
-        }
-
-        input[type="number"]:focus,
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #8b5a2b;
-            background: white;
-            box-shadow: 0 0 10px rgba(139, 90, 43, 0.3);
-        }
-
-        input[type="range"] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #e5c158;
-            outline: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #8b5a2b;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #8b5a2b;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .input-group input {
-            flex: 1;
-        }
-
-        .currency {
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 8px;
-            border: 2px solid #d4a600;
-            font-weight: 500;
-            color: #8b5a2b;
-        }
-
-        .slider-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .slider-container input[type="range"] {
-            flex: 1;
-        }
-
-        .slider-value {
-            color: #8b5a2b;
-            font-weight: 600;
-            min-width: 50px;
-            text-align: right;
-        }
-
-        .input-hint {
-            font-size: 11px;
-            color: #8b5a2b;
-            margin-top: 4px;
-            font-style: italic;
-            line-height: 1.4;
-        }
-
-        .results {
-            background: rgba(255, 255, 255, 0.7);
-            padding: 18px;
-            border-radius: 10px;
-            margin-top: 30px;
-            display: none;
-            border: 2px solid #d4a600;
-        }
-
-        .results.show {
-            display: block;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #d4a600;
-        }
-
-        .result-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .result-label {
-            color: #8b5a2b;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .result-value {
-            font-weight: 700;
-            color: #6b4423;
-            font-size: 14px;
-        }
-
-        .total-invested {
-            color: #8b5a2b;
-        }
-
-        .interest-earned {
-            color: #d4a600;
-        }
-
-        .taxes {
-            color: #c41e3a;
-        }
-
-        .net-value {
-            color: #2d5016;
-        }
-
-        .final-value {
-            background: linear-gradient(135deg, #e5c158 0%, #f4d03f 100%);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 2px solid #d4a600;
-        }
-
-        .final-value .result-label {
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        .final-value .result-value {
-            font-size: 24px;
-            color: #6b4423;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #8b5a2b 0%, #6b4423 100%);
-            color: #f4d03f;
-            border: 2px solid #d4a600;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-            font-family: 'Georgia', serif;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(107, 68, 35, 0.6);
-            background: linear-gradient(135deg, #6b4423 0%, #4a2f1a 100%);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .info-box {
-            background: rgba(255, 255, 255, 0.8);
-            border-left: 4px solid #8b5a2b;
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            color: #6b4423;
-        }
-
-        /* ── Ränta-på-ränta-ruta ──────────────────────────────── */
-        .rpr-panel {
-            margin-bottom: 12px;
-        }
-        .rpr-toggle {
-            width: 100%;
-            background: linear-gradient(135deg, #8b5a2b 0%, #6b4423 100%);
-            color: #f9e79f;
-            border: none;
-            border-radius: 10px;
-            padding: 13px 18px;
-            font-family: 'Georgia', serif;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            text-align: left;
-            transition: opacity 0.2s;
-        }
-        .rpr-toggle:hover { opacity: 0.88; transform: none; box-shadow: none; }
-        .rpr-toggle .rpr-arrow {
-            font-size: 11px;
-            transition: transform 0.25s;
-            flex-shrink: 0;
-        }
-        .rpr-toggle.open .rpr-arrow { transform: rotate(180deg); }
-
-        .rpr-body {
-            display: none;
-            background: rgba(255,255,255,0.82);
-            border: 1px solid #d4a600;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            padding: 20px;
-            color: #3a2510;
-            font-size: 13.5px;
-            line-height: 1.7;
-        }
-        .rpr-body.open { display: block; }
-
-        .rpr-body h3 {
-            font-size: 15px;
-            color: #6b4423;
-            margin-bottom: 10px;
-        }
-        .rpr-example {
-            background: #fff8e8;
-            border-left: 4px solid #d4a600;
-            border-radius: 6px;
-            padding: 14px 16px;
-            margin: 14px 0;
-            font-size: 13px;
-        }
-        .rpr-example strong { color: #6b4423; }
-        .rpr-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 16px 0 8px 0;
-        }
-        .rpr-bar-row { display: flex; flex-direction: column; gap: 3px; }
-        .rpr-bar-label { font-size: 12px; color: #6b4423; font-weight: 600; }
-        .rpr-bar-track {
-            background: #e8d9b8;
-            border-radius: 6px;
-            height: 28px;
-            position: relative;
-            overflow: hidden;
-        }
-        .rpr-bar-fill {
-            height: 100%;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            padding-left: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #fff;
-            white-space: nowrap;
-            transition: width 0.6s ease;
-        }
-        .rpr-bar-insatt { background: #8b5a2b; }
-        .rpr-bar-vanlig { background: #b07d3a; }
-        .rpr-bar-rpr    { background: #2d6a2d; }
-        .rpr-bar-value {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 12px;
-            font-weight: 700;
-            color: #3a2510;
-        }
-        .rpr-takeaway {
-            background: linear-gradient(135deg, #2d5016 0%, #1a3a0a 100%);
-            color: #c8f0a0;
-            border-radius: 8px;
-            padding: 13px 16px;
-            margin-top: 14px;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .rpr-takeaway strong { color: #e8ffd0; }
-
-
-        .breakdown {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #d4a600;
-        }
-
-        .breakdown-title {
-            font-weight: 600;
-            color: #6b4423;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-
-        .chart-container {
-            margin-top: 15px;
-            height: 40px;
-            background: #e5c158;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            border: 2px solid #d4a600;
-        }
-
-        .chart-segment {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: 700;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .chart-invested {
-            background: #8b5a2b;
-        }
-
-        .chart-interest {
-            background: #d4a600;
-        }
-
-        .chart-taxes {
-            background: #c41e3a;
-        }
-
-        .chart-net {
-            background: #2d5016;
-        }
-
-        .chart-fees {
-            background: #e07b00;
-        }
-
-        .legend {
-            font-size: 12px;
-            margin-top: 12px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 3px;
-        }
-
-        .table-container {
-            margin-top: 20px;
-            overflow-x: auto;
-            border-radius: 8px;
-            border: 2px solid #d4a600;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        table thead {
-            background: #8b5a2b;
-            color: #f4d03f;
-        }
-
-        table th {
-            padding: 10px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        table td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #d4a600;
-            color: #6b4423;
-        }
-
-        table tbody tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        .success {
-            color: #2d5016;
-        }
-
-        .warning {
-            color: #c41e3a;
-        }
-
-        .error-message {
-            color: #c41e3a;
-            font-size: 12px;
-            margin-top: 4px;
-            display: none;
-            font-weight: 600;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .amount-hint {
-            font-size: 12px;
-            color: #6b4423;
-            margin-top: 3px;
-            min-height: 16px;
-            font-style: italic;
-            opacity: 0.8;
-        }
-
-        /* ── Tooltips ─────────────────────────────────────────── */
-        .field-label {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            flex-wrap: wrap;
-        }
-        .info-tip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 17px;
-            height: 17px;
-            background: #c8a84b;
-            color: #2c1f0f;
-            border-radius: 50%;
-            font-size: 10px;
-            font-style: normal;
-            font-weight: bold;
-            cursor: help;
-            margin-left: 7px;
-            position: relative;
-            vertical-align: middle;
-            flex-shrink: 0;
-            user-select: none;
-            font-family: 'Arial', sans-serif;
-        }
-        .info-tip::after {
-            content: attr(data-tip);
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2c1f0f;
-            color: #f9e79f;
-            font-size: 12px;
-            line-height: 1.6;
-            padding: 10px 13px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            width: 240px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.15s;
-            z-index: 200;
-            font-weight: normal;
-            font-family: 'Arial', sans-serif;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-            left: auto;
-            right: -8px;
-            transform: none;
-        }
-        .info-tip:hover::after,
-        .info-tip:focus::after { opacity: 1; }
-
-        .warning-message {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            color: #856404;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        /* ─── Footer ──────────────────────────────────────────── */
-        .footer {
-            flex-basis: 100%;
-            width: 100%;
-            max-width: 550px;
-            margin: 10px auto 10px;
-            padding: 25px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            text-align: center;
-        }
-
-        .license-line {
-            color: #d4a600;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Georgia', serif;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .license-badge {
-            background: rgba(244, 208, 63, 0.12);
-            color: #f4d03f;
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid #d4a600;
-            font-size: 12px;
-            font-weight: 600;
-            font-family: 'Arial', sans-serif;
-            text-decoration: none;
-            transition: all 0.2s;
-            letter-spacing: 0.5px;
-        }
-
-        .license-badge:hover {
-            background: rgba(244, 208, 63, 0.25);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(212, 166, 0, 0.3);
-        }
-
-        .github-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #2c1f0f 0%, #1a1209 100%);
-            color: #f4d03f;
-            padding: 11px 26px;
-            border-radius: 50px;
-            border: 2px solid #d4a600;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            transition: all 0.2s;
-            font-family: 'Georgia', serif;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .github-button:hover {
-            background: linear-gradient(135deg, #1a1209 0%, #0a0604 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(212, 166, 0, 0.4);
-            border-color: #f4d03f;
-        }
-
-        .github-button svg {
-            width: 18px;
-            height: 18px;
-            fill: #f4d03f;
-        }
-
-        .updated-date {
-            color: #b8860b;
-            font-size: 11px;
-            opacity: 0.7;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .page-container {
-                flex-direction: column;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-        }
-
-        /* ── Tvåkolumnslayout (widescreen) ───────────────────── */
-        .tab-layout {
-            display: block;
-        }
-
-        .tab-results .results {
-            margin-top: 0;
-        }
-
-        @media (min-width: 900px) {
-            .container {
-                max-width: 1180px;
-            }
-
-            .footer {
-                max-width: 1180px;
-            }
-
-            .tab-layout {
-                display: grid;
-                grid-template-columns: 290px minmax(260px, 340px) 1fr;
-                gap: 24px;
-                align-items: start;
-            }
-
-            .tab-summary .results,
-            .tab-timeline .results {
-                display: block;
-            }
-        }
-
-        /* ── Sidhuvud med titel + explainer horisontellt ─────── */
-        .page-header {
-            margin-bottom: 16px;
-        }
-
-        .header-top {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .header-title {
-            flex: 1;
-            min-width: 160px;
-        }
-
-        .header-title h1 { margin-bottom: 2px; }
-        .header-title .subtitle { margin-bottom: 0; }
-
-        .header-extras {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            flex-shrink: 0;
-        }
-
-        /* Explainer-knappen ska inte ta full bredd i header-läge */
-        .header-extras .rpr-toggle {
-            width: auto;
-            padding: 10px 16px;
-        }
-
-        /* Info-boxen utan margin i header-läge */
-        .header-extras .info-box {
-            margin-bottom: 0;
-            white-space: nowrap;
-        }
-
-        /* Rpr-body spänner full bredd under header-raden */
-        .page-header .rpr-body {
-            border-radius: 0 0 10px 10px;
-        }
-
-        @media (max-width: 768px) {
-            .header-extras { width: 100%; }
-            .header-extras .rpr-toggle { width: 100%; }
-            .header-extras .info-box { white-space: normal; }
-        }
-        .col-header {
-            font-size: 10px;
-            font-weight: 700;
-            color: #8b5a2b;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-            padding-bottom: 7px;
-            border-bottom: 2px solid #d4a600;
-            opacity: 0.75;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
     <script src="calculations.js"></script>
 </head>
 <body>
+    <a href="#advanced" class="skip-link">Hoppa till innehållet</a>
     <div class="page-container">
         <div class="container">
             <div class="page-header">
@@ -876,7 +80,7 @@
                         <p class="subtitle">"Pengar är väl använd tid!" — Joakim von Anka</p>
                     </div>
                     <div class="header-extras">
-                        <button type="button" class="rpr-toggle" onclick="toggleRpr(this)" aria-expanded="false">
+                        <button type="button" class="rpr-toggle" id="rprToggle" aria-expanded="false">
                             <span>💡 Vad är ränta-på-ränta-effekten?</span>
                             <span class="rpr-arrow">▼</span>
                         </button>
@@ -929,9 +133,9 @@
                 </div>
             </div>
 
-            <div class="tabs">
-                <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
-                <button class="tab-button" onclick="switchTab('goal', this)">Sparmål</button>
+            <div class="tabs" role="tablist" aria-label="Verktygsflikar">
+                <button class="tab-button active" role="tab" aria-selected="true" aria-controls="advanced" id="tabBtnAdvanced">Pengamaskin</button>
+                <button class="tab-button" role="tab" aria-selected="false" aria-controls="goal" id="tabBtnGoal">Sparmål</button>
             </div>
 
             <!-- FLIKEN: PENGAMASKIN -->
@@ -943,34 +147,34 @@
                     <div class="form-group">
                         <label for="advInitialCapital" class="field-label">Startkapital <span class="info-tip" tabindex="0" data-tip="Pengar du redan har sparat och vill börja med. Har du 0 kr? Skriv 0. Har du ett buffertspar på 50 000 kr du vill räkna på? Skriv 50000.">?</span></label>
                         <div class="input-group">
-                            <input type="number" autocomplete="off" id="advInitialCapital" value="10000" min="0" max="100000000" step="100">
+                            <input type="number" autocomplete="off" inputmode="decimal" id="advInitialCapital" value="10000" min="0" max="100000000" step="100">
                             <div class="currency">kr</div>
                         </div>
-                        <div class="error-message" id="advInitialCapitalError"></div>
+                        <div class="error-message" role="alert" id="advInitialCapitalError"></div>
                         <div class="amount-hint" id="advInitialCapitalHint">10 000 kr</div>
                     </div>
 
                     <div class="form-group">
                         <label for="advMonthlyAmount" class="field-label">Månadligt sparande <span class="info-tip" tabindex="0" data-tip="Hur mycket du sätter in varje månad. Det behöver inte vara ett jämnt belopp — testa dig fram! Ens 300 kr/mån gör stor skillnad över lång tid.">?</span></label>
                         <div class="input-group">
-                            <input type="number" autocomplete="off" id="advMonthlyAmount" value="500" min="0" max="1000000" step="50">
+                            <input type="number" autocomplete="off" inputmode="decimal" id="advMonthlyAmount" value="500" min="0" max="1000000" step="50">
                             <div class="currency">kr</div>
                         </div>
-                        <div class="error-message" id="advMonthlyAmountError"></div>
+                        <div class="error-message" role="alert" id="advMonthlyAmountError"></div>
                         <div class="amount-hint" id="advMonthlyAmountHint">500 kr</div>
                     </div>
 
                     <div class="form-group">
                         <label for="advRate" class="field-label">Årlig avkastning (%) <span class="info-tip" tabindex="0" data-tip="Hur mycket dina pengar förväntas växa per år. Sparkonto: 2–3 %. Global indexfond (t.ex. Avanza Global): historiskt ~8–10 %. Obligationer/räntefonder: 3–5 %. Ingen kan garantera framtida avkastning.">?</span></label>
-                        <input type="number" autocomplete="off" id="advRate" value="5" min="0" max="100" step="0.01">
+                        <input type="number" autocomplete="off" inputmode="decimal" id="advRate" value="5" min="0" max="100" step="0.01">
                         <div class="input-hint">Tolkas som nominell årsränta — t.ex. 5 % blir 5/12 % per månad. Effektiv årsavkastning blir då något högre (~5,12 %).</div>
-                        <div class="error-message" id="advRateError"></div>
+                        <div class="error-message" role="alert" id="advRateError"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="advYears" class="field-label">Tidsperiod (år) <span class="info-tip" tabindex="0" data-tip="Hur många år du tänker spara innan du tar ut pengarna. Ju längre tid, desto kraftigare ränta-på-ränta-effekt. 10 år är OK, 30 år är kraftfullt.">?</span></label>
-                        <input type="number" autocomplete="off" id="advYears" value="10" min="1" max="100" step="1">
-                        <div class="error-message" id="advYearsError"></div>
+                        <input type="number" autocomplete="off" inputmode="decimal" id="advYears" value="10" min="1" max="100" step="1">
+                        <div class="error-message" role="alert" id="advYearsError"></div>
                     </div>
 
                     <div class="form-group">
@@ -979,7 +183,7 @@
                             <input type="range" id="fees" value="0.5" min="0" max="5" step="0.05">
                             <span class="slider-value" id="feesValue">0.50%</span>
                         </div>
-                        <div class="error-message" id="feesError"></div>
+                        <div class="error-message" role="alert" id="feesError"></div>
                     </div>
 
                     <div id="taxRateGroup" class="form-group">
@@ -997,14 +201,13 @@
                             <input type="range" id="advInflation" value="2" min="0" max="10" step="0.1">
                             <span class="slider-value" id="advInflationValue">2%</span>
                         </div>
-                        <div class="error-message" id="advInflationError"></div>
+                        <div class="error-message" role="alert" id="advInflationError"></div>
                     </div>
 
                     <!-- ISK-SEKTION -->
                     <div class="form-group" style="border-top:2px solid #d4a600; padding-top:15px; margin-top:5px;">
-                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px;">
-                            <input type="checkbox" id="iskEnabled"
-                                style="width:18px; height:18px; cursor:pointer; accent-color:#8b5a2b; flex-shrink:0;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="iskEnabled" class="checkbox-input">
                             ISK-konto (Investeringssparkonto)
                             <span class="info-tip" tabindex="0" data-tip="ISK är ett speciellt sparkonto hos banker och nätmäklare (Avanza, Nordnet m.fl.). Istället för att betala skatt när du säljer, betalar du en liten schablonskatt varje år — oavsett om du gått med vinst eller förlust. Oftast fördelaktigt om avkastningen är hög.">?</span>
                         </label>
@@ -1032,7 +235,7 @@
                 </div><!-- /.tab-inputs -->
                 <div class="tab-summary">
                 <p class="col-header">② Resultat</p>
-                <div id="advSummary" class="results">
+                <div id="advSummary" class="results" aria-live="polite" aria-atomic="true">
                     <h2 style="color: #6b4423; margin-bottom: 12px; font-size: 17px;">Detaljerade Resultat</h2>
 
                     <div class="result-row">
@@ -1080,7 +283,7 @@
                 </div><!-- /.tab-summary -->
                 <div class="tab-timeline">
                 <p class="col-header">③ Tidslinje</p>
-                <div id="advTimeline" class="results">
+                <div id="advTimeline" class="results" aria-live="polite">
                     <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Tidslinje — Årlig tillväxt</div>
                     <div style="position:relative; margin-bottom:15px;">
                         <canvas id="timelineChart" width="470" height="260"
@@ -1098,7 +301,7 @@
                                     <th>År</th>
                                     <th>Investerat</th>
                                     <th>Avkastning</th>
-                                    <th>Avkastning +</th>
+                                    <th title="Årets avkastningsökning jämfört med föregående år">Avkastning +</th>
                                     <th>Totalt värde</th>
                                 </tr>
                             </thead>
@@ -1123,14 +326,15 @@
                 <div class="form-group">
                     <label for="goalTarget" class="field-label">Jag vill ha <span class="info-tip" tabindex="0" data-tip="Det belopp du vill ha sparat. Tänk på vad du sparar till — kontantinsats till bostad, pension, drömresa, ekonomisk frihet? Skriv in summan i kronor.">?</span></label>
                     <div class="input-group">
-                        <input type="number" autocomplete="off" id="goalTarget" value="1000000" min="1" max="1000000000" step="10000">
+                        <input type="number" autocomplete="off" inputmode="decimal" id="goalTarget" value="1000000" min="1" max="1000000000" step="10000">
                         <div class="currency">kr</div>
                     </div>
-                    <div class="error-message" id="goalTargetError"></div>
+                    <div class="error-message" role="alert" id="goalTargetError"></div>
                     <div class="amount-hint" id="goalTargetHint">1 miljon kr</div>
                 </div>
 
                 <div class="form-group" style="margin-bottom:8px;">
+                    <div style="background:rgba(255,255,255,0.6); border:2px solid #d4a600; border-radius:10px; padding:14px 16px;">
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:500;">
                         <input type="checkbox" id="goalRealTerms" style="width:16px; height:16px; cursor:pointer; accent-color:#8b5a2b;">
                         Beloppet är i <em>dagens pengar</em> (justerat för inflation)
@@ -1139,29 +343,30 @@
                     <div style="font-size:12px; color:#8b5a2b; margin-top:4px; margin-left:26px;">
                         Avmarkerat = du anger det belopp du faktiskt vill ha i framtiden (nominellt).
                     </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="goalInitial" class="field-label">Startkapital (befintliga besparingar) <span class="info-tip" tabindex="0" data-tip="Pengar du redan har sparat och kan använda som startpunkt. Dessa pengar jobbar direkt mot ditt mål. Har du inget sparat ännu? Skriv 0.">?</span></label>
                     <div class="input-group">
-                        <input type="number" autocomplete="off" id="goalInitial" value="10000" min="0" max="100000000" step="100">
+                        <input type="number" autocomplete="off" inputmode="decimal" id="goalInitial" value="10000" min="0" max="100000000" step="100">
                         <div class="currency">kr</div>
                     </div>
-                    <div class="error-message" id="goalInitialError"></div>
+                    <div class="error-message" role="alert" id="goalInitialError"></div>
                     <div class="amount-hint" id="goalInitialHint">10 000 kr</div>
                 </div>
 
                 <div class="form-group">
                     <label for="goalYears" class="field-label">Tidsperiod (år) <span class="info-tip" tabindex="0" data-tip="Hur många år du har på dig att nå ditt mål. Sparar du till pension om 30 år? Skriv 30. Kontantinsats om 5 år? Skriv 5. Kortare tid kräver mer sparande per månad.">?</span></label>
-                    <input type="number" autocomplete="off" id="goalYears" value="20" min="1" max="100" step="1">
-                    <div class="error-message" id="goalYearsError"></div>
+                    <input type="number" autocomplete="off" inputmode="decimal" id="goalYears" value="20" min="1" max="100" step="1">
+                    <div class="error-message" role="alert" id="goalYearsError"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="goalRate" class="field-label">Årlig avkastning (%) <span class="info-tip" tabindex="0" data-tip="Hur mycket dina pengar förväntas växa per år. Sparkonto: 2–3 %. Global indexfond: historiskt ~8–10 %. Sätt lägre om du är osäker — bättre att bli positivt överraskad.">?</span></label>
-                    <input type="number" autocomplete="off" id="goalRate" value="5" min="0" max="100" step="0.01">
+                    <input type="number" autocomplete="off" inputmode="decimal" id="goalRate" value="5" min="0" max="100" step="0.01">
                     <div class="input-hint">Tolkas som nominell årsränta (delas med 12 till månadsränta).</div>
-                    <div class="error-message" id="goalRateError"></div>
+                    <div class="error-message" role="alert" id="goalRateError"></div>
                 </div>
 
                 <div class="form-group">
@@ -1170,7 +375,7 @@
                         <input type="range" id="goalFees" value="0.5" min="0" max="5" step="0.05">
                         <span class="slider-value" id="goalFeesValue">0.50%</span>
                     </div>
-                    <div class="error-message" id="goalFeesError"></div>
+                    <div class="error-message" role="alert" id="goalFeesError"></div>
                 </div>
 
                 <div id="goalTaxGroup" class="form-group">
@@ -1191,9 +396,8 @@
 
                 <!-- ISK -->
                 <div class="form-group" style="border-top:2px solid #d4a600; padding-top:15px; margin-top:5px;">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:15px;">
-                        <input type="checkbox" id="goalIskEnabled"
-                            style="width:18px; height:18px; cursor:pointer; accent-color:#8b5a2b; flex-shrink:0;">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="goalIskEnabled" class="checkbox-input">
                         ISK-konto (Investeringssparkonto)
                         <span class="info-tip" tabindex="0" data-tip="ISK är ett speciellt sparkonto hos banker och nätmäklare (Avanza, Nordnet m.fl.). Istället för att betala skatt när du säljer, betalar du en liten schablonskatt varje år — oavsett om du gått med vinst eller förlust. Oftast fördelaktigt om avkastningen är hög.">?</span>
                     </label>
@@ -1217,7 +421,7 @@
                 </div><!-- /.tab-inputs -->
                 <div class="tab-summary">
                 <p class="col-header">② Resultat</p>
-                <div id="goalSummary" class="results">
+                <div id="goalSummary" class="results" aria-live="polite" aria-atomic="true">
                     <!-- Stor ruta för månadsbeloppet -->
                     <div style="background:linear-gradient(135deg,#6b4423 0%,#4a2f1a 100%); border-radius:12px; padding:20px; margin-bottom:20px; border:2px solid #d4a600; text-align:center;">
                         <div style="color:#f4d03f; font-size:13px; font-weight:600; margin-bottom:6px;">DU BEHÖVER SPARA</div>
@@ -1263,7 +467,7 @@
                 </div><!-- /.tab-summary -->
                 <div class="tab-timeline">
                 <p class="col-header">③ Tidslinje</p>
-                <div id="goalTimeline" class="results">
+                <div id="goalTimeline" class="results" aria-live="polite">
                     <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Sparplan — Årlig tillväxt</div>
                     <div style="position:relative; margin-bottom:15px;">
                         <canvas id="goalTimelineChart" width="470" height="260"
@@ -1281,7 +485,7 @@
                                     <th>År</th>
                                     <th>Investerat</th>
                                     <th>Avkastning</th>
-                                    <th>Avkastning +</th>
+                                    <th title="Årets avkastningsökning jämfört med föregående år">Avkastning +</th>
                                     <th>Kontovärde</th>
                                 </tr>
                             </thead>
@@ -1310,775 +514,6 @@
         </footer>
     </div>
 
-    <script>
-        // ============================================================
-        //  Globalt tillstånd — synkat med checkboxar via event-handlers.
-        //  iskOn:     ISK-toggle på Pengamaskin-fliken
-        //  goalIskOn: ISK-toggle på Sparmål-fliken
-        //  Varför globalt: calculateAdvanced/calculateGoal körs både
-        //  vid sidladdning och vid input-events där `this` inte är
-        //  checkboxen — så funktionerna behöver en stabil referens.
-        // ============================================================
-        let iskOn     = false;
-        let goalIskOn = false;
-
-        // ============================================================
-        //  Validering av input
-        // ============================================================
-        function validateInput(id, min = 0, max = 100000000, isRequired = true) {
-            const element = document.getElementById(id);
-            if (!element) return true;
-
-            const value = parseFloat(element.value);
-            const errorElement = document.getElementById(id + 'Error');
-
-            if (!errorElement) return true;
-
-            if (isNaN(value) || element.value === '' || element.value === null) {
-                if (isRequired) {
-                    errorElement.textContent = '⚠️ Obligatoriskt fält';
-                    errorElement.classList.add('show');
-                    return false;
-                } else {
-                    errorElement.classList.remove('show');
-                    return true;
-                }
-            }
-
-            if (value < min) {
-                errorElement.textContent = `⚠️ Minimumvärde: ${min}`;
-                errorElement.classList.add('show');
-                return false;
-            }
-
-            if (value > max) {
-                errorElement.textContent = `⚠️ Maxvärde: ${max.toLocaleString('sv-SE')}`;
-                errorElement.classList.add('show');
-                return false;
-            }
-
-            errorElement.classList.remove('show');
-            errorElement.textContent = '';
-            return true;
-        }
-
-        // ============================================================
-        //  Slider-lyssnare — Pengamaskin
-        // ============================================================
-        document.getElementById('fees').addEventListener('input', function() {
-            const val = parseFloat(this.value);
-            const rateVal = parseFloat(document.getElementById('advRate').value) || 0;
-            const feesError = document.getElementById('feesError');
-
-            if (val < 0) this.value = 0;
-            if (val > 5) this.value = 5;
-
-            if (val > rateVal) {
-                feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
-                feesError.classList.add('show');
-            } else {
-                feesError.classList.remove('show');
-            }
-
-            document.getElementById('feesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
-            clearTimeout(window.advTimeout);
-            window.advTimeout = setTimeout(calculateAdvanced, 300);
-        });
-
-        // (Skatteslidern borttagen — kapitalvinstskatten är hårdkodad till 30 % enligt lag.)
-
-        document.getElementById('advInflation').addEventListener('input', function() {
-            const val = parseFloat(this.value);
-            if (val < 0) this.value = 0;
-            if (val > 10) this.value = 10;
-            document.getElementById('advInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
-            clearTimeout(window.advTimeout);
-            window.advTimeout = setTimeout(calculateAdvanced, 300);
-        });
-
-        // ISK-toggle - Pengamaskin
-        document.getElementById('iskEnabled').addEventListener('change', function() {
-            iskOn = this.checked;                          // global flagga
-            const taxGroup = document.getElementById('taxRateGroup');
-            document.getElementById('iskRateGroup').style.display = iskOn ? 'block' : 'none';
-
-            // Skattevisningen är bara informativ nu — gråmarkera när ISK är på
-            // (ISK har egen schablonbeskattning, ingen kapitalvinstskatt).
-            if (iskOn) {
-                taxGroup.style.opacity = '0.4';
-                taxGroup.style.pointerEvents = 'none';
-            } else {
-                taxGroup.style.opacity = '1';
-                taxGroup.style.pointerEvents = 'auto';
-            }
-            clearTimeout(window.advTimeout);
-            window.advTimeout = setTimeout(calculateAdvanced, 150);
-        });
-
-        document.getElementById('iskRate').addEventListener('input', function() {
-            const val = parseFloat(this.value);
-            document.getElementById('iskRateValue').textContent = val.toFixed(2) + '%';
-            clearTimeout(window.advTimeout);
-            window.advTimeout = setTimeout(calculateAdvanced, 300);
-        });
-
-        // ============================================================
-        //  Tab-hantering — använder explicit btn-referens (inget globalt event)
-        // ============================================================
-        function toggleRpr(btn) {
-            const body = document.getElementById('rprBody');
-            const isOpen = body.classList.toggle('open');
-            btn.classList.toggle('open', isOpen);
-            btn.setAttribute('aria-expanded', isOpen);
-        }
-
-        let _goalChartData = [];
-        let _advChartData  = [];
-
-        function switchTab(tabName, btnElement) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-
-            document.getElementById(tabName).classList.add('active');
-            if (btnElement) btnElement.classList.add('active');
-
-            // Rita om diagram när fliken blir synlig (canvas hade bredd 0 när dold)
-            requestAnimationFrame(() => {
-                if (tabName === 'goal' && _goalChartData.length > 0)
-                    drawTimelineChart(_goalChartData, 'goalTimelineChart', 'goalChartTooltip');
-                if (tabName === 'advanced' && _advChartData.length > 0)
-                    drawTimelineChart(_advChartData);
-            });
-        }
-
-        // ============================================================
-        //  Formatering
-        // ============================================================
-
-        function bindAmountHint(inputId, hintId) {
-            const input = document.getElementById(inputId);
-            const hint  = document.getElementById(hintId);
-            if (!input || !hint) return;
-            input.addEventListener('input', () => {
-                hint.textContent = formatAmountHint(input.value);
-            });
-        }
-
-        bindAmountHint('advInitialCapital', 'advInitialCapitalHint');
-        bindAmountHint('advMonthlyAmount',  'advMonthlyAmountHint');
-        bindAmountHint('goalTarget',        'goalTargetHint');
-        bindAmountHint('goalInitial',       'goalInitialHint');
-
-        // ============================================================
-        //  PENGAMASKIN — beräkning
-        // ============================================================
-        function calculateAdvanced() {
-            if (!validateInput('advInitialCapital', 0, 100000000, false) ||
-                !validateInput('advMonthlyAmount', 0, 1000000, false) ||
-                !validateInput('advRate', 0, 100, true) ||
-                !validateInput('advYears', 1, 100, true)) {
-                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
-                return;
-            }
-
-            const initialCapital  = parseFloat(document.getElementById('advInitialCapital').value) || 0;
-            const monthlyAmount   = parseFloat(document.getElementById('advMonthlyAmount').value)  || 0;
-            const annualRate      = parseFloat(document.getElementById('advRate').value)            || 0;
-            const years           = parseFloat(document.getElementById('advYears').value)           || 0;
-            const fees            = Math.max(0, Math.min(5, parseFloat(document.getElementById('fees').value) || 0));
-            const inflation       = Math.max(0, Math.min(10, parseFloat(document.getElementById('advInflation').value) || 0));
-            const iskSchablonRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('iskRate').value) || 0));
-
-            // Mjuk varning: avgift > avkastning är tekniskt giltigt (kontot
-            // tappar pengar) men ovanligt — beräkningen får ändå fortsätta.
-            const feesError = document.getElementById('feesError');
-            if (fees > annualRate) {
-                feesError.textContent = 'ℹ️ Avgiften är högre än avkastningen — kontot tappar i värde över tid.';
-                feesError.classList.add('show');
-            } else {
-                feesError.classList.remove('show');
-            }
-
-            const monthlyRateGross = annualRate / 100 / 12;
-            const monthlyRateNet   = (annualRate - fees) / 100 / 12;
-            const months = years * 12;
-
-            // Bruttovärde — full avkastning, inga avgifter, ingen skatt (referensvärde)
-            const grossValue = computeGrossValue(initialCapital, monthlyAmount, annualRate, years);
-
-            // Värde med avgifter men ingen skatt
-            const netAfterFees = computeNetAfterFees(initialCapital, monthlyAmount, annualRate, fees, years);
-
-            const totalInvested = initialCapital + monthlyAmount * months;
-            const totalFees     = grossValue - netAfterFees;
-
-            let netValue, taxesOwed, iskAccountValue = null;
-
-            if (iskOn) {
-                const iskResult = simulateISK(initialCapital, monthlyAmount, monthlyRateNet, years, iskSchablonRate);
-                iskAccountValue = iskResult.balance;
-                netValue  = iskResult.balance - iskResult.totalISKtax;
-                taxesOwed = iskResult.totalISKtax;
-            } else {
-                // AF-konto: kapitalvinstskatt 30 % vid uttag (lagstadgat).
-                taxesOwed  = computeCapitalGainsTax(netAfterFees - totalInvested);
-                netValue   = netAfterFees - taxesOwed;
-            }
-
-            if (!isValidNumber(grossValue) || !isValidNumber(netValue) || !isValidNumber(taxesOwed)) {
-                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
-                return;
-            }
-
-            const inflationFactor = Math.pow(1 + inflation / 100, years);
-            const realValue = netValue / inflationFactor;
-            if (!isValidNumber(realValue)) {
-                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
-                return;
-            }
-
-            // Etiketter
-            document.getElementById('advTaxesLabel').textContent = iskOn
-                ? 'ISK-skatt (betalas separat):'
-                : 'Skatt på kapitalvinst:';
-
-            document.getElementById('advTotalInvested').textContent = formatCurrency(totalInvested);
-            document.getElementById('advGrossLabel').textContent    = iskOn ? 'ISK-kontots värde:' : 'Bruttovärde (ingen skatt/avgift):';
-            document.getElementById('advGrossValue').textContent    = iskOn ? formatCurrency(iskAccountValue) : formatCurrency(grossValue);
-            document.getElementById('advTotalFees').textContent     = formatCurrency(totalFees);
-            document.getElementById('advTaxes').textContent         = formatCurrency(taxesOwed);
-            document.getElementById('advNetValue').textContent      = formatCurrency(netValue);
-            document.getElementById('advRealValue').textContent     = formatCurrency(realValue);
-
-            document.getElementById('advWarning').style.display = netValue > 1e9 ? 'block' : 'none';
-
-            // Fördelningsdiagram (relativt grossValue)
-            const advChartEl  = document.getElementById('advChart');
-            const advLegendEl = document.getElementById('advLegend');
-            if (grossValue <= 0) {
-                advChartEl.innerHTML  = '<div style="padding:8px; font-size:12px; color:#8b5a2b;">Ange avkastning och/eller sparande för att se fördelning.</div>';
-                advLegendEl.innerHTML = '';
-            } else {
-                const investedPercent = (totalInvested / grossValue) * 100;
-                const netGain         = Math.max(netValue - totalInvested, 0);
-                const gainNetPercent  = (netGain / grossValue) * 100;
-                const feesPercent     = (totalFees / grossValue) * 100;
-                const taxPercent      = Math.max(0, 100 - investedPercent - gainNetPercent - feesPercent);
-
-                advChartEl.innerHTML = `
-                <div class="chart-segment chart-invested" style="width:${investedPercent}%">
-                    ${investedPercent > 5 ? Math.round(investedPercent) + '%' : ''}</div>
-                <div class="chart-segment chart-interest" style="width:${gainNetPercent}%">
-                    ${gainNetPercent > 5 ? Math.round(gainNetPercent) + '%' : ''}</div>
-                <div class="chart-segment chart-fees" style="width:${feesPercent}%">
-                    ${feesPercent > 5 ? Math.round(feesPercent) + '%' : ''}</div>
-                <div class="chart-segment chart-taxes" style="width:${taxPercent}%">
-                    ${taxPercent > 5 ? Math.round(taxPercent) + '%' : ''}</div>
-            `;
-                advLegendEl.innerHTML = `
-                <div class="legend-item"><div class="legend-color chart-invested"></div><span>Investerat</span></div>
-                <div class="legend-item"><div class="legend-color chart-interest"></div><span>Nettovinst</span></div>
-                <div class="legend-item"><div class="legend-color chart-fees"></div><span>Avgifter</span></div>
-                <div class="legend-item"><div class="legend-color chart-taxes"></div>
-                    <span>${iskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
-            `;
-            }
-
-            ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.add('show'));
-
-            // Tidslinje — år-för-år (med Skatteverkets ISK-formel)
-            const tbody = document.getElementById('timelineBody');
-            tbody.innerHTML = '';
-            const chartData = [];
-            _advChartData = chartData;
-            let tlBalance  = initialCapital;
-            let tlInvested = initialCapital;
-
-            let tlPrevGain = null;
-            for (let year = 1; year <= years; year++) {
-                // Både ISK och AF: kontot växer oavkortat varje månad.
-                // ISK-skatten betalas separat via deklarationen.
-                // AF: kapitalvinstskatt betalas BARA vid uttag (sista året),
-                // inte löpande — så tidslinjen visar bruttovärdet.
-                for (let m = 0; m < 12; m++) {
-                    tlBalance  = tlBalance * (1 + monthlyRateNet) + monthlyAmount;
-                    tlInvested += monthlyAmount;
-                }
-                const tlGain = tlBalance - tlInvested;
-                const tlDelta = tlPrevGain === null ? null : tlGain - tlPrevGain;
-                tlPrevGain = tlGain;
-                chartData.push({ year, invested: tlInvested, gain: tlGain, total: tlBalance });
-                const row = tbody.insertRow();
-                row.insertCell().textContent = year;
-                row.insertCell().textContent = formatCurrency(tlInvested);
-                row.insertCell().textContent = formatCurrency(tlGain);
-                const deltaCell = row.insertCell();
-                if (tlDelta === null) {
-                    deltaCell.textContent = '—';
-                    deltaCell.style.color = '#8b5a2b';
-                } else {
-                    deltaCell.textContent = '+' + formatCurrency(tlDelta);
-                    deltaCell.style.color = '#2d5016';
-                    deltaCell.style.fontWeight = '600';
-                }
-                const lastCell = row.insertCell();
-                const strong = document.createElement('strong');
-                strong.textContent = formatCurrency(tlBalance);
-                lastCell.appendChild(strong);
-            }
-            requestAnimationFrame(() => drawTimelineChart(chartData));
-        }
-
-        // ============================================================
-        //  JÄMFÖRING
-        // ============================================================
-        // ============================================================
-        //  TIDSLINJE — diagram (delas av Pengamaskin & Sparmål)
-        // ============================================================
-        function drawTimelineChart(dataPoints, canvasId = 'timelineChart', tooltipId = 'chartTooltip') {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = 260 * dpr;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const W = rect.width;
-            const H = 260;
-            const PAD = { top: 20, right: 20, bottom: 50, left: 70 };
-            const plotW = W - PAD.left - PAD.right;
-            const plotH = H - PAD.top - PAD.bottom;
-
-            const maxVal = Math.max(...dataPoints.map(d => d.total)) * 1.05;
-            const minVal = 0;
-
-            function xPos(i) { return dataPoints.length === 1 ? PAD.left + plotW / 2 : PAD.left + (i / (dataPoints.length - 1)) * plotW; }
-            function yPos(v) { return PAD.top + plotH - ((v - minVal) / (maxVal - minVal)) * plotH; }
-
-            ctx.clearRect(0, 0, W, H);
-
-            // Rutnät
-            const gridLines = 5;
-            ctx.strokeStyle = 'rgba(212,166,0,0.25)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= gridLines; i++) {
-                const v = minVal + (i / gridLines) * maxVal;
-                const y = yPos(v);
-                ctx.beginPath();
-                ctx.moveTo(PAD.left, y);
-                ctx.lineTo(PAD.left + plotW, y);
-                ctx.stroke();
-
-                ctx.fillStyle = '#8b5a2b';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'right';
-                const label = v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' :
-                              v >= 1000    ? (v / 1000).toFixed(0) + 'k' :
-                              v.toFixed(0);
-                ctx.fillText(label + ' kr', PAD.left - 6, y + 4);
-            }
-
-            // Område — investerat
-            ctx.beginPath();
-            ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
-            dataPoints.forEach((d, i) => ctx.lineTo(xPos(i), yPos(d.invested)));
-            ctx.lineTo(xPos(dataPoints.length - 1), yPos(0));
-            ctx.lineTo(xPos(0), yPos(0));
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(139,90,43,0.35)';
-            ctx.fill();
-
-            // Linje — investerat
-            ctx.beginPath();
-            dataPoints.forEach((d, i) => i === 0 ? ctx.moveTo(xPos(i), yPos(d.invested)) : ctx.lineTo(xPos(i), yPos(d.invested)));
-            ctx.strokeStyle = '#8b5a2b';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Område — avkastning ovanpå investerat
-            ctx.beginPath();
-            ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
-            dataPoints.forEach((d, i) => ctx.lineTo(xPos(i), yPos(d.total)));
-            ctx.lineTo(xPos(dataPoints.length - 1), yPos(dataPoints[dataPoints.length - 1].invested));
-            for (let i = dataPoints.length - 1; i >= 0; i--) ctx.lineTo(xPos(i), yPos(dataPoints[i].invested));
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(212,166,0,0.4)';
-            ctx.fill();
-
-            // Linje — totalt värde
-            ctx.beginPath();
-            dataPoints.forEach((d, i) => i === 0 ? ctx.moveTo(xPos(i), yPos(d.total)) : ctx.lineTo(xPos(i), yPos(d.total)));
-            ctx.strokeStyle = '#d4a600';
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            // X-axel
-            ctx.fillStyle = '#6b4423';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            const step = Math.ceil(dataPoints.length / 10);
-            dataPoints.forEach((d, i) => {
-                if (i === 0 || (i + 1) % step === 0 || i === dataPoints.length - 1) {
-                    const x = xPos(i);
-                    ctx.beginPath();
-                    ctx.strokeStyle = 'rgba(107,68,35,0.4)';
-                    ctx.lineWidth = 1;
-                    ctx.moveTo(x, PAD.top + plotH);
-                    ctx.lineTo(x, PAD.top + plotH + 5);
-                    ctx.stroke();
-                    ctx.fillStyle = '#6b4423';
-                    ctx.fillText('År ' + d.year, x, H - PAD.bottom + 18);
-                }
-            });
-
-            // Axlar
-            ctx.beginPath();
-            ctx.strokeStyle = '#d4a600';
-            ctx.lineWidth = 2;
-            ctx.moveTo(PAD.left, PAD.top);
-            ctx.lineTo(PAD.left, PAD.top + plotH);
-            ctx.lineTo(PAD.left + plotW, PAD.top + plotH);
-            ctx.stroke();
-
-            // Teckenförklaring
-            const legY = H - 12;
-            const legItems = [
-                { color: 'rgba(139,90,43,0.7)', label: 'Investerat' },
-                { color: 'rgba(212,166,0,0.8)', label: 'Avkastning' }
-            ];
-            let legX = PAD.left;
-            legItems.forEach(item => {
-                ctx.fillStyle = item.color;
-                ctx.fillRect(legX, legY - 8, 14, 10);
-                ctx.fillStyle = '#6b4423';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText(item.label, legX + 18, legY);
-                legX += 100;
-            });
-
-            // Tooltip
-            canvas.onmousemove = function(e) {
-                const bRect = canvas.getBoundingClientRect();
-                const mouseX = e.clientX - bRect.left;
-                const relX = mouseX - PAD.left;
-                const idx = Math.round((relX / plotW) * (dataPoints.length - 1));
-                if (idx >= 0 && idx < dataPoints.length) {
-                    const d = dataPoints[idx];
-                    const tooltip = document.getElementById(tooltipId);
-                    tooltip.innerHTML = `År ${d.year}<br>Totalt: ${formatCurrency(d.total)}<br>Investerat: ${formatCurrency(d.invested)}<br>Avkastning: ${formatCurrency(d.gain)}`;
-                    tooltip.style.display = 'block';
-                    const tipX = Math.min(mouseX + 12, bRect.width - 160);
-                    tooltip.style.left = tipX + 'px';
-                    tooltip.style.top = (e.clientY - bRect.top - 20) + 'px';
-                }
-            };
-            canvas.onmouseleave = function() {
-                document.getElementById(tooltipId).style.display = 'none';
-            };
-        }
-
-        // Initial beräkning
-        window.addEventListener('load', () => {
-            // Synkronisera ISK-flaggorna med aktuella checkbox-states
-            iskOn     = document.getElementById('iskEnabled').checked;
-            goalIskOn = document.getElementById('goalIskEnabled').checked;
-
-            calculateAdvanced();
-            calculateGoal();
-
-            // Kör testsuiten lokalt (file:// eller localhost) för att
-            // upptäcka regressioner i beräkningslogiken.
-            if (location.hostname === 'localhost' ||
-                location.hostname === '127.0.0.1' ||
-                location.protocol === 'file:') {
-                try { runTests(); } catch (e) { console.error('runTests fel:', e); }
-            }
-        });
-
-        // Auto-beräkna vid ändringar — Pengamaskin
-        const advInputs = ['advInitialCapital', 'advMonthlyAmount', 'advRate', 'advYears'];
-        advInputs.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('input', () => {
-                    clearTimeout(window.advTimeout);
-                    window.advTimeout = setTimeout(calculateAdvanced, 300);
-
-                    if (id === 'advRate') {
-                        const rateVal = parseFloat(document.getElementById('advRate').value) || 0;
-                        const feesVal = parseFloat(document.getElementById('fees').value) || 0;
-                        const feesError = document.getElementById('feesError');
-                        if (feesVal > rateVal) {
-                            feesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
-                            feesError.classList.add('show');
-                        } else {
-                            feesError.classList.remove('show');
-                        }
-                    }
-                });
-                element.addEventListener('blur', () => {
-                    if (id === 'advInitialCapital') validateInput(id, 0, 100000000, false);
-                    if (id === 'advMonthlyAmount') validateInput(id, 0, 1000000, false);
-                    if (id === 'advRate') validateInput(id, 0, 100, true);
-                    if (id === 'advYears') validateInput(id, 1, 100, true);
-                });
-            }
-        });
-
-        // ============================================================
-        //  SPARMÅL — slider-lyssnare
-        // ============================================================
-        document.getElementById('goalFees').addEventListener('input', function() {
-            document.getElementById('goalFeesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
-            const rateVal = parseFloat(document.getElementById('goalRate').value) || 0;
-            const feesVal = parseFloat(this.value);
-            const goalFeesError = document.getElementById('goalFeesError');
-            if (feesVal > rateVal) {
-                goalFeesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
-                goalFeesError.classList.add('show');
-            } else {
-                goalFeesError.classList.remove('show');
-            }
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 300);
-        });
-        // (goalTax-slidern borttagen — kapitalvinstskatten är hårdkodad.)
-
-        document.getElementById('goalInflation').addEventListener('input', function() {
-            document.getElementById('goalInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 300);
-        });
-        document.getElementById('goalIskRate').addEventListener('input', function() {
-            document.getElementById('goalIskRateValue').textContent = parseFloat(this.value).toFixed(2) + '%';
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 300);
-        });
-
-        // ISK-toggle — Sparmål
-        document.getElementById('goalIskEnabled').addEventListener('change', function() {
-            goalIskOn = this.checked;                          // global flagga
-            const taxGroup = document.getElementById('goalTaxGroup');
-            document.getElementById('goalIskRateGroup').style.display = goalIskOn ? 'block' : 'none';
-            if (goalIskOn) {
-                taxGroup.style.opacity = '0.4';
-                taxGroup.style.pointerEvents = 'none';
-            } else {
-                taxGroup.style.opacity = '1';
-                taxGroup.style.pointerEvents = 'auto';
-            }
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 150);
-        });
-
-        ['goalTarget','goalInitial','goalYears','goalRate'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', () => {
-                if (id === 'goalRate') {
-                    const rateVal = parseFloat(document.getElementById('goalRate').value) || 0;
-                    const feesVal = parseFloat(document.getElementById('goalFees').value) || 0;
-                    const goalFeesError = document.getElementById('goalFeesError');
-                    if (feesVal > rateVal) {
-                        goalFeesError.textContent = '⚠️ Avgifterna kan inte vara större än avkastningen';
-                        goalFeesError.classList.add('show');
-                    } else {
-                        goalFeesError.classList.remove('show');
-                    }
-                }
-                clearTimeout(window.goalTimeout);
-                window.goalTimeout = setTimeout(calculateGoal, 300);
-            });
-        });
-        document.getElementById('goalRealTerms').addEventListener('change', () => {
-            clearTimeout(window.goalTimeout);
-            window.goalTimeout = setTimeout(calculateGoal, 150);
-        });
-
-        // ============================================================
-        //  SPARMÅL — beräkning
-        // ============================================================
-        function calculateGoal() {
-            if (!validateInput('goalTarget', 1, 1000000000, true) ||
-                !validateInput('goalInitial', 0, 100000000, false) ||
-                !validateInput('goalYears',  1, 100, true) ||
-                !validateInput('goalRate',   0, 100, true)) {
-                document.getElementById('goalSummary').classList.remove('show');
-                document.getElementById('goalTimeline').classList.remove('show');
-                return;
-            }
-
-            const targetRaw  = parseFloat(document.getElementById('goalTarget').value)   || 0;
-            const initialCap = parseFloat(document.getElementById('goalInitial').value)  || 0;
-            const years      = parseFloat(document.getElementById('goalYears').value)    || 0;
-            const annualRate = parseFloat(document.getElementById('goalRate').value)     || 0;
-            const fees       = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalFees').value) || 0));
-            const inflation  = Math.max(0, Math.min(10, parseFloat(document.getElementById('goalInflation').value) || 0));
-            const iskSchRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalIskRate').value) || 0));
-            const realTerms  = document.getElementById('goalRealTerms').checked;
-
-            // Mjuk varning: avgift > avkastning blockerar inte beräkningen längre.
-            const goalFeesError = document.getElementById('goalFeesError');
-            if (fees > annualRate) {
-                goalFeesError.textContent = 'ℹ️ Avgiften är högre än avkastningen — målet kan vara svårt eller omöjligt att nå.';
-                goalFeesError.classList.add('show');
-            } else {
-                goalFeesError.classList.remove('show');
-            }
-
-            const monthlyRateNet   = (annualRate - fees) / 100 / 12;
-            const monthlyRateGross = annualRate / 100 / 12;
-            const months = years * 12;
-
-            // Konvertera realt mål till nominellt
-            const inflationFactor = Math.pow(1 + inflation / 100, years);
-            const nominalTarget   = realTerms ? targetRaw * inflationFactor : targetRaw;
-            const realEquiv       = realTerms ? targetRaw : targetRaw / inflationFactor;
-
-            // Räcker startkapitalet utan månadssparande?
-            const netFromZero = simulateGoal(initialCap, 0, monthlyRateNet, years, goalIskOn, iskSchRate).netValue;
-
-            const resultsEl     = document.getElementById('goalSummary');
-            const timelineEl    = document.getElementById('goalTimeline');
-            const noSavingsEl   = document.getElementById('goalNoSavingsNeeded');
-            const monthlyEl     = document.getElementById('goalMonthly');
-            const monthlyNoteEl = document.getElementById('goalMonthlyNote');
-
-            resultsEl.classList.add('show');
-            timelineEl.classList.add('show');
-
-            if (netFromZero >= nominalTarget) {
-                noSavingsEl.style.display = 'block';
-                document.getElementById('goalRealRow').style.display = 'none';
-                monthlyEl.textContent = '0 kr/mån';
-                monthlyNoteEl.textContent = 'Ditt startkapital räcker på ' + years + ' år.';
-
-                // Beräkna avgifter & skatt även i detta fall
-                const grossNoFees = computeFV(initialCap, 0, monthlyRateGross, months);
-                const fvWithFeesNoTax = computeFV(initialCap, 0, monthlyRateNet, months);
-                const totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
-
-                const finalRes = simulateGoal(initialCap, 0, monthlyRateNet, years, goalIskOn, iskSchRate);
-
-                document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
-                document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
-                document.getElementById('goalTotalIn').textContent       = formatCurrency(initialCap);
-                document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalRes.netValue - initialCap, 0));
-                document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees);
-                document.getElementById('goalTaxResultLabel').textContent = goalIskOn ? 'ISK-skatt (betalas separat):' : 'Skatt (kapitalvinst):';
-                document.getElementById('goalTaxResult').textContent     = formatCurrency(finalRes.tax);
-                return;
-            }
-            noSavingsEl.style.display = 'none';
-
-            // Binärsökning: hitta månadssparande som ger nominalTarget netto
-            // Övre gräns = nominalTarget (tillräckligt för alla rimliga fall)
-            let lo = 0, hi = nominalTarget;
-            for (let i = 0; i < 80; i++) {
-                const mid = (lo + hi) / 2;
-                if (simulateGoal(initialCap, mid, monthlyRateNet, years, goalIskOn, iskSchRate).netValue < nominalTarget) {
-                    lo = mid;
-                } else {
-                    hi = mid;
-                }
-            }
-            const requiredMonthly = (lo + hi) / 2;
-
-            // Detaljer med funnet månadsbelopp
-            const totalIn  = initialCap + requiredMonthly * months;
-            const finalRes = simulateGoal(initialCap, requiredMonthly, monthlyRateNet, years, goalIskOn, iskSchRate);
-            const finalNet = finalRes.netValue;
-            const actualTax = finalRes.tax;     // <-- KORREKT skatt, inte avgifter+skatt
-
-            // Avgifter beräknas som differensen mellan brutto (utan avgifter) och netto-före-skatt
-            const grossNoFees = computeFV(initialCap, requiredMonthly, monthlyRateGross, months);
-            const fvWithFeesNoTax = computeFV(initialCap, requiredMonthly, monthlyRateNet, months);
-            const totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
-
-            // UI
-            monthlyEl.textContent = formatCurrency(Math.ceil(requiredMonthly)) + ' /mån';
-            monthlyNoteEl.textContent = 'Under ' + years + ' år · ' + (goalIskOn ? 'ISK' : 'vanligt konto');
-
-            document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget);
-            document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv);
-            document.getElementById('goalRealRow').style.display     = 'flex';
-            document.getElementById('goalTotalIn').textContent       = formatCurrency(totalIn);
-            document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalNet - totalIn, 0));
-            document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees);
-            document.getElementById('goalTaxResultLabel').textContent = goalIskOn ? 'ISK-skatt (betalas separat):' : 'Skatt (kapitalvinst):';
-            document.getElementById('goalTaxResult').textContent     = formatCurrency(actualTax);
-
-            // Fördelningsdiagram (relativt nominalTarget)
-            const investedPct = Math.min((totalIn / nominalTarget) * 100, 100);
-            const gainPct     = Math.max(((finalNet - totalIn) / nominalTarget) * 100, 0);
-            const feesPct     = Math.max((totalFees / nominalTarget) * 100, 0);
-            const taxPct      = Math.max(0, 100 - investedPct - gainPct - feesPct);
-
-            document.getElementById('goalChart').innerHTML = `
-                <div class="chart-segment chart-invested" style="width:${investedPct}%">
-                    ${investedPct > 5 ? Math.round(investedPct) + '%' : ''}</div>
-                <div class="chart-segment chart-interest" style="width:${gainPct}%">
-                    ${gainPct > 5 ? Math.round(gainPct) + '%' : ''}</div>
-                <div class="chart-segment chart-fees" style="width:${feesPct}%">
-                    ${feesPct > 5 ? Math.round(feesPct) + '%' : ''}</div>
-                <div class="chart-segment chart-taxes" style="width:${taxPct}%">
-                    ${taxPct > 5 ? Math.round(taxPct) + '%' : ''}</div>
-            `;
-            document.getElementById('goalLegend').innerHTML = `
-                <div class="legend-item"><div class="legend-color chart-invested"></div><span>Insatt kapital</span></div>
-                <div class="legend-item"><div class="legend-color chart-interest"></div><span>Avkastning</span></div>
-                <div class="legend-item"><div class="legend-color chart-fees"></div><span>Avgifter</span></div>
-                <div class="legend-item"><div class="legend-color chart-taxes"></div><span>${goalIskOn ? 'ISK-skatt' : 'Skatt'}</span></div>
-            `;
-
-            // ── År-för-år tabell + diagram ─────────────────────────
-            const goalChartData = [];
-            _goalChartData = goalChartData;
-            const goalTbody = document.getElementById('goalTableBody');
-            goalTbody.innerHTML = '';
-            let glBalance  = initialCap;
-            let glInvested = initialCap;
-
-            let glPrevGain = null;
-            for (let year = 1; year <= years; year++) {
-                // Tidslinjen visar bruttovärde varje år (oavsett kontotyp).
-                // ISK-skatten respektive kapitalvinstskatten redovisas
-                // separat i resultatpanelen ovan.
-                for (let m = 0; m < 12; m++) {
-                    glBalance  = glBalance * (1 + monthlyRateNet) + requiredMonthly;
-                    glInvested += requiredMonthly;
-                }
-                const glGain = glBalance - glInvested;
-                const glDelta = glPrevGain === null ? null : glGain - glPrevGain;
-                glPrevGain = glGain;
-                goalChartData.push({ year, invested: glInvested, gain: glGain, total: glBalance });
-                const row = goalTbody.insertRow();
-                row.insertCell().textContent = year;
-                row.insertCell().textContent = formatCurrency(glInvested);
-                row.insertCell().textContent = formatCurrency(glGain);
-                const deltaCell = row.insertCell();
-                if (glDelta === null) {
-                    deltaCell.textContent = '—';
-                    deltaCell.style.color = '#8b5a2b';
-                } else {
-                    deltaCell.textContent = '+' + formatCurrency(glDelta);
-                    deltaCell.style.color = '#2d5016';
-                    deltaCell.style.fontWeight = '600';
-                }
-                const lastCell = row.insertCell();
-                const strong = document.createElement('strong');
-                strong.textContent = formatCurrency(glBalance);
-                lastCell.appendChild(strong);
-            }
-
-            requestAnimationFrame(() =>
-                drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip')
-            );
-        }
-
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>

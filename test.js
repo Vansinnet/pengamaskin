@@ -317,6 +317,48 @@ section('Svit 2: Regressionstest med kanda facit');
     );
 }
 
+{
+    // Binärsöknings-verifiering: 0 kr start, mål 1 000 000 kr, 7%/ar, 0,5% avgift, 20 år, AF
+    // Hitta månadsbelopp via simulateGoal
+    var target = 1000000, years = 20, rate = 0.07, fees = 0.005, initial = 0;
+    var rNet = (rate - fees) / 100 / 12;
+    var lo = 0, hi = target;
+    for (var i = 0; i < 80; i++) {
+        var mid = (lo + hi) / 2;
+        if (simulateGoal(initial, mid, rNet, years, false, 0).netValue < target) lo = mid;
+        else hi = mid;
+    }
+    var monthly = (lo + hi) / 2;
+    var result = simulateGoal(initial, monthly, rNet, years, false, 0);
+    assert(
+        'Binary search: 0 kr -> 1 Mkr @ 6,5 % netto i 20 år AF',
+        Math.abs(result.netValue - target) < target * 0.001,
+        'månadsbelopp=' + monthly.toFixed(0) + ' kr/mån, netto=' + result.netValue.toFixed(0)
+    );
+}
+
+{
+    // Extrema parametrar: avgift > avkastning, 100 år, ISK
+    var r = simulateGoal(100000, 0, (0 - 1) / 100 / 12, 100, true, 3.55);
+    assert(
+        'simulateGoal: negativ nettoavkastning i 100 år ISK -> netto > 0 (fribelopp skyddar)',
+        r.netValue > 0 && r.netValue < 100000,
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
+    );
+}
+
+{
+    // Extrema parametrar: 0 % avkastning, 0 % avgift, 50 år, ISK
+    // 1 000 * 12 * 50 = 600 000 inbetalat. ISK-skatt dras årligen via fribelopp.
+    // Netto hamnar runt 560 000 (ISK-skatt ~40 000 över 50 år).
+    var r = simulateGoal(0, 1000, 0, 50, true, 3.55);
+    assert(
+        'simulateGoal: 0 % avkastning, 1 000/man i 50 år ISK -> netto mellan 500k och 600k',
+        r.netValue > 500000 && r.netValue < 600000,
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
+    );
+}
+
 
 // ===========================================================================
 //  SVIT 3 -- Formaterings- och valideringsfunktioner
@@ -340,16 +382,23 @@ assert('isValidNumber: strang -> false', !isValidNumber('abc'));
 
 {
     var s = formatCurrency(1000);
-    assert('formatCurrency: 1000 innehaller "1" och "000"', s.includes('1') && s.includes('000'));
+    assert('formatCurrency: 1000 -> "1\xa0000\xa0kr"', s === '1\xa0000\xa0kr', 'fick: ' + s);
 }
 {
     var s = formatCurrency(0);
-    assert('formatCurrency: 0 innehaller "0"', s.includes('0'));
+    assert('formatCurrency: 0 -> "0\xa0kr"', s === '0\xa0kr', 'fick: ' + s);
 }
 {
     var s = formatCurrency(1500000);
-    assert('formatCurrency: 1 500 000 innehaller "1" och "500" och "SEK" eller kr-tecken',
-        s.includes('1') && s.includes('500') && (s.includes('kr') || s.includes('SEK')));
+    assert('formatCurrency: 1 500 000 -> "1\xa0500\xa0000\xa0kr"', s === '1\xa0500\xa0000\xa0kr', 'fick: ' + s);
+}
+{
+    var s = formatCurrency(42.7);
+    assert('formatCurrency: 42,7 avrundat -> "43\xa0kr"', s === '43\xa0kr', 'fick: ' + s);
+}
+{
+    var s = formatCurrency(-5000);
+    assert('formatCurrency: -5 000 → "\u22125\u00a0000\u00a0kr"', s === '\u22125\u00a0000\u00a0kr', 'fick: ' + s);
 }
 
 // -- formatAmountHint ---------------------------------------------------------
@@ -390,6 +439,28 @@ assert('isValidNumber: strang -> false', !isValidNumber('abc'));
 {
     var s = formatAmountHint(999);
     assert('formatAmountHint: 999 -> innehaller "999 kr"', s.includes('999'), 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(NaN);
+    assert('formatAmountHint: NaN -> tom sträng', s === '', 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(null);
+    assert('formatAmountHint: null -> tom sträng', s === '', 'fick: ' + s);
+}
+{
+    var s = formatAmountHint('');
+    assert('formatAmountHint: tom sträng -> tom sträng', s === '', 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(-5000);
+    assert('formatAmountHint: -5 000 -> innehaller "5" och "000" och "kr"',
+        s.includes('5') && s.includes('000') && s.includes('kr'),
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(1e12);
+    assert('formatAmountHint: 1 000 miljarder -> "miljarder"', s.includes('miljarder'), 'fick: ' + s);
 }
 
 
