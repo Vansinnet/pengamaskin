@@ -5,13 +5,90 @@
 // ============================================================
 
 // ------------------------------------------------------------
-//  Lagstadgade konstanter (svensk skattelag, gäller 2026)
-//  Höj/sänk här om Riksdagen ändrar reglerna.
+//  Lagstadgade konstanter — svenska standardvärden (2026)
+//  Dessa används som fallback när inget land specificeras.
 // ------------------------------------------------------------
 const KAPITALVINSTSKATT       = 0.30;    // 30 % på realiserad vinst (AF-konto)
 const ISK_SKATT               = 0.30;    // 30 % på schablonintäkten (ISK)
 const ISK_SCHABLON_GOLV       = 1.25;    // procentenheter — minsta schablonräntan
 const ISK_FRIBELOPP_DEFAULT   = 300000;  // SEK skattefritt av kapitalunderlaget (2026)
+
+// ------------------------------------------------------------
+//  Landskonfiguration — skatteparametrar för Norden
+//  Alla värden gäller för 2026. Uppdatera vid lagändringar.
+//
+//  taxAdvantagedType:
+//    'ISK'           = svensk ISK (schablonformel, kvartalsvis)
+//    'ASK_ANNUAL'    = dansk ASK (17 % årlig lagerbeskatning)
+//    'DEFERRED'      = norsk ASK / finsk OSK (uppskjuten skatt,
+//                      beskattas vid uttag som vanligt konto)
+//    null            = inget skattegynnat konto (Island)
+// ------------------------------------------------------------
+const COUNTRY_CONFIG = {
+    SE: {
+        code: 'SE',
+        name: 'Sverige',
+        currency: 'SEK',
+        locale: 'sv-SE',
+        capitalGainsTax: 0.30,                  // 30 % på realiserad vinst
+        hasTaxAdvantaged: true,
+        taxAdvantagedType: 'ISK',
+        iskSchablonGolv: 1.25,                  // minsta schablonränta (%)
+        iskFribelopp: 300000,                   // skattefritt underlag (SEK)
+        iskSchablonRateDefault: 3.55,           // statslåneränta 2,55 % + 1 %
+        iskSkatt: 0.30                          // 30 % på schablonintäkt
+    },
+    NO: {
+        code: 'NO',
+        name: 'Norge',
+        currency: 'NOK',
+        locale: 'nb-NO',
+        capitalGainsTax: 0.3784,                // 37,84 % (2026, upp från 35,2 %)
+        hasTaxAdvantaged: true,
+        taxAdvantagedType: 'DEFERRED',          // ASK = uppskjuten skatt, beskattas vid uttag
+        skjermingsrente: 2.5                    // % — skjermingsfradrag (Skatteetaten, ~2026-nivå)
+    },
+    DK: {
+        code: 'DK',
+        name: 'Danmark',
+        currency: 'DKK',
+        locale: 'da-DK',
+        capitalGainsTax: 0.27,                  // 27 % upp till progressionsgräns
+        capitalGainsTaxHigh: 0.42,              // 42 % över progressionsgränsen (79 400 DKK 2026)
+        capitalGainsTaxThreshold: 79400,        // progressionsgräns i DKK (2026)
+        hasTaxAdvantaged: true,
+        taxAdvantagedType: 'ASK_ANNUAL',
+        askAnnualTax: 0.17                      // 17 % årlig lagerbeskatning på ASK
+    },
+    FI: {
+        code: 'FI',
+        name: 'Finland',
+        currency: 'EUR',
+        locale: 'fi-FI',
+        capitalGainsTax: 0.30,                  // 30 % upp till 30 000 €
+        capitalGainsTaxHigh: 0.34,              // 34 % över 30 000 €
+        capitalGainsTaxThreshold: 30000,        // progressionsgräns i EUR
+        hasTaxAdvantaged: true,
+        taxAdvantagedType: 'DEFERRED'           // OSK = uppskjuten skatt, beskattas vid uttag
+    },
+    IS: {
+        code: 'IS',
+        name: 'Island',
+        currency: 'ISK',
+        locale: 'is-IS',
+        capitalGainsTax: 0.22,                  // 22 % kapitalvinstskatt
+        hasTaxAdvantaged: false,
+        taxAdvantagedType: null                 // inget skattegynnat investeringskonto
+    }
+};
+
+/**
+ * Hämtar landskonfiguration för en landskod.
+ * Returnerar Sverige som fallback om koden saknas.
+ */
+function getCountryConfig(code) {
+    return COUNTRY_CONFIG[code] || COUNTRY_CONFIG.SE;
+}
 
 /**
  * Validerar att ett värde är ett giltigt, ändligt tal.
@@ -21,12 +98,15 @@ function isValidNumber(value) {
 }
 
 /**
- * Formaterar ett tal som svensk valuta (SEK), utan ören.
+ * Formaterar ett tal som valuta med angiven locale och valutakod.
+ * Default: sv-SE / SEK.
  */
-function formatCurrency(value) {
-    return new Intl.NumberFormat('sv-SE', {
+function formatCurrency(value, locale, currency) {
+    locale = locale || 'sv-SE';
+    currency = currency || 'SEK';
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'SEK',
+        currency: currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(value);
@@ -35,17 +115,26 @@ function formatCurrency(value) {
 /**
  * Formaterar ett inmatningsvärde som en läsbar summa.
  * T.ex. "1000000" → "1 000 000 kr (1 miljon)"
+ * locale och currency används för siffergruppering resp. valutasymbol.
  */
-function formatAmountHint(value) {
+function formatAmountHint(value, locale, currency) {
+    locale = locale || 'sv-SE';
+    currency = currency || 'SEK';
     if (isNaN(value) || value === '' || value === null) return '';
     const n = parseFloat(value);
-    if (n === 0) return '0 kr';
-    const grouped = new Intl.NumberFormat('sv-SE').format(Math.round(n));
+    if (n === 0) return '0 ' + getCurrencySymbol(currency);
+    const grouped = new Intl.NumberFormat(locale).format(Math.round(n));
+    const sym = getCurrencySymbol(currency);
     const fmtDec = v => parseFloat(v.toFixed(2)).toString().replace('.', ',');
-    if (n >= 1e9)       return grouped + ' kr (' + fmtDec(n / 1e9) + ' miljarder)';
-    if (n >= 1e6) { const m = n / 1e6; return grouped + ' kr (' + fmtDec(m) + (m === 1 ? ' miljon)' : ' miljoner)'); }
-    if (n >= 1e3)       return grouped + ' kr';
-    return grouped + ' kr';
+    if (n >= 1e9)       return grouped + ' ' + sym + ' (' + fmtDec(n / 1e9) + ' ' + (locale === 'sv-SE' ? 'miljarder' : 'billion') + ')';
+    if (n >= 1e6) { const m = n / 1e6; return grouped + ' ' + sym + ' (' + fmtDec(m) + (m === 1 ? ' ' + (locale === 'sv-SE' ? 'miljon' : 'million') : ' ' + (locale === 'sv-SE' ? 'miljoner' : 'million')) + ')'; }
+    if (n >= 1e3)       return grouped + ' ' + sym;
+    return grouped + ' ' + sym;
+}
+
+function getCurrencySymbol(currency) {
+    const symbols = { 'SEK': 'kr', 'NOK': 'kr', 'DKK': 'kr', 'EUR': '€', 'ISK': 'kr' };
+    return symbols[currency] || currency;
 }
 
 // ============================================================
@@ -92,18 +181,27 @@ function computeNetAfterFees(initialCapital, monthlyAmount, annualRate, fees, ye
 }
 
 /**
- * Kapitalvinstskatt på vinst. Returnerar 0 om ingen vinst.
- * Skattesatsen är hårdkodad till 30 % (svensk lag).
+ * Kapitalvinstskatt på vinst.
+ * @param {number} gain - Vinsten
+ * @param {number} [rate] - Skattesats (default: svensk 30 %)
+ * @param {number} [threshold] - Progressionsgräns (default: oändlig)
+ * @param {number} [rateHigh] - Högre skattesats över progressionsgränsen
+ * @returns {number} Skatt att betala (0 om ingen vinst)
  */
-function computeCapitalGainsTax(gain) {
-    return gain > 0 ? gain * KAPITALVINSTSKATT : 0;
+function computeCapitalGainsTax(gain, rate, threshold, rateHigh) {
+    if (gain <= 0) return 0;
+    rate = (rate !== undefined) ? rate : KAPITALVINSTSKATT;
+    if (threshold === undefined || rateHigh === undefined || gain <= threshold) {
+        return gain * rate;
+    }
+    return threshold * rate + (gain - threshold) * rateHigh;
 }
 
 // ============================================================
-//  ISK-beräkning enligt Skatteverkets formel
+//  ISK-beräkning enligt Skatteverkets formel (Sverige)
 //
 //  Kapitalunderlag = (V_jan + V_apr + V_jul + V_okt
-//                     + årets insättningar och överföringar in) / 4
+//                     + årets insättningar) / 4
 //
 //  Schablonintäkt = max(0, kapitalunderlag − fribelopp)
 //                   × max(schablonränta, golvet 1,25 %)
@@ -115,11 +213,15 @@ function computeCapitalGainsTax(gain) {
 //
 //  Returnerar { balance, totalISKtax }.
 // ============================================================
-function simulateISK(initial, monthly, monthlyRateNet, years, schablonRanta, fribelopp = ISK_FRIBELOPP_DEFAULT) {
+function simulateISK(initial, monthly, monthlyRateNet, years, schablonRanta, fribelopp, iskSkatt, schablonGolv) {
+    fribelopp = (fribelopp !== undefined) ? fribelopp : ISK_FRIBELOPP_DEFAULT;
+    iskSkatt = (iskSkatt !== undefined) ? iskSkatt : ISK_SKATT;
+    schablonGolv = (schablonGolv !== undefined) ? schablonGolv : ISK_SCHABLON_GOLV;
+
     let balance = initial;
     let totalISKtax = 0;
     const insattningarPerÅr = monthly * 12;
-    const effectiveSchablonRanta = Math.max(schablonRanta, ISK_SCHABLON_GOLV);
+    const effectiveSchablonRanta = Math.max(schablonRanta, schablonGolv);
 
     for (let yr = 1; yr <= years; yr++) {
         const q1 = balance;                                                                     // ingången av Q1 (1 jan)
@@ -135,30 +237,142 @@ function simulateISK(initial, monthly, monthlyRateNet, years, schablonRanta, fri
         const kapitalunderlag       = (q1 + q2 + q3 + q4 + insattningarPerÅr) / 4;
         const beskattningsbartUnderlag = Math.max(0, kapitalunderlag - fribelopp);
         const schablonintakt        = beskattningsbartUnderlag * (effectiveSchablonRanta / 100);
-        totalISKtax += schablonintakt * ISK_SKATT;
+        totalISKtax += schablonintakt * iskSkatt;
     }
     return { balance, totalISKtax };
 }
 
 // ============================================================
-//  Simulering för sparmål — returnerar { netValue, tax }
-//  Hanterar både ISK och AF-konto.
-//  Används av binärsökningen i calculateGoal.
+//  Dansk ASK (Aktiesparekonto) — 17 % årlig lagerbeskatning
+//
+//  Till skillnad från svensk ISK (schablon) beskattas dansk
+//  ASK på den faktiska avkastningen varje år, med 17 %.
+//  Skatten dras direkt från kontot (inte separat deklaration).
+//  Negativ avkastning kan framföras till nästa år.
 // ============================================================
-function simulateGoal(initialCapital, monthlyAmount, monthlyRateNet, years, iskOn, iskSchablonRate, fribelopp = ISK_FRIBELOPP_DEFAULT) {
-    if (iskOn) {
-        const r = simulateISK(initialCapital, monthlyAmount, monthlyRateNet, years, iskSchablonRate, fribelopp);
-        // ISK-skatten betalas separat — användarens "pengar i handen" =
-        // kontosaldo minus den skatt deklarationen kommer kräva.
-        return { netValue: r.balance - r.totalISKtax, tax: r.totalISKtax };
-    } else {
-        const months  = years * 12;
-        const fv      = computeFV(initialCapital, monthlyAmount, monthlyRateNet, months);
-        const totalIn = initialCapital + monthlyAmount * months;
-        const gain    = fv - totalIn;
-        const tax     = computeCapitalGainsTax(gain);
-        return { netValue: fv - tax, tax: tax };
+function simulateDanishASK(initial, monthly, monthlyRateNet, years, annualTaxRate) {
+    let balance = initial;
+    let totalTax = 0;
+    let carryForwardLoss = 0;
+
+    for (let yr = 1; yr <= years; yr++) {
+        const balanceBeforeYear = balance;
+        const depositsThisYear = monthly * 12;
+        for (let m = 0; m < 12; m++) {
+            balance = balance * (1 + monthlyRateNet) + monthly;
+        }
+        let gainThisYear = balance - balanceBeforeYear - depositsThisYear;
+
+        // Framförbar förlust från tidigare år
+        if (carryForwardLoss > 0) {
+            gainThisYear -= carryForwardLoss;
+            carryForwardLoss = 0;
+        }
+
+        if (gainThisYear > 0) {
+            const tax = gainThisYear * annualTaxRate;
+            balance -= tax;
+            totalTax += tax;
+        } else if (gainThisYear < 0) {
+            carryForwardLoss = -gainThisYear;
+        }
     }
+    return { balance, totalTax };
+}
+
+// ============================================================
+//  Norsk ASK (Aksjesparekonto) — skjermingsfradrag
+//
+//  Skatten är uppskjuten till uttag. Vid uttag:
+//    skattepliktig vinst = max(0, totalvinst − ackumulerat
+//                           skjermingsfradrag)
+//    skatt = skattepliktig vinst × 37,84 %
+//
+//  Skjermingsfradraget beräknas årsvis som:
+//    fradrag = genomsnittligt anskaffningsvärde × skjermingsrente
+//
+//  där skjermingsrenten sätts av Skatteetaten (typiskt 2–4 %).
+//  Modellen använder (startvärde + slutvärde) / 2 för årsgenomsnittet.
+// ============================================================
+function simulateNorwegianASK(initial, monthly, monthlyRateNet, years, capitalGainsTax, skjermingsrente) {
+    let balance = initial;
+    let costBasis = initial;
+    let accumulatedFradrag = 0;
+
+    for (let yr = 1; yr <= years; yr++) {
+        const basisBefore = costBasis;
+        for (let m = 0; m < 12; m++) {
+            balance = balance * (1 + monthlyRateNet) + monthly;
+            costBasis += monthly;
+        }
+        const avgBasis = (basisBefore + costBasis) / 2;
+        accumulatedFradrag += avgBasis * (skjermingsrente / 100);
+    }
+
+    const gain = balance - costBasis;
+    const taxableGain = Math.max(0, gain - accumulatedFradrag);
+    const tax = taxableGain * capitalGainsTax;
+
+    return { balance, totalTax: tax, accumulatedFradrag };
+}
+
+// ============================================================
+//  Simulering för sparmål — returnerar { netValue, tax }
+//  Hanterar ISK, dansk ASK, norsk ASK, uppskjuten skatt och AF.
+// ============================================================
+function simulateGoal(initialCapital, monthlyAmount, monthlyRateNet, years, iskOn, iskSchablonRate, fribelopp, config) {
+    fribelopp = (fribelopp !== undefined) ? fribelopp : ISK_FRIBELOPP_DEFAULT;
+    config = config || {};
+
+    if (iskOn) {
+        const advType = config.taxAdvantagedType || 'ISK';
+
+        if (advType === 'ASK_ANNUAL') {
+            // Dansk ASK: 17 % årlig lagerbeskatning
+            const r = simulateDanishASK(initialCapital, monthlyAmount, monthlyRateNet, years,
+                config.askAnnualTax || 0.17);
+            return { netValue: r.balance, tax: r.totalTax };
+        }
+
+        if (advType === 'ISK') {
+            // Svensk ISK
+            const iskSkattRate = config.iskSkatt || ISK_SKATT;
+            const schablonGolv = config.iskSchablonGolv || ISK_SCHABLON_GOLV;
+            const r = simulateISK(initialCapital, monthlyAmount, monthlyRateNet, years,
+                iskSchablonRate, fribelopp, iskSkattRate, schablonGolv);
+            return { netValue: r.balance - r.totalISKtax, tax: r.totalISKtax };
+        }
+
+        if (advType === 'DEFERRED') {
+            // Norsk ASK med skjermingsfradrag
+            if (config.skjermingsrente !== undefined) {
+                const r = simulateNorwegianASK(initialCapital, monthlyAmount, monthlyRateNet, years,
+                    config.capitalGainsTax || KAPITALVINSTSKATT, config.skjermingsrente);
+                return { netValue: r.balance - r.totalTax, tax: r.totalTax };
+            }
+            // Finsk OSK / generell uppskjuten skatt utan skjermingsfradrag
+            const months  = years * 12;
+            const fv      = computeFV(initialCapital, monthlyAmount, monthlyRateNet, months);
+            const totalIn = initialCapital + monthlyAmount * months;
+            const gain    = fv - totalIn;
+            const taxRate = config.capitalGainsTax || KAPITALVINSTSKATT;
+            const taxHigh = config.capitalGainsTaxHigh;
+            const taxThreshold = config.capitalGainsTaxThreshold;
+            const tax = computeCapitalGainsTax(gain, taxRate, taxThreshold, taxHigh);
+            return { netValue: fv - tax, tax: tax };
+        }
+    }
+
+    // Standardkonto (AF / vanlig konto / Island)
+    const months  = years * 12;
+    const fv      = computeFV(initialCapital, monthlyAmount, monthlyRateNet, months);
+    const totalIn = initialCapital + monthlyAmount * months;
+    const gain    = fv - totalIn;
+    const taxRate = config.capitalGainsTax || KAPITALVINSTSKATT;
+    const taxHigh = config.capitalGainsTaxHigh;
+    const taxThreshold = config.capitalGainsTaxThreshold;
+    const tax     = computeCapitalGainsTax(gain, taxRate, taxThreshold, taxHigh);
+    return { netValue: fv - tax, tax: tax };
 }
 
 // ============================================================

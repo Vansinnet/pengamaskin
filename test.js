@@ -32,6 +32,7 @@ try {
         '    computeFV, computeGrossValue, computeNetAfterFees,\n' +
         '    computeCapitalGainsTax, simulateISK, simulateGoal,\n' +
         '    runTests, isValidNumber, formatCurrency, formatAmountHint,\n' +
+        '    simulateDanishASK, simulateNorwegianASK, getCountryConfig, COUNTRY_CONFIG,\n' +
         '    KAPITALVINSTSKATT, ISK_SKATT, ISK_SCHABLON_GOLV, ISK_FRIBELOPP_DEFAULT\n' +
         '};'
     );
