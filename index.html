@@ -97,7 +97,7 @@
             background: linear-gradient(135deg, #f4d03f 0%, #f9e79f 100%);
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.3);
-            padding: 40px;
+            padding: 28px;
             max-width: 550px;
             width: 100%;
             border: 3px solid #d4a600;
@@ -113,7 +113,7 @@
 
         .subtitle {
             color: #8b5a2b;
-            margin-bottom: 25px;
+            margin-bottom: 14px;
             font-size: 14px;
             font-style: italic;
         }
@@ -121,7 +121,7 @@
         .tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 18px;
             border-bottom: 2px solid #d4a600;
         }
 
@@ -155,7 +155,7 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 13px;
         }
 
         label {
@@ -169,7 +169,7 @@
         input[type="number"],
         input[type="text"] {
             width: 100%;
-            padding: 12px;
+            padding: 9px 12px;
             border: 2px solid #d4a600;
             border-radius: 8px;
             font-size: 14px;
@@ -266,7 +266,7 @@
 
         .results {
             background: rgba(255, 255, 255, 0.7);
-            padding: 25px;
+            padding: 18px;
             border-radius: 10px;
             margin-top: 30px;
             display: none;
@@ -280,8 +280,8 @@
         .result-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
             border-bottom: 1px solid #d4a600;
         }
 
@@ -365,16 +365,16 @@
         .info-box {
             background: rgba(255, 255, 255, 0.8);
             border-left: 4px solid #8b5a2b;
-            padding: 12px;
+            padding: 8px 12px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
+            margin-bottom: 12px;
+            font-size: 12px;
             color: #6b4423;
         }
 
         /* ── Ränta-på-ränta-ruta ──────────────────────────────── */
         .rpr-panel {
-            margin-bottom: 18px;
+            margin-bottom: 12px;
         }
         .rpr-toggle {
             width: 100%;
@@ -770,6 +770,50 @@
                 font-size: 24px;
             }
         }
+
+        /* ── Tvåkolumnslayout (widescreen) ───────────────────── */
+        .tab-layout {
+            display: block;
+        }
+
+        .tab-results .results {
+            margin-top: 0;
+        }
+
+        @media (min-width: 900px) {
+            .container {
+                max-width: 1180px;
+            }
+
+            .footer {
+                max-width: 1180px;
+            }
+
+            .tab-layout {
+                display: grid;
+                grid-template-columns: 290px minmax(260px, 340px) 1fr;
+                gap: 24px;
+                align-items: start;
+            }
+
+            .tab-summary .results,
+            .tab-timeline .results {
+                display: block;
+            }
+        }
+
+        /* ── Kolumnrubriker ───────────────────────────────────── */
+        .col-header {
+            font-size: 10px;
+            font-weight: 700;
+            color: #8b5a2b;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 7px;
+            border-bottom: 2px solid #d4a600;
+            opacity: 0.75;
+        }
     </style>
     <script src="calculations.js"></script>
 </head>
@@ -779,65 +823,6 @@
             <h1>Pengamaskinen</h1>
             <p class="subtitle">— Där pengar förökar sig själva —</p>
 
-            <div class="rpr-panel">
-                <button class="rpr-toggle" onclick="toggleRpr(this)" aria-expanded="false">
-                    <span>💡 Vad är ränta-på-ränta-effekten?</span>
-                    <span class="rpr-arrow">▼</span>
-                </button>
-                <div class="rpr-body">
-                    <h3>Enkelt förklarat — utan krångliga ord</h3>
-                    <p>
-                        Föreställ dig att du sätter in pengar på ett konto som ger 7&nbsp;% i avkastning per år.
-                        Det första året tjänar du ränta på det du satte in.
-                        Det andra året tjänar du ränta på <em>det du satte in + den ränta du redan fått</em>.
-                        Tredje året tjänar du ränta på allt det. Och så vidare.
-                    </p>
-                    <p style="margin-top:10px;">
-                        Det låter som en liten grej — men det är som ett snöboll som rullar nerför ett berg.
-                        I början är den liten. Mot slutet är den enorm.
-                    </p>
-
-                    <div class="rpr-example">
-                        <strong>Konkret exempel:</strong> Du sparar <strong>1&nbsp;000&nbsp;kr/månad</strong> i <strong>30&nbsp;år</strong> med <strong>7&nbsp;% avkastning</strong> per år.<br><br>
-                        Du har satt in totalt: <strong>360&nbsp;000&nbsp;kr</strong><br>
-                        Utan avkastning alls: <strong>360&nbsp;000&nbsp;kr</strong><br>
-                        Med enkel ränta (7&nbsp;% bara på det insatta, varje år): <strong>~&nbsp;1&nbsp;116&nbsp;000&nbsp;kr</strong><br>
-                        Med ränta-på-ränta (7&nbsp;% på allt som växer): <strong>~&nbsp;1&nbsp;220&nbsp;000&nbsp;kr</strong>
-                    </div>
-
-                    <div class="rpr-bars">
-                        <div class="rpr-bar-row">
-                            <div class="rpr-bar-label">Vad du satt in (1 000 kr/mån × 30 år)</div>
-                            <div class="rpr-bar-track">
-                                <div class="rpr-bar-fill rpr-bar-insatt" style="width:29.5%">360&nbsp;000&nbsp;kr</div>
-                            </div>
-                        </div>
-                        <div class="rpr-bar-row">
-                            <div class="rpr-bar-label">Med vanlig ränta efter 30 år (bara på insatt kapital)</div>
-                            <div class="rpr-bar-track">
-                                <div class="rpr-bar-fill rpr-bar-vanlig" style="width:91.5%">1&nbsp;116&nbsp;000&nbsp;kr</div>
-                            </div>
-                        </div>
-                        <div class="rpr-bar-row">
-                            <div class="rpr-bar-label">Med ränta-på-ränta efter 30 år ✨</div>
-                            <div class="rpr-bar-track">
-                                <div class="rpr-bar-fill rpr-bar-rpr" style="width:100%">1&nbsp;220&nbsp;000&nbsp;kr</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="rpr-takeaway">
-                        🌱 <strong>Vad det innebär för dig:</strong> Ju tidigare du börjar, desto kraftfullare blir effekten.
-                        Tio extra år kan fördubbla slutsumman — inte för att du sparar dubbelt så mycket, utan för att pengarna
-                        hinner växa på sin egen tillväxt. Tid är din viktigaste tillgång.
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-box">
-                ℹ️ "Pengar är väl använd tid!" - Joakim von Anka
-            </div>
-
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
                 <button class="tab-button" onclick="switchTab('goal', this)">Sparmål</button>
@@ -845,6 +830,9 @@
 
             <!-- FLIKEN: PENGAMASKIN -->
             <div id="advanced" class="tab-content active">
+                <div class="tab-layout">
+                <div class="tab-inputs">
+                <p class="col-header">① Parametrar</p>
                 <form id="advancedForm">
                     <div class="form-group">
                         <label for="advInitialCapital" class="field-label">Startkapital <span class="info-tip" tabindex="0" data-tip="Pengar du redan har sparat och vill börja med. Har du 0 kr? Skriv 0. Har du ett buffertspar på 50 000 kr du vill räkna på? Skriv 50000.">?</span></label>
@@ -880,7 +868,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="field-label">Förvaltningsavgifter per år (%) <span class="info-tip" tabindex="0" data-tip="Avgiften fonden tar varje år — syns inte på kontot men dras automatiskt. Billiga indexfonder tar 0,1–0,4 %. Dyra aktivt förvaltade fonder kan ta 1–2 %. Lägre avgift = mer pengar till dig.">?</span></label>
+                        <label for="fees" class="field-label">Förvaltningsavgifter per år (%) <span class="info-tip" tabindex="0" data-tip="Avgiften fonden tar varje år — syns inte på kontot men dras automatiskt. Billiga indexfonder tar 0,1–0,4 %. Dyra aktivt förvaltade fonder kan ta 1–2 %. Lägre avgift = mer pengar till dig.">?</span></label>
                         <div class="slider-container">
                             <input type="range" id="fees" value="0.5" min="0" max="5" step="0.05">
                             <span class="slider-value" id="feesValue">0.50%</span>
@@ -889,7 +877,7 @@
                     </div>
 
                     <div id="taxRateGroup" class="form-group">
-                        <label id="taxRateLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
+                        <p id="taxRateLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></p>
                         <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(139,90,43,0.08); border-radius:8px; border:1px solid rgba(139,90,43,0.2);">
                             <strong style="font-size:18px; color:#6b4423;">30 %</strong>
                             <span style="font-size:12px; color:#8b5a2b;">Lagstadgad — gäller AF-konto vid uttag</span>
@@ -898,7 +886,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="field-label">Inflation (%) <span class="info-tip" tabindex="0" data-tip="Inflation betyder att pengar tappar köpkraft med åren. Det som kostar 100 kr idag kostar kanske 122 kr om 10 år med 2 % inflation. Kalkylatorn visar då vad ditt sparande är värt i DAGENS penningvärde. Riksbankens mål är 2 %.">?</span></label>
+                        <label for="advInflation" class="field-label">Inflation (%) <span class="info-tip" tabindex="0" data-tip="Inflation betyder att pengar tappar köpkraft med åren. Det som kostar 100 kr idag kostar kanske 122 kr om 10 år med 2 % inflation. Kalkylatorn visar då vad ditt sparande är värt i DAGENS penningvärde. Riksbankens mål är 2 %.">?</span></label>
                         <div class="slider-container">
                             <input type="range" id="advInflation" value="2" min="0" max="10" step="0.1">
                             <span class="slider-value" id="advInflationValue">2%</span>
@@ -921,7 +909,7 @@
                     </div>
 
                     <div id="iskRateGroup" class="form-group" style="display:none;">
-                        <label class="field-label">ISK schablonränta 2026 (%) <span class="info-tip" tabindex="0" data-tip="Den ränta som styr hur stor ISK-skatten är. Bestäms av staten varje år som statslåneräntan + 1 %. År 2026: 2,55 % + 1 % = 3,55 %. Du behöver inte ändra detta om du inte vet bättre.">?</span></label>
+                        <label for="iskRate" class="field-label">ISK schablonränta 2026 (%) <span class="info-tip" tabindex="0" data-tip="Den ränta som styr hur stor ISK-skatten är. Bestäms av staten varje år som statslåneräntan + 1 %. År 2026: 2,55 % + 1 % = 3,55 %. Du behöver inte ändra detta om du inte vet bättre.">?</span></label>
                         <div class="slider-container">
                             <input type="range" id="iskRate" value="3.55" min="0" max="5" step="0.05">
                             <span class="slider-value" id="iskRateValue">3.55%</span>
@@ -933,11 +921,65 @@
                         </div>
                     </div>
 
-                    <button type="button" onclick="calculateAdvanced()">Beräkna</button>
-                </form>
 
-                <div id="advancedResults" class="results">
-                    <h2 style="color: #6b4423; margin-bottom: 15px; font-size: 18px;">Detaljerade Resultat</h2>
+                </form>
+                <div class="rpr-panel">
+                    <button type="button" class="rpr-toggle" onclick="toggleRpr(this)" aria-expanded="false">
+                        <span>💡 Vad är ränta-på-ränta-effekten?</span>
+                        <span class="rpr-arrow">▼</span>
+                    </button>
+                    <div class="rpr-body">
+                        <h3>Enkelt förklarat — utan krångliga ord</h3>
+                        <p>
+                            Föreställ dig att du sätter in pengar på ett konto som ger 7&nbsp;% i avkastning per år.
+                            Det första året tjänar du ränta på det du satte in.
+                            Det andra året tjänar du ränta på <em>det du satte in + den ränta du redan fått</em>.
+                            Tredje året tjänar du ränta på allt det. Och så vidare.
+                        </p>
+                        <p style="margin-top:10px;">
+                            Det låter som en liten grej — men det är som ett snöboll som rullar nerför ett berg.
+                            I början är den liten. Mot slutet är den enorm.
+                        </p>
+                        <div class="rpr-example">
+                            <strong>Konkret exempel:</strong> Du sparar <strong>1&nbsp;000&nbsp;kr/månad</strong> i <strong>30&nbsp;år</strong> med <strong>7&nbsp;% avkastning</strong> per år.<br><br>
+                            Du har satt in totalt: <strong>360&nbsp;000&nbsp;kr</strong><br>
+                            Utan avkastning alls: <strong>360&nbsp;000&nbsp;kr</strong><br>
+                            Med enkel ränta (7&nbsp;% bara på det insatta, varje år): <strong>~&nbsp;1&nbsp;116&nbsp;000&nbsp;kr</strong><br>
+                            Med ränta-på-ränta (7&nbsp;% på allt som växer): <strong>~&nbsp;1&nbsp;220&nbsp;000&nbsp;kr</strong>
+                        </div>
+                        <div class="rpr-bars">
+                            <div class="rpr-bar-row">
+                                <div class="rpr-bar-label">Vad du satt in (1 000 kr/mån × 30 år)</div>
+                                <div class="rpr-bar-track">
+                                    <div class="rpr-bar-fill rpr-bar-insatt" style="width:29.5%">360&nbsp;000&nbsp;kr</div>
+                                </div>
+                            </div>
+                            <div class="rpr-bar-row">
+                                <div class="rpr-bar-label">Med vanlig ränta efter 30 år (bara på insatt kapital)</div>
+                                <div class="rpr-bar-track">
+                                    <div class="rpr-bar-fill rpr-bar-vanlig" style="width:91.5%">1&nbsp;116&nbsp;000&nbsp;kr</div>
+                                </div>
+                            </div>
+                            <div class="rpr-bar-row">
+                                <div class="rpr-bar-label">Med ränta-på-ränta efter 30 år ✨</div>
+                                <div class="rpr-bar-track">
+                                    <div class="rpr-bar-fill rpr-bar-rpr" style="width:100%">1&nbsp;220&nbsp;000&nbsp;kr</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rpr-takeaway">
+                            🌱 <strong>Vad det innebär för dig:</strong> Ju tidigare du börjar, desto kraftfullare blir effekten.
+                            Tio extra år kan fördubbla slutsumman — inte för att du sparar dubbelt så mycket, utan för att pengarna
+                            hinner växa på sin egen tillväxt. Tid är din viktigaste tillgång.
+                        </div>
+                    </div>
+                </div>
+                <div class="info-box">ℹ️ "Pengar är väl använd tid!" — Joakim von Anka</div>
+                </div><!-- /.tab-inputs -->
+                <div class="tab-summary">
+                <p class="col-header">② Resultat</p>
+                <div id="advSummary" class="results">
+                    <h2 style="color: #6b4423; margin-bottom: 12px; font-size: 17px;">Detaljerade Resultat</h2>
 
                     <div class="result-row">
                         <span class="result-label">Totalt investerat:</span>
@@ -980,37 +1022,44 @@
                         <div class="chart-container" id="advChart"></div>
                         <div class="legend" id="advLegend"></div>
                     </div>
-
-                    <div class="breakdown" style="margin-top:25px; padding-top:20px; border-top:2px solid #d4a600;">
-                        <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Tidslinje — Årlig tillväxt</div>
-                        <div style="position:relative; margin-bottom:15px;">
-                            <canvas id="timelineChart" width="470" height="260"
-                                style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
-                            <div id="chartTooltip" style="
-                                display:none; position:absolute; background:#6b4423; color:#f4d03f;
-                                padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
-                                pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-                                border:1px solid #d4a600; z-index:10;"></div>
-                        </div>
-                        <div class="table-container">
-                            <table id="timelineTable">
-                                <thead>
-                                    <tr>
-                                        <th>År</th>
-                                        <th>Investerat</th>
-                                        <th>Avkastning</th>
-                                        <th>Totalt värde</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="timelineBody"></tbody>
-                            </table>
-                        </div>
+                </div>
+                </div><!-- /.tab-summary -->
+                <div class="tab-timeline">
+                <p class="col-header">③ Tidslinje</p>
+                <div id="advTimeline" class="results">
+                    <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Tidslinje — Årlig tillväxt</div>
+                    <div style="position:relative; margin-bottom:15px;">
+                        <canvas id="timelineChart" width="470" height="260"
+                            style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
+                        <div id="chartTooltip" style="
+                            display:none; position:absolute; background:#6b4423; color:#f4d03f;
+                            padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
+                            pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+                            border:1px solid #d4a600; z-index:10;"></div>
+                    </div>
+                    <div class="table-container">
+                        <table id="timelineTable">
+                            <thead>
+                                <tr>
+                                    <th>År</th>
+                                    <th>Investerat</th>
+                                    <th>Avkastning</th>
+                                    <th>Totalt värde</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timelineBody"></tbody>
+                        </table>
                     </div>
                 </div>
+                </div><!-- /.tab-timeline -->
+                </div><!-- /.tab-layout -->
             </div>
 
             <!-- FLIKEN: SPARMÅL -->
             <div id="goal" class="tab-content">
+                <div class="tab-layout">
+                <div class="tab-inputs">
+                <p class="col-header">① Parametrar</p>
                 <h2 style="color:#6b4423; font-size:20px; margin-bottom:6px;">Såhär mycket pengar vill jag ha</h2>
                 <p style="color:#8b5a2b; font-size:13px; margin-bottom:20px; font-style:italic;">
                     Fyll i ditt mål — så räknar vi ut hur mycket du behöver spara varje månad.
@@ -1061,7 +1110,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="field-label">Förvaltningsavgifter per år (%) <span class="info-tip" tabindex="0" data-tip="Avgiften fonden tar varje år — syns inte på kontot men dras automatiskt. Billiga indexfonder tar 0,1–0,4 %. Dyra aktivt förvaltade fonder kan ta 1–2 %. Lägre avgift = mer pengar till dig.">?</span></label>
+                    <label for="goalFees" class="field-label">Förvaltningsavgifter per år (%) <span class="info-tip" tabindex="0" data-tip="Avgiften fonden tar varje år — syns inte på kontot men dras automatiskt. Billiga indexfonder tar 0,1–0,4 %. Dyra aktivt förvaltade fonder kan ta 1–2 %. Lägre avgift = mer pengar till dig.">?</span></label>
                     <div class="slider-container">
                         <input type="range" id="goalFees" value="0.5" min="0" max="5" step="0.05">
                         <span class="slider-value" id="goalFeesValue">0.50%</span>
@@ -1070,7 +1119,7 @@
                 </div>
 
                 <div id="goalTaxGroup" class="form-group">
-                    <label id="goalTaxLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></label>
+                    <p id="goalTaxLabel" class="field-label">Skatt på kapitalvinst <span class="info-tip" tabindex="0" data-tip="När du tar ut pengarna betalar du skatt på vinsten (inte på det du satt in). I Sverige är kapitalvinstskatten 30 % enligt lag och kan inte ändras. Exempel: du satte in 100 000 kr, tar ut 200 000 kr → betalar 30 % skatt på 100 000 kr vinst = 30 000 kr i skatt.">?</span></p>
                     <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(139,90,43,0.08); border-radius:8px; border:1px solid rgba(139,90,43,0.2);">
                         <strong style="font-size:18px; color:#6b4423;">30 %</strong>
                         <span style="font-size:12px; color:#8b5a2b;">Lagstadgad — gäller AF-konto vid uttag</span>
@@ -1078,7 +1127,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="field-label">Inflation (%) <span class="info-tip" tabindex="0" data-tip="Inflation betyder att pengar tappar köpkraft med åren. Det som kostar 100 kr idag kostar kanske 122 kr om 10 år med 2 % inflation. Riksbankens mål är 2 %.">?</span></label>
+                    <label for="goalInflation" class="field-label">Inflation (%) <span class="info-tip" tabindex="0" data-tip="Inflation betyder att pengar tappar köpkraft med åren. Det som kostar 100 kr idag kostar kanske 122 kr om 10 år med 2 % inflation. Riksbankens mål är 2 %.">?</span></label>
                     <div class="slider-container">
                         <input type="range" id="goalInflation" value="2" min="0" max="10" step="0.1">
                         <span class="slider-value" id="goalInflationValue">2%</span>
@@ -1098,7 +1147,7 @@
                     </div>
                 </div>
                 <div id="goalIskRateGroup" class="form-group" style="display:none;">
-                    <label class="field-label">ISK schablonränta (%) <span class="info-tip" tabindex="0" data-tip="Den ränta som styr hur stor ISK-skatten är. Bestäms av staten varje år som statslåneräntan + 1 %. År 2026: 2,55 % + 1 % = 3,55 %. Du behöver inte ändra detta om du inte vet bättre.">?</span></label>
+                    <label for="goalIskRate" class="field-label">ISK schablonränta (%) <span class="info-tip" tabindex="0" data-tip="Den ränta som styr hur stor ISK-skatten är. Bestäms av staten varje år som statslåneräntan + 1 %. År 2026: 2,55 % + 1 % = 3,55 %. Du behöver inte ändra detta om du inte vet bättre.">?</span></label>
                     <div class="slider-container">
                         <input type="range" id="goalIskRate" value="3.55" min="0" max="5" step="0.05">
                         <span class="slider-value" id="goalIskRateValue">3.55%</span>
@@ -1110,9 +1159,10 @@
                     </div>
                 </div>
 
-                <button type="button" onclick="calculateGoal()">Beräkna månadssparande</button>
-
-                <div id="goalResults" class="results">
+                </div><!-- /.tab-inputs -->
+                <div class="tab-summary">
+                <p class="col-header">② Resultat</p>
+                <div id="goalSummary" class="results">
                     <!-- Stor ruta för månadsbeloppet -->
                     <div style="background:linear-gradient(135deg,#6b4423 0%,#4a2f1a 100%); border-radius:12px; padding:20px; margin-bottom:20px; border:2px solid #d4a600; text-align:center;">
                         <div style="color:#f4d03f; font-size:13px; font-weight:600; margin-bottom:6px;">DU BEHÖVER SPARA</div>
@@ -1154,33 +1204,37 @@
                         <div class="chart-container" id="goalChart"></div>
                         <div class="legend" id="goalLegend"></div>
                     </div>
-
-                    <div class="breakdown" style="margin-top:25px; padding-top:20px; border-top:2px solid #d4a600;">
-                        <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Sparplan — Årlig tillväxt</div>
-                        <div style="position:relative; margin-bottom:15px;">
-                            <canvas id="goalTimelineChart" width="470" height="260"
-                                style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
-                            <div id="goalChartTooltip" style="
-                                display:none; position:absolute; background:#6b4423; color:#f4d03f;
-                                padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
-                                pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-                                border:1px solid #d4a600; z-index:10;"></div>
-                        </div>
-                        <div class="table-container">
-                            <table id="goalTable">
-                                <thead>
-                                    <tr>
-                                        <th>År</th>
-                                        <th>Investerat</th>
-                                        <th>Avkastning</th>
-                                        <th>Kontovärde</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="goalTableBody"></tbody>
-                            </table>
-                        </div>
+                </div>
+                </div><!-- /.tab-summary -->
+                <div class="tab-timeline">
+                <p class="col-header">③ Tidslinje</p>
+                <div id="goalTimeline" class="results">
+                    <div class="breakdown-title" style="font-size:15px; margin-bottom:15px;">📈 Sparplan — Årlig tillväxt</div>
+                    <div style="position:relative; margin-bottom:15px;">
+                        <canvas id="goalTimelineChart" width="470" height="260"
+                            style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
+                        <div id="goalChartTooltip" style="
+                            display:none; position:absolute; background:#6b4423; color:#f4d03f;
+                            padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
+                            pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+                            border:1px solid #d4a600; z-index:10;"></div>
+                    </div>
+                    <div class="table-container">
+                        <table id="goalTable">
+                            <thead>
+                                <tr>
+                                    <th>År</th>
+                                    <th>Investerat</th>
+                                    <th>Avkastning</th>
+                                    <th>Kontovärde</th>
+                                </tr>
+                            </thead>
+                            <tbody id="goalTableBody"></tbody>
+                        </table>
                     </div>
                 </div>
+                </div><!-- /.tab-timeline -->
+                </div><!-- /.tab-layout -->
             </div>
 
         </div>
@@ -1367,7 +1421,7 @@
                 !validateInput('advMonthlyAmount', 0, 1000000, false) ||
                 !validateInput('advRate', 0, 100, true) ||
                 !validateInput('advYears', 1, 100, true)) {
-                document.getElementById('advancedResults').classList.remove('show');
+                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
                 return;
             }
 
@@ -1416,14 +1470,14 @@
             }
 
             if (!isValidNumber(grossValue) || !isValidNumber(netValue) || !isValidNumber(taxesOwed)) {
-                document.getElementById('advancedResults').classList.remove('show');
+                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
                 return;
             }
 
             const inflationFactor = Math.pow(1 + inflation / 100, years);
             const realValue = netValue / inflationFactor;
             if (!isValidNumber(realValue)) {
-                document.getElementById('advancedResults').classList.remove('show');
+                ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.remove('show'));
                 return;
             }
 
@@ -1474,7 +1528,7 @@
             `;
             }
 
-            document.getElementById('advancedResults').classList.add('show');
+            ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.add('show'));
 
             // Tidslinje — år-för-år (med Skatteverkets ISK-formel)
             const tbody = document.getElementById('timelineBody');
@@ -1496,12 +1550,13 @@
                 const tlGain = tlBalance - tlInvested;
                 chartData.push({ year, invested: tlInvested, gain: tlGain, total: tlBalance });
                 const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td>${year}</td>
-                    <td>${formatCurrency(tlInvested)}</td>
-                    <td>${formatCurrency(tlGain)}</td>
-                    <td><strong>${formatCurrency(tlBalance)}</strong></td>
-                `;
+                row.insertCell().textContent = year;
+                row.insertCell().textContent = formatCurrency(tlInvested);
+                row.insertCell().textContent = formatCurrency(tlGain);
+                const lastCell = row.insertCell();
+                const strong = document.createElement('strong');
+                strong.textContent = formatCurrency(tlBalance);
+                lastCell.appendChild(strong);
             }
             requestAnimationFrame(() => drawTimelineChart(chartData));
         }
@@ -1783,7 +1838,8 @@
                 !validateInput('goalInitial', 0, 100000000, false) ||
                 !validateInput('goalYears',  1, 100, true) ||
                 !validateInput('goalRate',   0, 100, true)) {
-                document.getElementById('goalResults').classList.remove('show');
+                document.getElementById('goalSummary').classList.remove('show');
+                document.getElementById('goalTimeline').classList.remove('show');
                 return;
             }
 
@@ -1817,12 +1873,14 @@
             // Räcker startkapitalet utan månadssparande?
             const netFromZero = simulateGoal(initialCap, 0, monthlyRateNet, years, goalIskOn, iskSchRate).netValue;
 
-            const resultsEl     = document.getElementById('goalResults');
+            const resultsEl     = document.getElementById('goalSummary');
+            const timelineEl    = document.getElementById('goalTimeline');
             const noSavingsEl   = document.getElementById('goalNoSavingsNeeded');
             const monthlyEl     = document.getElementById('goalMonthly');
             const monthlyNoteEl = document.getElementById('goalMonthlyNote');
 
             resultsEl.classList.add('show');
+            timelineEl.classList.add('show');
 
             if (netFromZero >= nominalTarget) {
                 noSavingsEl.style.display = 'block';
@@ -1927,12 +1985,13 @@
                 const glGain = glBalance - glInvested;
                 goalChartData.push({ year, invested: glInvested, gain: glGain, total: glBalance });
                 const row = goalTbody.insertRow();
-                row.innerHTML = `
-                    <td>${year}</td>
-                    <td>${formatCurrency(glInvested)}</td>
-                    <td>${formatCurrency(glGain)}</td>
-                    <td><strong>${formatCurrency(glBalance)}</strong></td>
-                `;
+                row.insertCell().textContent = year;
+                row.insertCell().textContent = formatCurrency(glInvested);
+                row.insertCell().textContent = formatCurrency(glGain);
+                const lastCell = row.insertCell();
+                const strong = document.createElement('strong');
+                strong.textContent = formatCurrency(glBalance);
+                lastCell.appendChild(strong);
             }
 
             requestAnimationFrame(() =>
