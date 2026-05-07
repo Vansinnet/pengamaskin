@@ -243,6 +243,36 @@ section('Svit 2: Regressionstest med kanda facit');
     );
 }
 
+{
+    // Manadsinsattning: 100 000 start + 2 000/man, 7%/ar i 10 ar, schablonranta 3.55%
+    // Vanligaste verkliga sparscenario -- testar kapitalunderlagsberakningen
+    // vid lopande insattningar over flera ar.
+    // Facit: saldo ~= 547 136 kr, total ISK-skatt ~= 5 746 kr
+    var r = simulateISK(100000, 2000, 0.07 / 12, 10, 3.55);
+    assert(
+        'simulateISK: 100k + 2 000/man @ 7% i 10 ar -> saldo ~= 547 136 kr',
+        approx(r.balance, 547136, 10),
+        'fick saldo ' + r.balance.toFixed(0)
+    );
+    assert(
+        'simulateISK: 100k + 2 000/man @ 7% i 10 ar -> ISK-skatt ~= 5 746 kr',
+        approx(r.totalISKtax, 5746, 10),
+        'fick skatt ' + r.totalISKtax.toFixed(0)
+    );
+}
+
+{
+    // Flerarsigt skatteackumulering: 500 000 kr @ 7%/ar i 5 ar
+    // Varje ar vaxa kapitalet och schablonskatten okar darmed.
+    // Facit: saldo ~= 708 813 kr, total ISK-skatt ~= 15 610 kr
+    var r = simulateISK(500000, 0, 0.07 / 12, 5, 3.55);
+    assert(
+        'simulateISK: 500 000 @ 7% i 5 ar -> ackumulerad ISK-skatt ~= 15 610 kr',
+        approx(r.totalISKtax, 15610, 10),
+        'fick skatt ' + r.totalISKtax.toFixed(0)
+    );
+}
+
 // -- simulateGoal -------------------------------------------------------------
 
 {
@@ -255,11 +285,13 @@ section('Svit 2: Regressionstest med kanda facit');
 }
 
 {
+    // Pinnat regressionstest ISK: 100 000 + 1 000/man @ 6%/ar i 10 ar
+    // Facit: netto ~= 345 512 kr, total ISK-skatt ~= 307 kr
     var r = simulateGoal(100000, 1000, 0.06 / 12, 10, true, 3.55);
     assert(
-        'simulateGoal ISK: 10 ar ger positivt netto',
-        r.netValue > 0,
-        'fick netto ' + r.netValue.toFixed(0)
+        'simulateGoal ISK: 100k + 1 000/man @ 6% i 10 ar -> netto ~= 345 512 kr',
+        approx(r.netValue, 345512, 20),
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
     );
 }
 
@@ -287,6 +319,81 @@ section('Svit 2: Regressionstest med kanda facit');
 
 
 // ===========================================================================
+//  SVIT 3 -- Formaterings- och valideringsfunktioner
+// ===========================================================================
+
+section('Svit 3: Formaterings- och valideringsfunktioner');
+
+const { isValidNumber, formatCurrency, formatAmountHint } = calc;
+
+// -- isValidNumber ------------------------------------------------------------
+
+assert('isValidNumber: heltal', isValidNumber(42));
+assert('isValidNumber: decimal', isValidNumber(3.14));
+assert('isValidNumber: noll', isValidNumber(0));
+assert('isValidNumber: negativt', isValidNumber(-100));
+assert('isValidNumber: NaN -> false', !isValidNumber(NaN));
+assert('isValidNumber: Infinity -> false', !isValidNumber(Infinity));
+assert('isValidNumber: strang -> false', !isValidNumber('abc'));
+
+// -- formatCurrency -----------------------------------------------------------
+
+{
+    var s = formatCurrency(1000);
+    assert('formatCurrency: 1000 innehaller "1" och "000"', s.includes('1') && s.includes('000'));
+}
+{
+    var s = formatCurrency(0);
+    assert('formatCurrency: 0 innehaller "0"', s.includes('0'));
+}
+{
+    var s = formatCurrency(1500000);
+    assert('formatCurrency: 1 500 000 innehaller "1" och "500" och "SEK" eller kr-tecken',
+        s.includes('1') && s.includes('500') && (s.includes('kr') || s.includes('SEK')));
+}
+
+// -- formatAmountHint ---------------------------------------------------------
+
+{
+    var s = formatAmountHint(1500000);
+    assert('formatAmountHint: 1 500 000 -> "1,5 miljoner" (ingen trailing nolla)',
+        s.includes('1,5') && s.includes('miljoner') && !s.includes('1,50'),
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(2500000);
+    assert('formatAmountHint: 2 500 000 -> "2,5 miljoner"',
+        s.includes('2,5') && !s.includes('2,50'),
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(1000000);
+    assert('formatAmountHint: 1 000 000 -> singular "miljon"',
+        s.includes('1 miljon') || s.includes('1\u00a0miljon'),
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(1250000);
+    assert('formatAmountHint: 1 250 000 -> "1,25 miljoner"',
+        s.includes('1,25'), 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(2500000000);
+    assert('formatAmountHint: 2 500 000 000 -> "2,5 miljarder" (ingen trailing nolla)',
+        s.includes('2,5') && s.includes('miljarder') && !s.includes('2,50'),
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(0);
+    assert('formatAmountHint: 0 -> "0 kr"', s === '0 kr', 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(999);
+    assert('formatAmountHint: 999 -> innehaller "999 kr"', s.includes('999'), 'fick: ' + s);
+}
+
+
+// ===========================================================================
 //  SAMMANFATTNING
 // ===========================================================================
 
@@ -295,8 +402,12 @@ console.log('\n' + '='.repeat(50));
 var svit2Passed = totalPassed - builtIn.passed;
 var svit2Failed = totalFailed - builtIn.failed;
 
-console.log('Svit 1 (inbyggda):   ' + builtIn.passed + ' OK, ' + builtIn.failed + ' fel');
-console.log('Svit 2 (regression): ' + svit2Passed + ' OK, ' + svit2Failed + ' fel');
+// Svit 3 raknas separat (formaterings- och valideringsfunktioner)
+// OBS: svit3-raderna borjar efter ISK/simulateGoal-blocken i svit 2.
+// For enkelhetens skull rapporteras allt over builtIn som svit 2+3.
+
+console.log('Svit 1 (inbyggda):     ' + builtIn.passed + ' OK, ' + builtIn.failed + ' fel');
+console.log('Svit 2+3 (regression): ' + svit2Passed + ' OK, ' + svit2Failed + ' fel');
 console.log('-'.repeat(50));
 console.log('TOTALT: ' + totalPassed + ' OK, ' + totalFailed + ' fel');
 

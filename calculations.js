@@ -41,8 +41,9 @@ function formatAmountHint(value) {
     const n = parseFloat(value);
     if (n === 0) return '0 kr';
     const grouped = new Intl.NumberFormat('sv-SE').format(Math.round(n));
-    if (n >= 1e9)       return grouped + ' kr (' + (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 2).replace('.', ',') + ' miljarder)';
-    if (n >= 1e6) { const m = n / 1e6; return grouped + ' kr (' + m.toFixed(m % 1 === 0 ? 0 : 2).replace('.', ',') + (m === 1 ? ' miljon)' : ' miljoner)'); }
+    const fmtDec = v => parseFloat(v.toFixed(2)).toString().replace('.', ',');
+    if (n >= 1e9)       return grouped + ' kr (' + fmtDec(n / 1e9) + ' miljarder)';
+    if (n >= 1e6) { const m = n / 1e6; return grouped + ' kr (' + fmtDec(m) + (m === 1 ? ' miljon)' : ' miljoner)'); }
     if (n >= 1e3)       return grouped + ' kr';
     return grouped + ' kr';
 }
@@ -112,7 +113,7 @@ function computeCapitalGainsTax(gain) {
 //  AKTIVT VAL: ISK-skatten betalas via deklarationen och
 //  minskar INTE kontots värde — kontot växer oavkortat.
 //
-//  Returnerar { balance, totalIskTax }.
+//  Returnerar { balance, totalISKtax }.
 // ============================================================
 function simulateISK(initial, monthly, monthlyRateNet, years, schablonRanta, fribelopp = ISK_FRIBELOPP_DEFAULT) {
     let balance = initial;
@@ -225,10 +226,11 @@ function runTests() {
         log('ISK schablonräntans golv 1,25 % används', approx(r.totalISKtax, 375, 1), `fick skatt ${r.totalISKtax}`);
     }
 
-    // 9. Inflationsjustering
+    // 9. Inflationsjustering via computeFV — realvärdet av 200 000 kr
+    //    vid 2 % inflation i 10 år = computeFV(200000, 0, -0.02/12, 120) ≈ 163 719
     {
-        const realValue = 200000 / Math.pow(1.02, 10);
-        log('200 000 kr / (1,02)^10 ≈ 164 070', approx(realValue, 164070, 1), `fick ${realValue}`);
+        const realValue = computeFV(200000, 0, -0.02 / 12, 120);
+        log('computeFV: realvärde 200 000 kr vid 2% inflation i 10 år ≈ 163 719', approx(realValue, 163719, 1), `fick ${realValue.toFixed(2)}`);
     }
 
     // 10. Sparmål (sanity check) — binärsökningens utgångspunkt
