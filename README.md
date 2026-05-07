@@ -1,171 +1,122 @@
-# Pengamaskinen – Investeringskalkylator
+# Pengamaskinen – Nordisk investeringskalkylator
 
 **🌐 [Öppna Pengamaskinen →](https://pengamaskin.pages.dev)**
 
-Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för svenska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, ISK-skatt, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
+Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för nordiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
 
-## 🎯 Vad gör Pengamaskinen?
+Stöd för **Sverige, Norge, Danmark, Finland och Island** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
 
-Pengamaskinen hjälper dig att förstå sparande genom tre kraftfulla funktioner:
+## 🎯 Funktioner
 
-### 1. **Pengamaskin** — Beräkna framtida värde
+### Pengamaskin — Beräkna framtida värde
 Se hur ditt sparande växer år för år med:
-- 📊 Startkapital och månadligt sparande
-- 📈 Årlig avkastning (nominell ränta)
-- 🏦 Förvaltningsavgifter (TER)
-- 🇸🇪 ISK-konto enligt Skatteverkets officiella formel
-- 💰 Skatt på kapitalvinst (engångsbeskattning)
-- 📉 Inflationsjustering för realvärde
+- Startkapital och månadligt sparande
+- Årlig avkastning (nominell ränta, månadsvis kapitalisering)
+- Förvaltningsavgifter (TER)
+- Landsspecifika skatteregler automatiskt (se landstabell nedan)
+- Skattegynnat konto per land (ISK, ASK, OSK)
+- Inflationsjustering för realvärde
 
-**Resultat inkluderar:**
-- Slutvärde efter skatt och avgifter
-- Årlig tidslinje med diagram
-- Fördelning av investeringar, avkastning, avgifter och skatt
+### Sparmål — Räkna ut månadssparande
+Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje månad?"
+- Målbelopp (nominellt eller i dagens pengar)
+- Tidsperiod
+- Binärsökning för exakt månadsbelopp
 
-### 2. **Sparmål** — Räkna ut månadssparande
-Sätt ett målbelopp och få svar på: *Hur mycket måste jag spara varje månad?*
-- 🎯 Målbelopp (nominellt eller i dagens pengar)
-- ⏰ Tidsperiod på år
-- 💵 Befintliga besparingar
-- 📊 År-för-år prognoser
+### Visualisering
+- **Fördelningsdiagram** — hur fördelas slutvärdet på insatt kapital, avkastning, avgifter och skatt?
+- **År-för-år tidslinje** — detaljerad tabell + interaktivt Canvas-diagram
+- **Ränta-på-ränta-explainer** — expanderbar förklaring med visuella staplar
 
-Verktygen tar hänsyn till alla samma faktorer som Pengamaskin.
+## 🌍 Länder och kontotyper
 
-## 🔐 ISK-beräkning enligt Skatteverket
+| Land | Standardkonto | Skattegynnat konto | Kapitalvinstskatt |
+|------|--------------|-------------------|-------------------|
+| 🇸🇪 Sverige | AF-konto | **ISK** (schablonbeskattning, 1,25% golv, 300k fribelopp) | 30 % |
+| 🇳🇴 Norge | Vanlig konto | **ASK** (skjermingsfradrag ~2,5%/år, beskattas vid uttag) | 37,84 % |
+| 🇩🇰 Danmark | Frit depot | **ASK** (17 % årlig lagerbeskatning, dras från kontot) | 27/42 % |
+| 🇫🇮 Finland | Arvo-osuustili | **OSK** (uppskjuten skatt, beskattas vid uttag) | 30/34 % |
+| 🇮🇸 Island | Venjulegur reikningur | — (inget skattegynnat konto) | 22 % |
 
-Pengamaskinen använder **Skatteverkets officiella formel** för ISK-skatteberäkning:
+### Så fungerar skattegynnade konton i verktyget:
 
-```
-Kapitalunderlag = (värdet 1/1 + 1/4 + 1/7 + 1/10 + årets insättningar) ÷ 4
-Schablonintäkt = (Kapitalunderlag − 300 000 kr) × schablonränta
-ISK-skatt = Schablonintäkt × 30%
-```
+- **Svensk ISK** — Skatteverkets officiella kvartalsformel: `(saldo 1/1 + 1/4 + 1/7 + 1/10 + insättningar) / 4`. Skatten betalas separat (minskar inte kontosaldot).
+- **Norsk ASK** — Skjermingsfradrag (riskfri avkastning × anskaffningsvärde) dras av från vinsten före skatt. Årligt fradrag ackumuleras över sparperioden.
+- **Dansk ASK** — 17 % årlig skatt på faktisk avkastning (lagerbeskatning). Skatten dras direkt från kontot. Förluster kan framföras till nästa år.
+- **Finsk OSK** — Uppskjuten skatt vid uttag. Progressiv skatt 30/34 % med gräns vid 30 000 €.
+- **Island** — Endast standardkonto med 22 % kapitalvinstskatt.
 
-- 2026: **Schablonränta 3,55%** (statslåneränta 2,55% + 1%)
-- **300 000 kr skattefritt** från och med 2026
-- Ingen reavinstskatt vid uttag
-
-## 💡 Hur använder jag Pengamaskinen?
+## 💡 Användning
 
 1. **Öppna** [pengamaskin.pages.dev](https://pengamaskin.pages.dev)
-2. **Fyll i** dina siffror (startkapital, månadssparande, förväntad avkastning osv.)
-3. **Se resultat** direkt — inga knappar att klicka (auto-beräkning)
-4. **Experimentera** — ändra värden för att se hur olika scenarier påverkar resultatet
-
-### Tips:
-- **Årlig avkastning:** Tolkas som nominell ränta. 5% blir 5%/12 per månad.
-- **Förvaltningsavgifter:** Typisk fond har 0,3–1% TER.
-- **Skatt på kapitalvinst:** 30% är standard vid kapitalvinst för icke-ISK konton.
-- **ISK:** Eliminerar reavinstskatt — bra för höga avkastningar.
-- **Inflation:** Standard 2% per år (motsvarar långsiktig inflation i Sverige).
-
-## 📊 Resultat & visualisering
-
-Varje beräkning visar:
-
-- **Slutvärde:** Dina pengar efter skatt, avgifter och inflation
-- **Fördelningsdiagram:** Hur mycket är investerat, avkastning, avgifter och skatt?
-- **År-för-år tabell:** Detaljerade siffror för varje år
-- **Interaktivt diagram:** Hovra för att se värden per år
+2. **Välj land** i dropdown-menyn — skatteparametrar och kontotyper anpassas automatiskt
+3. **Välj språk** — svenska eller engelska, oberoende av valt land
+4. **Fyll i** dina siffror — resultatet uppdateras i realtid (auto-beräkning)
+5. **Experimentera** — ändra värden för att jämföra scenarier
 
 ## 🛡️ Säkerhet & integritet
 
-- ✅ **Ingen server:** All beräkning sker i din webbläsare
-- ✅ **Ingen datainsamling:** Vi sparar inte din data
-- ✅ **Open Source:** Källkoden finns tillgänglig
-- ✅ **MIT-licens:** Gratis att använda och modifiera
-- ✅ **CSP-skyddad:** Content Security Policy förhindrar externa angrepp
+- **Ingen server:** All beräkning sker i din webbläsare
+- **Ingen datainsamling:** Vi sparar inte din data
+- **Inga externa beroenden:** Vanilla JavaScript, inga CDN:er, inga trackers
+- **Open Source:** MIT-licens — fritt att använda och modifiera
+- **CSP-skyddad:** Content Security Policy förhindrar externa angrepp
+- **Offline-kapabel:** Fungerar utan nätverksanslutning efter första laddning
 
-## 📱 Kompatibilitet
-
-- ✅ Desktop (Chrome, Firefox, Safari, Edge)
-- ✅ Tablet (iPad, Android)
-- ✅ Mobil (responsiv design)
-- ✅ Offline möjligt (laddad en gång)
-
-## 🎓 Matematiska antaganden
+## 📊 Matematiska antaganden
 
 ### Ränta-på-ränta
-Används standard slutvärdeskalkyl för annuitet (månadsvisa insättningar):
+Månadsvis kapitalisering med end-of-month-insättningar:
 ```
 FV = P(1+r)^n + PMT × [((1+r)^n − 1) / r]
 ```
-Där:
-- `P` = startkapital
-- `PMT` = månadligt sparande
-- `r` = månatlig ränta (årlig ränta ÷ 12)
-- `n` = antal månader
+Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 
 ### Avgifter
-Dras linjärt från räntan: `nettoränta = annualRate − fees`
-
-### Skatt
-För icke-ISK: Kapitalvinstskatt på total vinst vid uttag (30% standard)
-För ISK: Schablonbeskattning årligen enligt Skatteverkets formel
+`nettoränta = annualRate − fees` — avgifter modelleras som reducerad nettotillväxttakt.
 
 ### Inflation
-Reala värde = nominellt värde ÷ (1 + inflation)^år
+`Realvärde = nominellt värde / (1 + inflation)^år` — sammansatt diskontering.
 
 ## 📖 Exempel
 
-**Scenario:** Du sparar 1 000 kr/månad under 30 år, börjar med 50 000 kr
+**Scenario:** Du sparar 1 000 kr/månad under 30 år, börjar med 50 000 kr, svensk ISK.
 
 | Inställning | Värde |
 |-------------|-------|
+| Land | Sverige |
 | Startkapital | 50 000 kr |
 | Månadligt | 1 000 kr |
-| Avkastning | 7% årlig |
+| Avkastning | 7 % årlig |
 | Period | 30 år |
-| Avgifter | 0,5% |
-| ISK | Ja |
+| Avgifter | 0,5 % |
+| Konto | ISK |
 
-**Resultat:**
-- Investerat: 410 000 kr (50 000 + 1 000 × 360 månader)
-- Slutvärde: ~2 800 000 kr (efter ISK-skatt)
-- Avkastning: ~2 390 000 kr netto
+**Resultat:** Investerat: 410 000 kr · Slutvärde: ~2 800 000 kr (efter ISK-skatt) · Avkastning: ~2 390 000 kr netto.
 
-*Notera: Exempel är simulerat och baserat på antaganden. Verklig avkastning varierar.*
+*Notera: Exemplet är simulerat. Verklig avkastning varierar.*
 
 ## 🔧 Teknisk information
 
-- **Språk:** JavaScript (vanilla, ingen bibliotek)
-- **Styling:** CSS3 med gradient och flexbox
-- **Data:** Allt beräknat i webbläsaren
-- **Format:** Single-page HTML-fil (~80 KB)
-- **Licensiering:** MIT
-
-## 📝 Källkod
-
-Pengamaskinen är **open source** under MIT-licens. Källkoden är tillgänglig på:
-- 📂 [GitHub: Vansinnet/pengamaskin](https://github.com/Vansinnet/pengamaskin)
-
-Du kan:
-- ✅ Använda det fritt för personligt bruk
-- ✅ Modifiera och anpassa det
-- ✅ Driftsätta det själv
-- ✅ Dela förbättringar
-
-## ⚠️ Ansvarsfriskrivning
-
-Pengamaskinen är ett **utbildningsverktyg** och gör **antaganden** om framtida avkastning, skatter och inflation. 
-
-**Verklig avkastning kan skilja sig från beräkningarna.** Använd dessa siffror som vägledning, inte som garantier. För personlig finansiell rådgivning, kontakta en licensierad finansiell rådgivare.
-
-- Skatteregler kan ändras
-- ISK-regler uppdateras årligen
-- Inflation är svårförutsägbar
-- Marknader är volatila
+| Egenskap | Detalj |
+|----------|--------|
+| Språk | JavaScript (vanilla, inga ramverk) |
+| Styling | CSS3 (guld/brun-tema, flexbox, responsiv grid) |
+| Arkitektur | `calculations.js` (rena funktioner) + `app.js` (UI) |
+| i18n | Dynamiskt lexikon, `data-i18n`-attribut |
+| Flaggor | Inline SVG, CSP-kompatibla |
+| Diagram | Canvas med tooltip + tangentbordsnavigering |
+| Tester | `node test.js` — 58 regressionstester |
+| Licens | MIT |
 
 ## 📮 Feedback & bidrag
 
-Har du förslag på förbättringar? Hitta du en bugg? Skapa ett [GitHub issue](https://github.com/Vansinnet/pengamaskin/issues) eller en pull request!
+Har du förslag på förbättringar? Hittade du en bugg? Skapa ett [GitHub issue](https://github.com/Vansinnet/pengamaskin/issues) eller en pull request!
 
-## 🙏 Tack
+## ⚠️ Ansvarsfriskrivning
 
-Pengamaskinen är gjord med ❤️ för svenska sparare som vill förstå sitt sparande utan krångel.
+Pengamaskinen är ett **utbildningsverktyg**. Skatteregler kan ändras — kontrollera alltid mot Skatteverket/Skatteetaten/Vero/Skatturinn för aktuella satser. Använd siffrorna som vägledning, inte som garantier. För personlig finansiell rådgivning, kontakta en licensierad rådgivare.
 
 ---
 
 **🌐 [Starta Pengamaskinen nu →](https://pengamaskin.pages.dev)**
-
-*Lycka till med sparandet! 💰*
