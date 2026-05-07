@@ -74,9 +74,13 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
         if (delta === null) {
             c4.textContent = '—';
             c4.style.color = '#8b5a2b';
-        } else {
+        } else if (delta >= 0) {
             c4.textContent = '+' + formatCurrency(delta);
             c4.style.color = '#2d5016';
+            c4.style.fontWeight = '600';
+        } else {
+            c4.textContent = formatCurrency(delta);
+            c4.style.color = '#8b0000';
             c4.style.fontWeight = '600';
         }
         tr.appendChild(c4);
@@ -93,7 +97,7 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
     return chartData;
 }
 
-function renderBreakdown(chartElId, legendElId, base, invested, netValue, fees, isk, labels) {
+function renderBreakdown(chartElId, legendElId, base, invested, netValue, fees, taxAmt, isk, labels) {
     const chartEl = document.getElementById(chartElId);
     const legendEl = document.getElementById(legendElId);
     while (chartEl.firstChild) chartEl.removeChild(chartEl.firstChild);
@@ -108,7 +112,7 @@ function renderBreakdown(chartElId, legendElId, base, invested, netValue, fees, 
     const iPct = Math.min((invested / base) * 100, 100);
     const gPct = Math.max(((netValue - invested) / base) * 100, 0);
     const fPct = Math.max((fees / base) * 100, 0);
-    const tPct = Math.max(0, 100 - iPct - gPct - fPct);
+    const tPct = Math.max(0, (taxAmt / base) * 100);
     [[iPct,'chart-invested'],[gPct,'chart-interest'],[fPct,'chart-fees'],[tPct,'chart-taxes']].forEach(function(s) {
         const seg = document.createElement('div');
         seg.className = 'chart-segment ' + s[1];
@@ -141,7 +145,7 @@ function validateInput(id, min = 0, max = 100000000, isRequired = true) {
 
     if (!errorElement) return true;
 
-    if (isNaN(value) || element.value === '' || element.value === null) {
+    if (isNaN(value) || element.value === '') {
         if (isRequired) {
             errorElement.textContent = '⚠️ Obligatoriskt fält';
             errorElement.classList.add('show');
@@ -325,7 +329,7 @@ function calculateAdvanced() {
     document.getElementById('advWarning').style.display = netValue > 1e9 ? 'block' : 'none';
 
     // Fördelningsdiagram
-    renderBreakdown('advChart', 'advLegend', grossValue, totalInvested, netValue, totalFees, state.iskOn,
+    renderBreakdown('advChart', 'advLegend', grossValue, totalInvested, netValue, totalFees, taxesOwed, state.iskOn,
         { invested: 'Investerat', gain: 'Nettovinst' });
 
     ['advSummary','advTimeline'].forEach(id=>document.getElementById(id).classList.add('show'));
@@ -358,9 +362,10 @@ function drawTimelineChart(dataPoints, canvasId = 'timelineChart', tooltipId = '
 
     const maxVal = Math.max(...dataPoints.map(d => d.total)) * 1.05;
     const minVal = 0;
+    const range = maxVal - minVal || 1;
 
     function xPos(i) { return dataPoints.length === 1 ? PAD.left + plotW / 2 : PAD.left + (i / (dataPoints.length - 1)) * plotW; }
-    function yPos(v) { return PAD.top + plotH - ((v - minVal) / (maxVal - minVal)) * plotH; }
+    function yPos(v) { return PAD.top + plotH - ((v - minVal) / range) * plotH; }
 
     ctx.clearRect(0, 0, W, H);
 
@@ -551,7 +556,7 @@ function runAppTests() {
         legendDiv.id = '_appTestLegend';
         document.body.appendChild(chartDiv);
         document.body.appendChild(legendDiv);
-        renderBreakdown('_appTestChart', '_appTestLegend', 200000, 120000, 170000, 5000, false,
+        renderBreakdown('_appTestChart', '_appTestLegend', 200000, 120000, 170000, 5000, 0, false,
             { invested: 'TestInsatt', gain: 'TestVinst' });
 
         var segs = chartDiv.querySelectorAll('.chart-segment');
@@ -574,7 +579,7 @@ function runAppTests() {
         var cd = document.createElement('div'); cd.id = '_appTC2';
         var ld = document.createElement('div'); ld.id = '_appTL2';
         document.body.appendChild(cd); document.body.appendChild(ld);
-        renderBreakdown('_appTC2', '_appTL2', 100000, 90000, 95000, 1000, true, { invested: 'I', gain: 'G' });
+        renderBreakdown('_appTC2', '_appTL2', 100000, 90000, 95000, 1000, 0, true, { invested: 'I', gain: 'G' });
         t('renderBreakdown ISK: legend visar "ISK-skatt"', ld.textContent.includes('ISK-skatt'));
         document.body.removeChild(cd); document.body.removeChild(ld);
     })();
@@ -584,7 +589,7 @@ function runAppTests() {
         var cd = document.createElement('div'); cd.id = '_appTC3';
         var ld = document.createElement('div'); ld.id = '_appTL3';
         document.body.appendChild(cd); document.body.appendChild(ld);
-        renderBreakdown('_appTC3', '_appTL3', 0, 0, 0, 0, false, { invested: 'I', gain: 'G' });
+        renderBreakdown('_appTC3', '_appTL3', 0, 0, 0, 0, 0, false, { invested: 'I', gain: 'G' });
         t('renderBreakdown base=0: fallback-text visas', cd.textContent.includes('Ange avkastning'));
         t('renderBreakdown base=0: legend är tom', ld.children.length === 0);
         document.body.removeChild(cd); document.body.removeChild(ld);
@@ -780,7 +785,7 @@ function calculateGoal() {
     document.getElementById('goalTaxResult').textContent     = formatCurrency(actualTax);
 
     // Fördelningsdiagram
-    renderBreakdown('goalChart', 'goalLegend', nominalTarget, totalIn, finalNet, totalFees, state.goalIskOn,
+    renderBreakdown('goalChart', 'goalLegend', nominalTarget, totalIn, finalNet, totalFees, actualTax, state.goalIskOn,
         { invested: 'Insatt kapital', gain: 'Avkastning' });
 
     // Tidslinje
