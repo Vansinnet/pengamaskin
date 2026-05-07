@@ -402,9 +402,9 @@ function updateCountryUI() {
         taxDisplay = formatTaxRate(c.capitalGainsTax) + ' / ' + formatTaxRate(c.capitalGainsTaxHigh);
     }
     var taxDisplays = document.querySelectorAll('#taxRateDisplay, #advTaxRateDisplay');
-    taxDisplays.forEach(function(el) { el.textContent = taxDisplay + ' %'; });
+    taxDisplays.forEach(function(el) { el.textContent = taxDisplay; });
     var goalTaxDisplay = document.getElementById('goalTaxRateDisplay');
-    if (goalTaxDisplay) goalTaxDisplay.textContent = taxDisplay + ' %';
+    if (goalTaxDisplay) goalTaxDisplay.textContent = taxDisplay;
 
     // Uppdatera landsspecifik skattebeskrivning
     var taxDesc = document.getElementById('taxRateDescription');

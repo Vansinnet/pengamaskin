@@ -265,8 +265,9 @@ function simulateDanishASK(initial, monthly, monthlyRateNet, years, annualTaxRat
 
         // Framförbar förlust från tidigare år
         if (carryForwardLoss > 0) {
-            gainThisYear -= carryForwardLoss;
-            carryForwardLoss = 0;
+            const used = Math.min(gainThisYear, carryForwardLoss);
+            gainThisYear -= used;
+            carryForwardLoss -= used;
         }
 
         if (gainThisYear > 0) {
@@ -305,8 +306,8 @@ function simulateNorwegianASK(initial, monthly, monthlyRateNet, years, capitalGa
             balance = balance * (1 + monthlyRateNet) + monthly;
             costBasis += monthly;
         }
-        const avgBasis = (basisBefore + costBasis) / 2;
-        accumulatedFradrag += avgBasis * (skjermingsrente / 100);
+        // Skjermingsfradrag beräknas på ingångsvärdet (Skatteetatens regler)
+        accumulatedFradrag += basisBefore * (skjermingsrente / 100);
     }
 
     const gain = balance - costBasis;
