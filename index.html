@@ -802,7 +802,56 @@
             }
         }
 
-        /* ── Kolumnrubriker ───────────────────────────────────── */
+        /* ── Sidhuvud med titel + explainer horisontellt ─────── */
+        .page-header {
+            margin-bottom: 16px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .header-title h1 { margin-bottom: 2px; }
+        .header-title .subtitle { margin-bottom: 0; }
+
+        .header-extras {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        /* Explainer-knappen ska inte ta full bredd i header-läge */
+        .header-extras .rpr-toggle {
+            width: auto;
+            padding: 10px 16px;
+        }
+
+        /* Info-boxen utan margin i header-läge */
+        .header-extras .info-box {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        /* Rpr-body spänner full bredd under header-raden */
+        .page-header .rpr-body {
+            border-radius: 0 0 10px 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header-extras { width: 100%; }
+            .header-extras .rpr-toggle { width: 100%; }
+            .header-extras .info-box { white-space: normal; }
+        }
         .col-header {
             font-size: 10px;
             font-weight: 700;
@@ -820,8 +869,65 @@
 <body>
     <div class="page-container">
         <div class="container">
-            <h1>Pengamaskinen</h1>
-            <p class="subtitle">— Där pengar förökar sig själva —</p>
+            <div class="page-header">
+                <div class="header-top">
+                    <div class="header-title">
+                        <h1>Pengamaskinen</h1>
+                        <p class="subtitle">"Pengar är väl använd tid!" — Joakim von Anka</p>
+                    </div>
+                    <div class="header-extras">
+                        <button type="button" class="rpr-toggle" onclick="toggleRpr(this)" aria-expanded="false">
+                            <span>💡 Vad är ränta-på-ränta-effekten?</span>
+                            <span class="rpr-arrow">▼</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="rprBody" class="rpr-body">
+                    <h3>Enkelt förklarat — utan krångliga ord</h3>
+                    <p>
+                        Föreställ dig att du sätter in pengar på ett konto som ger 7&nbsp;% i avkastning per år.
+                        Det första året tjänar du ränta på det du satte in.
+                        Det andra året tjänar du ränta på <em>det du satte in + den ränta du redan fått</em>.
+                        Tredje året tjänar du ränta på allt det. Och så vidare.
+                    </p>
+                    <p style="margin-top:10px;">
+                        Det låter som en liten grej — men det är som ett snöboll som rullar nerför ett berg.
+                        I början är den liten. Mot slutet är den enorm.
+                    </p>
+                    <div class="rpr-example">
+                        <strong>Konkret exempel:</strong> Du sparar <strong>1&nbsp;000&nbsp;kr/månad</strong> i <strong>30&nbsp;år</strong> med <strong>7&nbsp;% avkastning</strong> per år.<br><br>
+                        Du har satt in totalt: <strong>360&nbsp;000&nbsp;kr</strong><br>
+                        Utan avkastning alls: <strong>360&nbsp;000&nbsp;kr</strong><br>
+                        Med enkel ränta (7&nbsp;% bara på det insatta, varje år): <strong>~&nbsp;1&nbsp;116&nbsp;000&nbsp;kr</strong><br>
+                        Med ränta-på-ränta (7&nbsp;% på allt som växer): <strong>~&nbsp;1&nbsp;220&nbsp;000&nbsp;kr</strong>
+                    </div>
+                    <div class="rpr-bars">
+                        <div class="rpr-bar-row">
+                            <div class="rpr-bar-label">Vad du satt in (1 000 kr/mån × 30 år)</div>
+                            <div class="rpr-bar-track">
+                                <div class="rpr-bar-fill rpr-bar-insatt" style="width:29.5%">360&nbsp;000&nbsp;kr</div>
+                            </div>
+                        </div>
+                        <div class="rpr-bar-row">
+                            <div class="rpr-bar-label">Med vanlig ränta efter 30 år (bara på insatt kapital)</div>
+                            <div class="rpr-bar-track">
+                                <div class="rpr-bar-fill rpr-bar-vanlig" style="width:91.5%">1&nbsp;116&nbsp;000&nbsp;kr</div>
+                            </div>
+                        </div>
+                        <div class="rpr-bar-row">
+                            <div class="rpr-bar-label">Med ränta-på-ränta efter 30 år ✨</div>
+                            <div class="rpr-bar-track">
+                                <div class="rpr-bar-fill rpr-bar-rpr" style="width:100%">1&nbsp;220&nbsp;000&nbsp;kr</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rpr-takeaway">
+                        🌱 <strong>Vad det innebär för dig:</strong> Ju tidigare du börjar, desto kraftfullare blir effekten.
+                        Tio extra år kan fördubbla slutsumman — inte för att du sparar dubbelt så mycket, utan för att pengarna
+                        hinner växa på sin egen tillväxt. Tid är din viktigaste tillgång.
+                    </div>
+                </div>
+            </div>
 
             <div class="tabs">
                 <button class="tab-button active" onclick="switchTab('advanced', this)">Pengamaskin</button>
@@ -923,58 +1029,6 @@
 
 
                 </form>
-                <div class="rpr-panel">
-                    <button type="button" class="rpr-toggle" onclick="toggleRpr(this)" aria-expanded="false">
-                        <span>💡 Vad är ränta-på-ränta-effekten?</span>
-                        <span class="rpr-arrow">▼</span>
-                    </button>
-                    <div class="rpr-body">
-                        <h3>Enkelt förklarat — utan krångliga ord</h3>
-                        <p>
-                            Föreställ dig att du sätter in pengar på ett konto som ger 7&nbsp;% i avkastning per år.
-                            Det första året tjänar du ränta på det du satte in.
-                            Det andra året tjänar du ränta på <em>det du satte in + den ränta du redan fått</em>.
-                            Tredje året tjänar du ränta på allt det. Och så vidare.
-                        </p>
-                        <p style="margin-top:10px;">
-                            Det låter som en liten grej — men det är som ett snöboll som rullar nerför ett berg.
-                            I början är den liten. Mot slutet är den enorm.
-                        </p>
-                        <div class="rpr-example">
-                            <strong>Konkret exempel:</strong> Du sparar <strong>1&nbsp;000&nbsp;kr/månad</strong> i <strong>30&nbsp;år</strong> med <strong>7&nbsp;% avkastning</strong> per år.<br><br>
-                            Du har satt in totalt: <strong>360&nbsp;000&nbsp;kr</strong><br>
-                            Utan avkastning alls: <strong>360&nbsp;000&nbsp;kr</strong><br>
-                            Med enkel ränta (7&nbsp;% bara på det insatta, varje år): <strong>~&nbsp;1&nbsp;116&nbsp;000&nbsp;kr</strong><br>
-                            Med ränta-på-ränta (7&nbsp;% på allt som växer): <strong>~&nbsp;1&nbsp;220&nbsp;000&nbsp;kr</strong>
-                        </div>
-                        <div class="rpr-bars">
-                            <div class="rpr-bar-row">
-                                <div class="rpr-bar-label">Vad du satt in (1 000 kr/mån × 30 år)</div>
-                                <div class="rpr-bar-track">
-                                    <div class="rpr-bar-fill rpr-bar-insatt" style="width:29.5%">360&nbsp;000&nbsp;kr</div>
-                                </div>
-                            </div>
-                            <div class="rpr-bar-row">
-                                <div class="rpr-bar-label">Med vanlig ränta efter 30 år (bara på insatt kapital)</div>
-                                <div class="rpr-bar-track">
-                                    <div class="rpr-bar-fill rpr-bar-vanlig" style="width:91.5%">1&nbsp;116&nbsp;000&nbsp;kr</div>
-                                </div>
-                            </div>
-                            <div class="rpr-bar-row">
-                                <div class="rpr-bar-label">Med ränta-på-ränta efter 30 år ✨</div>
-                                <div class="rpr-bar-track">
-                                    <div class="rpr-bar-fill rpr-bar-rpr" style="width:100%">1&nbsp;220&nbsp;000&nbsp;kr</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="rpr-takeaway">
-                            🌱 <strong>Vad det innebär för dig:</strong> Ju tidigare du börjar, desto kraftfullare blir effekten.
-                            Tio extra år kan fördubbla slutsumman — inte för att du sparar dubbelt så mycket, utan för att pengarna
-                            hinner växa på sin egen tillväxt. Tid är din viktigaste tillgång.
-                        </div>
-                    </div>
-                </div>
-                <div class="info-box">ℹ️ "Pengar är väl använd tid!" — Joakim von Anka</div>
                 </div><!-- /.tab-inputs -->
                 <div class="tab-summary">
                 <p class="col-header">② Resultat</p>
@@ -1044,6 +1098,7 @@
                                     <th>År</th>
                                     <th>Investerat</th>
                                     <th>Avkastning</th>
+                                    <th>Avkastning +</th>
                                     <th>Totalt värde</th>
                                 </tr>
                             </thead>
@@ -1226,6 +1281,7 @@
                                     <th>År</th>
                                     <th>Investerat</th>
                                     <th>Avkastning</th>
+                                    <th>Avkastning +</th>
                                     <th>Kontovärde</th>
                                 </tr>
                             </thead>
@@ -1370,7 +1426,7 @@
         //  Tab-hantering — använder explicit btn-referens (inget globalt event)
         // ============================================================
         function toggleRpr(btn) {
-            const body = btn.nextElementSibling;
+            const body = document.getElementById('rprBody');
             const isOpen = body.classList.toggle('open');
             btn.classList.toggle('open', isOpen);
             btn.setAttribute('aria-expanded', isOpen);
@@ -1538,6 +1594,7 @@
             let tlBalance  = initialCapital;
             let tlInvested = initialCapital;
 
+            let tlPrevGain = null;
             for (let year = 1; year <= years; year++) {
                 // Både ISK och AF: kontot växer oavkortat varje månad.
                 // ISK-skatten betalas separat via deklarationen.
@@ -1548,11 +1605,22 @@
                     tlInvested += monthlyAmount;
                 }
                 const tlGain = tlBalance - tlInvested;
+                const tlDelta = tlPrevGain === null ? null : tlGain - tlPrevGain;
+                tlPrevGain = tlGain;
                 chartData.push({ year, invested: tlInvested, gain: tlGain, total: tlBalance });
                 const row = tbody.insertRow();
                 row.insertCell().textContent = year;
                 row.insertCell().textContent = formatCurrency(tlInvested);
                 row.insertCell().textContent = formatCurrency(tlGain);
+                const deltaCell = row.insertCell();
+                if (tlDelta === null) {
+                    deltaCell.textContent = '—';
+                    deltaCell.style.color = '#8b5a2b';
+                } else {
+                    deltaCell.textContent = '+' + formatCurrency(tlDelta);
+                    deltaCell.style.color = '#2d5016';
+                    deltaCell.style.fontWeight = '600';
+                }
                 const lastCell = row.insertCell();
                 const strong = document.createElement('strong');
                 strong.textContent = formatCurrency(tlBalance);
@@ -1974,6 +2042,7 @@
             let glBalance  = initialCap;
             let glInvested = initialCap;
 
+            let glPrevGain = null;
             for (let year = 1; year <= years; year++) {
                 // Tidslinjen visar bruttovärde varje år (oavsett kontotyp).
                 // ISK-skatten respektive kapitalvinstskatten redovisas
@@ -1983,11 +2052,22 @@
                     glInvested += requiredMonthly;
                 }
                 const glGain = glBalance - glInvested;
+                const glDelta = glPrevGain === null ? null : glGain - glPrevGain;
+                glPrevGain = glGain;
                 goalChartData.push({ year, invested: glInvested, gain: glGain, total: glBalance });
                 const row = goalTbody.insertRow();
                 row.insertCell().textContent = year;
                 row.insertCell().textContent = formatCurrency(glInvested);
                 row.insertCell().textContent = formatCurrency(glGain);
+                const deltaCell = row.insertCell();
+                if (glDelta === null) {
+                    deltaCell.textContent = '—';
+                    deltaCell.style.color = '#8b5a2b';
+                } else {
+                    deltaCell.textContent = '+' + formatCurrency(glDelta);
+                    deltaCell.style.color = '#2d5016';
+                    deltaCell.style.fontWeight = '600';
+                }
                 const lastCell = row.insertCell();
                 const strong = document.createElement('strong');
                 strong.textContent = formatCurrency(glBalance);

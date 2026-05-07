@@ -256,8 +256,11 @@ Befintliga funktioner som alltid ska finnas kvar:
 - Pengamaskin-fliken med alla nuvarande inmatningsfält
 - Sparmål-fliken med binärsökning och månadssparande-utdata
 - ISK-toggle med schablonränta och fribelopp
-- Tidslinje-tabell + Canvas-diagram (år-för-år) i kolumn ③
-- Ränta-på-ränta-explainer (expanderbar panel, placerad i kolumn ①)
+- Tidslinje-tabell + Canvas-diagram (år-för-år) i kolumn ③, inklusive kolumnen
+  "Avkastning +" som visar årets avkastningsökning jämfört med föregående år
+- Ränta-på-ränta-explainer (expanderbar panel, placerad i `.page-header` ovanför
+  flikarna — **inte** i kolumn ①). Panelen har `id="rprBody"` och `toggleRpr()`
+  hittar den via `getElementById('rprBody')`, inte `nextElementSibling`
 - Tooltip-systemet (`data-tip`, CSS `::after`)
 - Realtidsberäkning — **ingen Beräkna-knapp finns**, allt sker automatiskt
   via `input`-events med 300 ms debounce och `window.addEventListener('load')`
