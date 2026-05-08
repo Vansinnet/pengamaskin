@@ -42,13 +42,14 @@ const I18N = {
         rprToggle: '💡 Vad är ränta-på-ränta-effekten?',
         rprTitle: 'Enkelt förklarat — utan krångliga ord',
         rprPara1: 'Föreställ dig att du sätter in pengar på ett konto som ger 7\xa0% i avkastning per år. Det första året tjänar du ränta på det du satte in. Det andra året tjänar du ränta på <em>det du satte in + den ränta du redan fått</em>. Tredje året tjänar du ränta på allt det. Och så vidare.',
-        rprPara2: 'Det låter som en liten grej — men det är som ett snöboll som rullar nerför ett berg. I början är den liten. Mot slutet är den enorm.',
+        rprPara2: 'Det låter som en liten grej — men det är som en snöboll som rullar nerför ett berg. I början är den liten. Mot slutet är den enorm.',
         rprExampleTitle: 'Konkret exempel:',
         rprExampleText: 'Du sparar <strong>1\xa0000\xa0kr/månad</strong> i <strong>30\xa0år</strong> med <strong>7\xa0% avkastning</strong> per år.',
         rprExampleDetail: 'Du har satt in totalt: <strong>360\xa0000\xa0kr</strong><br>Utan avkastning alls: <strong>360\xa0000\xa0kr</strong><br>Med enkel ränta (7\xa0% bara på det insatta, varje år): <strong>~\xa01\xa0116\xa0000\xa0kr</strong><br>Med ränta-på-ränta (7\xa0% på allt som växer): <strong>~\xa01\xa0220\xa0000\xa0kr</strong>',
         rprBarInsatt: 'Vad du satt in (1 000 kr/mån × 30 år)',
         rprBarVanlig: 'Med vanlig ränta efter 30 år (bara på insatt kapital)',
         rprBarRpr: 'Med ränta-på-ränta efter 30 år ✨',
+        rprBarsNote: 'Exempel i SEK:',
         rprTakeaway: '🌱 <strong>Vad det innebär för dig:</strong> Ju tidigare du börjar, desto kraftfullare blir effekten. Tio extra år kan fördubbla slutsumman — inte för att du sparar dubbelt så mycket, utan för att pengarna hinner växa på sin egen tillväxt. Tid är din viktigaste tillgång.',
         // Advanced — formulär
         labelInitialCapital: 'Startkapital',
@@ -148,6 +149,7 @@ const I18N = {
         chartTooltipTotal: 'Totalt',
         chartTooltipInvested: 'Investerat',
         chartTooltipGain: 'Avkastning',
+        chartAriaLabel: 'Diagram över årlig tillväxt. Använd piltangenter för att bläddra mellan åren.',
         // Felmeddelanden
         errorRequired: '⚠️ Obligatoriskt fält',
         errorMin: '⚠️ Minimumvärde:',
@@ -202,6 +204,7 @@ const I18N = {
         rprBarInsatt: 'What you deposited (1,000 kr/month × 30 years)',
         rprBarVanlig: 'With simple interest after 30 years (only on deposits)',
         rprBarRpr: 'With compound interest after 30 years ✨',
+        rprBarsNote: 'Example in SEK:',
         rprTakeaway: '🌱 <strong>What it means for you:</strong> The earlier you start, the more powerful the effect. Ten extra years can double the final sum — not because you save twice as much, but because the money grows on its own growth. Time is your most valuable asset.',
         labelInitialCapital: 'Starting capital',
         tipInitialCapital: 'Money you already have saved and want to start with. Have 0? Write 0. Have a 50,000 buffer? Write 50000.',
@@ -295,6 +298,7 @@ const I18N = {
         chartTooltipTotal: 'Total',
         chartTooltipInvested: 'Invested',
         chartTooltipGain: 'Return',
+        chartAriaLabel: 'Chart showing annual growth. Use arrow keys to browse between years.',
         errorRequired: '⚠️ Required field',
         errorMin: '⚠️ Minimum value:',
         errorMax: '⚠️ Maximum value:',
@@ -344,7 +348,7 @@ function getCountry() {
     return getCountryConfig(state.country);
 }
 
-function getCurrencySymbol() {
+function activeCurrencySym() {
     const c = getCountry();
     return c.currency === 'SEK' ? 'kr' : c.currency === 'NOK' ? 'kr' : c.currency === 'DKK' ? 'kr' : c.currency === 'EUR' ? '€' : 'kr';
 }
@@ -388,7 +392,7 @@ function formatTaxRate(rate) {
 // ============================================================
 function updateCountryUI() {
     const c = getCountry();
-    const sym = getCurrencySymbol();
+    const sym = activeCurrencySym();
 
     // Uppdatera valutasymboler i input-grupper
     ['advCurrencyUnit','advMonthlyCurrencyUnit','goalCurrencyUnit','goalInitialCurrencyUnit'].forEach(function(id) {
@@ -558,6 +562,7 @@ function setupIskToggle(checkboxId, advRateGroupId, askRateGroupId, taxGroupId, 
 }
 
 function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, danishAskTaxRate) {
+    years = Math.floor(years);
     var frag = document.createDocumentFragment();
     var chartData = [];
     var balance = startCapital;
@@ -693,7 +698,10 @@ function validateInput(id, min, max, isRequired) {
     var value = parseFloat(element.value);
     var errorElement = document.getElementById(id + 'Error');
 
-    if (!errorElement) return true;
+    if (!errorElement) {
+        console.warn('validateInput: inget error-element hittat för "' + id + '" — validering förbigås');
+        return true;
+    }
 
     if (isNaN(value) || element.value === '') {
         if (isRequired) {
@@ -799,9 +807,9 @@ function bindAmountHint(inputId, hintId) {
         var n = parseFloat(val);
         var loc = getLocale();
         var curr = getCountry().currency;
-        if (n === 0) { hint.textContent = '0 ' + getCurrencySymbol(); return; }
+        if (n === 0) { hint.textContent = '0 ' + activeCurrencySym(); return; }
         var grouped = new Intl.NumberFormat(loc).format(Math.round(n));
-        var sym = getCurrencySymbol();
+        var sym = activeCurrencySym();
         var fmtDec = function(v) { return parseFloat(v.toFixed(2)).toString().replace('.', ','); };
         var millionsWord = state.lang === 'sv' ? 'miljoner' : 'million';
         var millionWord = state.lang === 'sv' ? 'miljon' : 'million';
@@ -834,15 +842,15 @@ function calculateAdvanced() {
     var c = getCountry();
     var loc = c.locale;
     var curr = c.currency;
-    var sym = getCurrencySymbol();
+    var sym = activeCurrencySym();
 
     var initialCapital  = parseFloat(document.getElementById('advInitialCapital').value) || 0;
     var monthlyAmount   = parseFloat(document.getElementById('advMonthlyAmount').value)  || 0;
     var annualRate      = parseFloat(document.getElementById('advRate').value)            || 0;
-    var years           = parseFloat(document.getElementById('advYears').value)           || 0;
+    var years           = Math.floor(parseFloat(document.getElementById('advYears').value))           || 0;
     var fees            = Math.max(0, Math.min(5, parseFloat(document.getElementById('fees').value) || 0));
     var inflation       = Math.max(0, Math.min(10, parseFloat(document.getElementById('advInflation').value) || 0));
-    var iskSchablonRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('iskRate').value) || 0));
+    var iskSchablonRate = Math.max(0, Math.min(15, parseFloat(document.getElementById('iskRate').value) || 0));
 
     setFeesError(annualRate, fees, $('feesError'), t('feesErrorNetNegative'));
 
@@ -1011,7 +1019,7 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
         var label = v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' :
                     v >= 1000    ? (v / 1000).toFixed(0) + 'k' :
                     v.toFixed(0);
-        var sym = getCurrencySymbol();
+        var sym = activeCurrencySym();
         ctx.fillText(label + ' ' + sym, PAD.left - 6, y + 4);
     }
 
@@ -1098,7 +1106,7 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     // Tooltip (mus + tangentbord)
     canvas.tabIndex = 0;
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', 'Diagram över årlig tillväxt. Använd piltangenter för att bläddra mellan åren.');
+    canvas.setAttribute('aria-label', t('chartAriaLabel'));
     canvas.style.outline = 'none';
     var focusIdx = dataPoints.length - 1;
     var loc = getLocale();
@@ -1138,22 +1146,22 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     };
     canvas.onmouseleave = hideTooltip;
 
-    canvas.addEventListener('focus', function () {
+    canvas.onfocus = function () {
         canvas.style.boxShadow = '0 0 0 2px #d4a600';
         showTooltip(focusIdx);
-    });
-    canvas.addEventListener('blur', function () {
+    };
+    canvas.onblur = function () {
         canvas.style.boxShadow = 'none';
         hideTooltip();
-    });
-    canvas.addEventListener('keydown', function (e) {
+    };
+    canvas.onkeydown = function (e) {
         if (e.key === 'ArrowRight') { focusIdx = Math.min(focusIdx + 1, dataPoints.length - 1); e.preventDefault(); }
         else if (e.key === 'ArrowLeft')  { focusIdx = Math.max(focusIdx - 1, 0); e.preventDefault(); }
         else if (e.key === 'Home')       { focusIdx = 0; e.preventDefault(); }
         else if (e.key === 'End')        { focusIdx = dataPoints.length - 1; e.preventDefault(); }
         else return;
         showTooltip(focusIdx);
-    });
+    };
 }
 
 // ============================================================
@@ -1256,6 +1264,7 @@ document.getElementById('goalIskRate').addEventListener('input', function() {
 ['goalTarget','goalInitial','goalYears','goalRate'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', function() {
+        showCalc();
         if (id === 'goalRate') {
             setFeesError(parseFloat($('goalRate').value) || 0, parseFloat($('goalFees').value) || 0, $('goalFeesError'));
         }
@@ -1286,16 +1295,16 @@ function calculateGoal() {
     var c = getCountry();
     var loc = c.locale;
     var curr = c.currency;
-    var sym = getCurrencySymbol();
+    var sym = activeCurrencySym();
     var advType = c.taxAdvantagedType;
 
     var targetRaw  = parseFloat(document.getElementById('goalTarget').value)   || 0;
     var initialCap = parseFloat(document.getElementById('goalInitial').value)  || 0;
-    var years      = parseFloat(document.getElementById('goalYears').value)    || 0;
+    var years      = Math.floor(parseFloat(document.getElementById('goalYears').value))    || 0;
     var annualRate = parseFloat(document.getElementById('goalRate').value)     || 0;
     var fees       = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalFees').value) || 0));
     var inflation  = Math.max(0, Math.min(10, parseFloat(document.getElementById('goalInflation').value) || 0));
-    var iskSchRate = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalIskRate').value) || 0));
+    var iskSchRate = Math.max(0, Math.min(15, parseFloat(document.getElementById('goalIskRate').value) || 0));
     var realTerms  = document.getElementById('goalRealTerms').checked;
 
     setFeesError(annualRate, fees, $('goalFeesError'), t('feesErrorGoal'));
@@ -1362,6 +1371,16 @@ function calculateGoal() {
             document.getElementById('goalTaxResultLabel').textContent = t('taxTypeCapitalGains');
         }
         document.getElementById('goalTaxResult').textContent = formatCurrency(finalRes.tax, loc, curr);
+
+        // Fördelningsdiagram
+        renderBreakdown('goalChart', 'goalLegend', nominalTarget, initialCap, finalRes.netValue, totalFees, finalRes.tax, state.goalIskOn,
+            { invested: t('legendInvested'), gain: t('legendGain') });
+
+        // Tidslinje
+        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody');
+        state.goalChartData = noSaveChartData;
+        requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
+
         return;
     }
     noSavingsEl.style.display = 'none';
