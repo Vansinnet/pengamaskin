@@ -1,10 +1,10 @@
-# Pengamaskinen – Nordisk investeringskalkylator
+# Pengamaskinen – Europeisk investeringskalkylator
 
 **🌐 [Öppna Pengamaskinen →](https://pengamaskin.pages.dev)**
 
-Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för nordiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
+Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för europeiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
 
-Stöd för **Sverige, Norge, Danmark, Finland och Island** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
+Stöd för **35 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
 
 ## 🎯 Funktioner
 
@@ -13,8 +13,8 @@ Se hur ditt sparande växer år för år med:
 - Startkapital och månadligt sparande
 - Årlig avkastning (nominell ränta, månadsvis kapitalisering)
 - Förvaltningsavgifter (TER)
-- Landsspecifika skatteregler automatiskt (se landstabell nedan)
-- Skattegynnat konto per land (ISK, ASK, OSK)
+- Landsspecifika skatteregler automatiskt
+- Skattegynnat konto per land (ISK, ASK, OSK, ISA, TBSZ, PIR m.fl.)
 - Inflationsjustering för realvärde
 
 ### Sparmål — Räkna ut månadssparande
@@ -28,23 +28,34 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 - **År-för-år tidslinje** — detaljerad tabell + interaktivt Canvas-diagram
 - **Ränta-på-ränta-explainer** — expanderbar förklaring med visuella staplar
 
-## 🌍 Länder och kontotyper
+## 🌍 Länder och regioner (35 länder)
 
-| Land | Standardkonto | Skattegynnat konto | Kapitalvinstskatt |
-|------|--------------|-------------------|-------------------|
-| 🇸🇪 Sverige | AF-konto | **ISK** (schablonbeskattning, 1,25% golv, 300k fribelopp) | 30 % |
-| 🇳🇴 Norge | Vanlig konto | **ASK** (skjermingsfradrag ~2,5%/år, beskattas vid uttag) | 37,84 % |
-| 🇩🇰 Danmark | Frit depot | **ASK** (17 % årlig lagerbeskatning, dras från kontot) | 27/42 % |
-| 🇫🇮 Finland | Arvo-osuustili | **OSK** (uppskjuten skatt, beskattas vid uttag) | 30/34 % |
-| 🇮🇸 Island | Venjulegur reikningur | — (inget skattegynnat konto) | 22 % |
+| Region | Länder |
+|--------|--------|
+| Norden | 🇸🇪 Sverige, 🇳🇴 Norge, 🇩🇰 Danmark, 🇫🇮 Finland, 🇮🇸 Island |
+| Västeuropa | 🇩🇪 Tyskland, 🇫🇷 Frankrike, 🇦🇹 Österrike, 🇨🇭 Schweiz, 🇱🇮 Liechtenstein |
+| Brittiska öarna | 🇬🇧 Storbritannien, 🇮🇪 Irland |
+| Benelux | 🇳🇱 Nederländerna, 🇧🇪 Belgien, 🇱🇺 Luxemburg |
+| Centraleuropa | 🇵🇱 Polen, 🇨🇿 Tjeckien, 🇸🇰 Slovakien, 🇭🇺 Ungern |
+| Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇵🇹 Portugal, 🇬🇷 Grekland, 🇨🇾 Cypern, 🇲🇹 Malta, 🇲🇨 Monaco, 🇦🇩 Andorra, 🇸🇲 San Marino |
+| Baltikum | 🇪🇪 Estland, 🇱🇻 Lettland, 🇱🇹 Litauen |
+| Östeuropa | 🇷🇴 Rumänien, 🇧🇬 Bulgarien |
+| Balkan | 🇭🇷 Kroatien, 🇸🇮 Slovenien |
 
-### Så fungerar skattegynnade konton i verktyget:
+### Skatteregimer (8 st, pluggbara)
 
-- **Svensk ISK** — Skatteverkets officiella kvartalsformel: `(saldo 1/1 + 1/4 + 1/7 + 1/10 + insättningar) / 4`. Skatten betalas separat (minskar inte kontosaldot).
-- **Norsk ASK** — Skjermingsfradrag (riskfri avkastning × anskaffningsvärde) dras av från vinsten före skatt. Årligt fradrag ackumuleras över sparperioden.
-- **Dansk ASK** — 17 % årlig skatt på faktisk avkastning (lagerbeskatning). Skatten dras direkt från kontot. Förluster kan framföras till nästa år.
-- **Finsk OSK** — Uppskjuten skatt vid uttag. Progressiv skatt 30/34 % med gräns vid 30 000 €.
-- **Island** — Endast standardkonto med 22 % kapitalvinstskatt.
+| Regim | Beskrivning | Används av |
+|-------|------------|-----------|
+| `CGT_ONLY` | Kapitalvinstskatt vid uttag | Alla länders standardkonton |
+| `ISK` | Svensk schablonbeskattning (kvartalsformel) | Sverige (SE) |
+| `LAGER_ANNUAL` | Årlig lagerbeskatning med carry-forward | Danmark (DK) |
+| `DEFERRED_SKJERMING` | Uppskjuten skatt med skjermingsfradrag | Norge (NO) |
+| `DEFERRED_PLAIN` | Uppskjuten skatt utan avdrag (progressiv CGT) | Finland, Frankrike, Estland, Lettland, Litauen |
+| `TAX_FREE_WRAPPER` | Helt skattefri investeringsform | Storbritannien, Italien, Ungern |
+| `DUTCH_BOX3` | Förmögenhetsskatt (schablonavkastning) | Nederländerna (NL) |
+| `TIME_TEST_CGT` | Skattefritt efter X års innehav | Tjeckien, Slovakien, Slovenien, Kroatien, Luxemburg |
+
+*Arkitekturen är designad för att göra nya länder triviala — ~20 rader konfiguration, noll kodändringar i beräknings- eller UI-logik (förutsatt att regimen redan finns).*
 
 ## 💡 Användning
 
@@ -102,12 +113,31 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 |----------|--------|
 | Språk | JavaScript (vanilla, inga ramverk) |
 | Styling | CSS3 (guld/brun-tema, flexbox, responsiv grid) |
-| Arkitektur | `calculations.js` (rena funktioner) + `app.js` (UI) |
+| Arkitektur | `calc/` — rena beräkningsfunktioner (5 filer) + `app.js` (UI) |
 | i18n | Dynamiskt lexikon, `data-i18n`-attribut |
 | Flaggor | Inline SVG, CSP-kompatibla |
 | Diagram | Canvas med tooltip + tangentbordsnavigering |
-| Tester | `node test.js` — 58 regressionstester |
+| Tester | `node test.js` — 90 regressionstester (3 sviter) |
 | Licens | MIT |
+
+### Filstruktur
+
+```
+/
+├── index.html              # UI-struktur (HTML + event-attribut)
+├── styles.css              # All styling
+├── app.js                  # UI-logik, i18n, state, DOM, canvas
+│
+├── calc/                   # Beräkningsbibliotek — rena funktioner
+│   ├── constants.js        # Lagstadgade skattekontanter (fallback)
+│   ├── utils.js            # Validering och formatering
+│   ├── core.js             # Kärnberäkningar (FV, avgifter, CGT)
+│   ├── tax-regimes.js      # Pluggbar skatteregims-register (8 st)
+│   └── countries.js        # Landskonfiguration (35 länder) + regioner
+│
+├── test.js                 # Node.js-testrunner
+└── _headers                # CSP- och säkerhetsheaders (Cloudflare Pages)
+```
 
 ## 📮 Feedback & bidrag
 
@@ -115,7 +145,7 @@ Har du förslag på förbättringar? Hittade du en bugg? Skapa ett [GitHub issue
 
 ## ⚠️ Ansvarsfriskrivning
 
-Pengamaskinen är ett **utbildningsverktyg**. Skatteregler kan ändras — kontrollera alltid mot Skatteverket/Skatteetaten/Vero/Skatturinn för aktuella satser. Använd siffrorna som vägledning, inte som garantier. För personlig finansiell rådgivning, kontakta en licensierad rådgivare.
+Pengamaskinen är ett **utbildningsverktyg**. Skatteregler kan ändras — kontrollera alltid mot respektive lands skattemyndighet för aktuella satser. Använd siffrorna som vägledning, inte som garantier. För personlig finansiell rådgivning, kontakta en licensierad rådgivare.
 
 ---
 
