@@ -3,7 +3,9 @@
 #
 #  Alla headers sätts på samtliga routes (/*).
 #  Verktyget laddar enbart same-origin-resurser:
-#    index.html, styles.css, calculations.js, app.js
+#    index.html, styles.css, app.js,
+#    calc/constants.js, calc/utils.js, calc/core.js,
+#    calc/tax-regimes.js, calc/countries.js
 #  Inga externa skript, fonter, bilder eller API:er.
 # ============================================================
 
