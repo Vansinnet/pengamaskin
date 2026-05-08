@@ -30,7 +30,6 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
 
-  # --- Äldre skydd (harmlösa, skadar inte) ---
-  X-XSS-Protection: 1; mode=block
+  # Äldre skydd (harmlösa, skadar inte)
   X-Download-Options: noopen
   X-Permitted-Cross-Domain-Policies: none

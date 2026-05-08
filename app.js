@@ -181,6 +181,7 @@ const I18N = {
         chartLegendReturn: 'Avkastning',
         // Period suffix
         perMonth: '/mån',
+        goalUnreachable: 'Målet kan vara ouppnåeligt med dessa parametrar',
         monthsOver: 'månader över',
     },
     en: {
@@ -326,17 +327,13 @@ const I18N = {
         chartLegendInvested: 'Invested',
         chartLegendReturn: 'Return',
         perMonth: '/month',
+        goalUnreachable: 'Goal may be unreachable with these parameters',
         monthsOver: 'months over',
     }
 };
 
 function t(key) {
     const lang = state.lang || 'sv';
-    const dict = I18N[lang] || I18N.sv;
-    return dict[key] !== undefined ? dict[key] : (I18N.sv[key] || key);
-}
-
-function tForLang(key, lang) {
     const dict = I18N[lang] || I18N.sv;
     return dict[key] !== undefined ? dict[key] : (I18N.sv[key] || key);
 }
@@ -360,27 +357,25 @@ function getLocale() {
 // ============================================================
 //  UI-översättning — uppdatera alla data-i18n-element
 // ============================================================
-function translatePage(lang) {
-    lang = lang || state.lang;
-
+function translatePage() {
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
-        el.textContent = tForLang(el.getAttribute('data-i18n'), lang);
+        el.textContent = t(el.getAttribute('data-i18n'));
     });
     document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
-        el.innerHTML = tForLang(el.getAttribute('data-i18n-html'), lang);
+        el.innerHTML = t(el.getAttribute('data-i18n-html'));
     });
     document.querySelectorAll('[data-i18n-tip]').forEach(function(el) {
-        el.setAttribute('data-tip', tForLang(el.getAttribute('data-i18n-tip'), lang));
+        el.setAttribute('data-tip', t(el.getAttribute('data-i18n-tip')));
     });
     document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
-        el.setAttribute('aria-label', tForLang(el.getAttribute('data-i18n-aria'), lang));
+        el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
     });
     document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
-        el.setAttribute('title', tForLang(el.getAttribute('data-i18n-title'), lang));
+        el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
     });
 
-    document.documentElement.lang = lang;
-    document.title = tForLang('appName', lang) + ' – ' + (lang === 'sv' ? 'Gratis investeringskalkylator' : 'Free investment calculator');
+    document.documentElement.lang = state.lang;
+    document.title = t('appName') + ' – ' + (state.lang === 'sv' ? 'Gratis investeringskalkylator' : 'Free investment calculator');
 }
 
 function formatTaxRate(rate) {
@@ -512,9 +507,6 @@ function updateCountryUI() {
         if ($('goalTaxGroup')) { $('goalTaxGroup').style.opacity = '1'; $('goalTaxGroup').style.pointerEvents = 'auto'; }
     }
 
-    // Uppdatera varningsmeddelande
-    var advWarning = document.getElementById('advWarning');
-    if (advWarning) advWarning.textContent = t('warningLargeNumbers');
 }
 
 // ============================================================
@@ -1405,6 +1397,9 @@ function calculateGoal() {
     var fvWithFeesNoTax = computeFV(initialCap, requiredMonthly, monthlyRateNet, months);
     var totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
 
+    // Om målet är ouppnåeligt under givna parametrar (t.ex. 0 % avkastning + ISK-skatt)
+    var goalUnreachable = finalNet < nominalTarget && requiredMonthly > nominalTarget * 0.5;
+
     var accountTypeStr;
     if (state.goalIskOn && advType) {
         if (advType === 'ISK') accountTypeStr = 'ISK';
@@ -1416,7 +1411,8 @@ function calculateGoal() {
     }
 
     monthlyEl.textContent = formatCurrency(Math.ceil(requiredMonthly), loc, curr) + ' ' + t('perMonth');
-    monthlyNoteEl.textContent = (state.lang === 'sv' ? 'Under ' : 'Over ') + years + (state.lang === 'sv' ? ' år · ' : ' years · ') + accountTypeStr;
+    monthlyNoteEl.textContent = (goalUnreachable ? '⚠️ ' + t('goalUnreachable') + ' — ' : '')
+        + (state.lang === 'sv' ? 'Under ' : 'Over ') + years + (state.lang === 'sv' ? ' år · ' : ' years · ') + accountTypeStr;
 
     document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget, loc, curr);
     document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv, loc, curr);
@@ -1612,7 +1608,7 @@ var langDropdown = initCustomDropdown(
     function(value) {
         state.lang = value;
         countryDropdown.updateLabels(state.lang);
-        translatePage(state.lang);
+        translatePage();
         updateCountryUI();
         clearTimeout(state.advTimeout);
         clearTimeout(state.goalTimeout);
@@ -1632,6 +1628,10 @@ var countryDropdown = initCustomDropdown(
         state.goalIskOn = false;
         document.getElementById('iskEnabled').checked = false;
         document.getElementById('goalIskEnabled').checked = false;
+        // Dölj rate-grupper defensivt — updateCountryUI() styr synlighet efter land
+        ['iskRateGroup','askRateGroup','goalIskRateGroup','goalAskRateGroup'].forEach(function(id) {
+            var el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
         updateCountryUI();
         clearTimeout(state.advTimeout);
         clearTimeout(state.goalTimeout);
@@ -1649,7 +1649,7 @@ window.addEventListener('load', function() {
     state.goalIskOn = document.getElementById('goalIskEnabled').checked;
 
     // Initialisera UI för valt språk och land
-    translatePage(state.lang);
+    translatePage();
     updateCountryUI();
 
     // Första beräkning

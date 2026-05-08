@@ -360,6 +360,10 @@ section('Svit 2: Regressionstest med kanda facit');
     );
 }
 
+// Snapshot efter Svit 2 — används för separat rapportering
+var svit2Passed = totalPassed - builtIn.passed;
+var svit2Failed = totalFailed - builtIn.failed;
+var svit2Total  = svit2Passed + svit2Failed;
 
 // ===========================================================================
 //  SVIT 3 -- Formaterings- och valideringsfunktioner
@@ -471,15 +475,12 @@ assert('isValidNumber: strang -> false', !isValidNumber('abc'));
 
 console.log('\n' + '='.repeat(50));
 
-var svit2Passed = totalPassed - builtIn.passed;
-var svit2Failed = totalFailed - builtIn.failed;
+var svit3Passed = totalPassed - builtIn.passed - svit2Passed;
+var svit3Failed = totalFailed - builtIn.failed - svit2Failed;
 
-// Svit 3 raknas separat (formaterings- och valideringsfunktioner)
-// OBS: svit3-raderna borjar efter ISK/simulateGoal-blocken i svit 2.
-// For enkelhetens skull rapporteras allt over builtIn som svit 2+3.
-
-console.log('Svit 1 (inbyggda):     ' + builtIn.passed + ' OK, ' + builtIn.failed + ' fel');
-console.log('Svit 2+3 (regression): ' + svit2Passed + ' OK, ' + svit2Failed + ' fel');
+console.log('Svit 1 (inbyggda):  ' + builtIn.passed + ' OK, ' + builtIn.failed + ' fel');
+console.log('Svit 2 (regression): ' + svit2Passed + ' OK, ' + svit2Failed + ' fel');
+console.log('Svit 3 (formatering): ' + svit3Passed + ' OK, ' + svit3Failed + ' fel');
 console.log('-'.repeat(50));
 console.log('TOTALT: ' + totalPassed + ' OK, ' + totalFailed + ' fel');
 
