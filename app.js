@@ -30,7 +30,9 @@ const I18N = {
         subtitle: '"Pengar är väl använd tid!" — Joakim von Anka',
         langLabel: 'Språk',
         countryLabel: 'Land',
+        tabsAriaLabel: 'Verktygsflikar',
         skipLink: 'Hoppa till innehållet',
+        appTagline: 'Gratis investeringskalkylator',
         // Tabs
         tabAdvanced: 'Pengamaskin',
         tabGoal: 'Sparmål',
@@ -74,7 +76,7 @@ const I18N = {
         iskDescription: 'Schablonbeskattning på kapitalunderlaget varje år — ingen reavinstskatt vid uttag.',
         labelISKRate: 'ISK schablonränta 2026 (%)',
         tipISKRate: 'Den ränta som styr hur stor ISK-skatten är. Bestäms av staten varje år som statslåneräntan + 1 %. År 2026: 2,55 % + 1 % = 3,55 %. Du behöver inte ändra detta om du inte vet bättre.',
-        iskRateHint: '2026: statslåneränta 2,55 % + 1 % = 3,55 % · Effektiv skatt = schablonränta × 30 % · Golv: 1,25 %. Kapitalunderlag = (värdet 1/1, 1/4, 1/7, 1/10 + årets insättningar) ÷ 4. De första 300 000 kr av kapitalunderlaget är skattefria (fr.o.m. 2026).',
+        iskRateHint: '2026: statslåneränta 2,55 % + 1 % = <strong>3,55 %</strong> · Effektiv skatt = schablonränta × 30 % · Golv: 1,25 %<br>Kapitalunderlag = (värdet 1/1, 1/4, 1/7, 1/10 + årets insättningar) ÷ 4 (Skatteverkets formel).<br>De första <strong>300 000 kr</strong> av kapitalunderlaget är skattefria (fr.o.m. 2026).',
         labelASKRate: 'ASK årlig lagerbeskatning',
         tipASKRate: 'Dansk Aktiesparekonto (ASK) beskattas med 17 % på årets totala avkastning — både realiserad och orealiserad. Skatten dras direkt från kontot varje år.',
         askRateFixed: 'Fast årlig skatt på avkastningen (lagerbeskatning)',
@@ -83,6 +85,10 @@ const I18N = {
         resultTitle: 'Detaljerade Resultat',
         labelTotalInvested: 'Totalt investerat:',
         labelGrossValue: 'Bruttovärde (ingen skatt/avgift):',
+        labelGrossISKValue: 'ISK-kontots värde:',
+        labelGrossASKValue: 'ASK-kontots värde:',
+        labelGrossDeferredValue: 'Kontots värde (före skatt):',
+        labelGrossAccountValue: 'Kontots värde:',
         labelFeesResult: 'Förvaltningsavgifter:',
         labelTaxesResult: 'Skatt på kapitalvinst:',
         labelRealValue: 'Realvärde (efter inflation):',
@@ -95,6 +101,7 @@ const I18N = {
         thInvested: 'Investerat',
         thReturn: 'Avkastning',
         thReturnPlus: 'Avkastning +',
+        thReturnPlusTitle: 'Årets avkastningsökning jämfört med föregående år',
         thTotal: 'Totalt värde',
         // Goal — formulär
         goalHeading: 'Såhär mycket pengar vill jag ha',
@@ -138,6 +145,9 @@ const I18N = {
         goalBreakdownTitle: 'Fördelning',
         goalTimelineTitle: '📈 Sparplan — Årlig tillväxt',
         goalThTotal: 'Kontovärde',
+        footerLicense: 'Öppen källkod —',
+        footerUpdated: 'Senast uppdaterat: 6 maj 2026',
+        footerGitHub: 'Visa källkoden på GitHub',
         // Legend / chart
         legendInvested: 'Investerat',
         legendGain: 'Nettovinst',
@@ -181,6 +191,9 @@ const I18N = {
         chartLegendReturn: 'Avkastning',
         // Period suffix
         perMonth: '/mån',
+        goalStandardAccount: 'vanligt konto',
+        goalUnder: 'Under ',
+        goalYearsSpan: ' år · ',
         goalUnreachable: 'Målet kan vara ouppnåeligt med dessa parametrar',
         monthsOver: 'månader över',
     },
@@ -189,7 +202,9 @@ const I18N = {
         subtitle: '"Money is time well spent!" — Scrooge McDuck',
         langLabel: 'Language',
         countryLabel: 'Country',
+        tabsAriaLabel: 'Tool tabs',
         skipLink: 'Skip to content',
+        appTagline: 'Free investment calculator',
         tabAdvanced: 'Calculator',
         tabGoal: 'Savings Goal',
         colParams: '① Parameters',
@@ -229,7 +244,7 @@ const I18N = {
         iskDescription: 'Standard-rate taxation on the capital base each year — no capital gains tax on withdrawal.',
         labelISKRate: 'ISK standard rate 2026 (%)',
         tipISKRate: 'The rate that determines the ISK tax. Set annually by the government. 2026: 2.55% + 1% = 3.55%. No need to change unless you know better.',
-        iskRateHint: '2026: government bond rate 2.55% + 1% = 3.55% · Effective tax = standard rate × 30% · Floor: 1.25%. Capital base = (value Jan 1, Apr 1, Jul 1, Oct 1 + annual deposits) ÷ 4. The first 300,000 kr of the capital base is tax-free (from 2026).',
+        iskRateHint: '2026: government bond rate 2.55% + 1% = <strong>3.55%</strong> · Effective tax = standard rate × 30% · Floor: 1.25%<br>Capital base = (value Jan 1, Apr 1, Jul 1, Oct 1 + annual deposits) ÷ 4 (Tax Agency formula).<br>The first <strong>300,000 kr</strong> of the capital base is tax-free (from 2026).',
         labelASKRate: 'ASK annual inventory taxation',
         tipASKRate: 'Danish Share Savings Account (ASK) is taxed at 17% on the year\'s total return — both realized and unrealized. Tax is deducted directly from the account each year.',
         askRateFixed: 'Fixed annual tax on returns (inventory taxation)',
@@ -237,6 +252,10 @@ const I18N = {
         resultTitle: 'Detailed Results',
         labelTotalInvested: 'Total invested:',
         labelGrossValue: 'Gross value (no tax/fees):',
+        labelGrossISKValue: 'ISK account value:',
+        labelGrossASKValue: 'ASK account value:',
+        labelGrossDeferredValue: 'Account value (pre-tax):',
+        labelGrossAccountValue: 'Account value:',
         labelFeesResult: 'Management fees:',
         labelTaxesResult: 'Capital gains tax:',
         labelRealValue: 'Real value (inflation adjusted):',
@@ -248,6 +267,7 @@ const I18N = {
         thInvested: 'Invested',
         thReturn: 'Return',
         thReturnPlus: 'Return +',
+        thReturnPlusTitle: 'Year-on-year increase in return compared to previous year',
         thTotal: 'Total value',
         goalHeading: 'This is how much money I want',
         goalSubheading: 'Enter your goal — we\'ll calculate how much you need to save each month.',
@@ -289,6 +309,9 @@ const I18N = {
         goalBreakdownTitle: 'Breakdown',
         goalTimelineTitle: '📈 Savings Plan — Annual growth',
         goalThTotal: 'Account value',
+        footerLicense: 'Open source —',
+        footerUpdated: 'Last updated: May 6, 2026',
+        footerGitHub: 'View source code on GitHub',
         legendInvested: 'Invested',
         legendGain: 'Net profit',
         legendFees: 'Fees',
@@ -327,6 +350,9 @@ const I18N = {
         chartLegendInvested: 'Invested',
         chartLegendReturn: 'Return',
         perMonth: '/month',
+        goalStandardAccount: 'standard account',
+        goalUnder: 'Over ',
+        goalYearsSpan: ' years · ',
         goalUnreachable: 'Goal may be unreachable with these parameters',
         monthsOver: 'months over',
     }
@@ -375,7 +401,7 @@ function translatePage() {
     });
 
     document.documentElement.lang = state.lang;
-    document.title = t('appName') + ' – ' + (state.lang === 'sv' ? 'Gratis investeringskalkylator' : 'Free investment calculator');
+    document.title = t('appName') + ' – ' + t('appTagline');
 }
 
 function formatTaxRate(rate) {
@@ -489,6 +515,9 @@ function updateCountryUI() {
             if (askRateGrp) askRateGrp.style.display = 'none';
             if (goalIskRateGrp) goalIskRateGrp.style.display = 'none';
             if (goalAskRateGrp) goalAskRateGrp.style.display = 'none';
+            // Återställ kapitalvinstgrupperna som kan ha dimmats av ISK-toggle
+            if ($('taxRateGroup')) { $('taxRateGroup').style.opacity = '1'; $('taxRateGroup').style.pointerEvents = 'auto'; }
+            if ($('goalTaxGroup')) { $('goalTaxGroup').style.opacity = '1'; $('goalTaxGroup').style.pointerEvents = 'auto'; }
         }
     } else {
         // Island — inget skattegynnat konto
@@ -573,7 +602,7 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
         // Dansk ASK — årlig 17 % lagerbeskatning (samma logik som simulateDanishASK)
         if (danishAskTaxRate) {
             var yrGain = balance - balBeforeYear - (monthlyAmount * 12);
-            if (carryForwardLoss > 0) {
+            if (carryForwardLoss > 0 && yrGain > 0) {
                 var used = Math.min(yrGain, carryForwardLoss);
                 yrGain -= used;
                 carryForwardLoss -= used;
@@ -732,6 +761,7 @@ document.getElementById('fees').addEventListener('input', function() {
     if (val > 5) this.value = 5;
     setFeesError(parseFloat($('advRate').value) || 0, val, $('feesError'));
     $('feesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+    showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
 });
@@ -741,6 +771,7 @@ document.getElementById('advInflation').addEventListener('input', function() {
     if (val < 0) this.value = 0;
     if (val > 10) this.value = 10;
     document.getElementById('advInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+    showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
 });
@@ -750,6 +781,7 @@ setupIskToggle('iskEnabled', 'iskRateGroup', 'askRateGroup', 'taxRateGroup', 'is
 document.getElementById('iskRate').addEventListener('input', function() {
     var val = parseFloat(this.value);
     document.getElementById('iskRateValue').textContent = val.toFixed(2) + '%';
+    showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
 });
@@ -802,7 +834,7 @@ function bindAmountHint(inputId, hintId) {
         if (n === 0) { hint.textContent = '0 ' + activeCurrencySym(); return; }
         var grouped = new Intl.NumberFormat(loc).format(Math.round(n));
         var sym = activeCurrencySym();
-        var fmtDec = function(v) { return parseFloat(v.toFixed(2)).toString().replace('.', ','); };
+        var fmtDec = function(v) { var s = parseFloat(v.toFixed(2)).toString(); return state.lang === 'en' ? s : s.replace('.', ','); };
         var millionsWord = state.lang === 'sv' ? 'miljoner' : 'million';
         var millionWord = state.lang === 'sv' ? 'miljon' : 'million';
         var billionsWord = state.lang === 'sv' ? 'miljarder' : 'billion';
@@ -923,15 +955,13 @@ function calculateAdvanced() {
     if (iskActive) {
         if (advType === 'ISK') {
             taxesLabelEl.textContent = t('taxTypeISK');
-            grossLabelEl.textContent = c.taxAdvantagedType === 'ISK'
-                ? (state.lang === 'sv' ? 'ISK-kontots värde:' : 'ISK account value:')
-                : (state.lang === 'sv' ? 'Kontots värde:' : 'Account value:');
+            grossLabelEl.textContent = t('labelGrossISKValue');
         } else if (advType === 'ASK_ANNUAL') {
             taxesLabelEl.textContent = t('taxTypeASK');
-            grossLabelEl.textContent = state.lang === 'sv' ? 'ASK-kontots värde:' : 'ASK account value:';
+            grossLabelEl.textContent = t('labelGrossASKValue');
         } else {
             taxesLabelEl.textContent = t('taxTypeCapitalGains');
-            grossLabelEl.textContent = state.lang === 'sv' ? 'Kontots värde (före skatt):' : 'Account value (pre-tax):';
+            grossLabelEl.textContent = t('labelGrossDeferredValue');
         }
     } else {
         taxesLabelEl.textContent = t('taxTypeCapitalGains');
@@ -1064,7 +1094,7 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
             ctx.lineTo(x, PAD.top + plotH + 5);
             ctx.stroke();
             ctx.fillStyle = '#6b4423';
-            var yearLabel = (state.lang === 'sv' ? 'År ' : 'Yr ') + d.year;
+            var yearLabel = t('chartTooltipYear') + ' ' + d.year;
             ctx.fillText(yearLabel, x, H - PAD.bottom + 18);
         }
     });
@@ -1108,10 +1138,10 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
         if (idx < 0 || idx >= dataPoints.length) return;
         var d = dataPoints[idx];
         var tooltip = document.getElementById(tooltipId);
-        var yearLabel = (state.lang === 'sv' ? 'År ' : 'Yr ') + d.year;
-        var totalLabel = (state.lang === 'sv' ? 'Totalt: ' : 'Total: ');
-        var investedLabel = (state.lang === 'sv' ? 'Investerat: ' : 'Invested: ');
-        var gainLabel = (state.lang === 'sv' ? 'Avkastning: ' : 'Return: ');
+        var yearLabel = t('chartTooltipYear') + ' ' + d.year;
+        var totalLabel = t('chartTooltipTotal') + ': ';
+        var investedLabel = t('chartTooltipInvested') + ': ';
+        var gainLabel = t('chartTooltipGain') + ': ';
         tooltip.textContent = '';
         [yearLabel, totalLabel + formatCurrency(d.total, loc, curr), investedLabel + formatCurrency(d.invested, loc, curr), gainLabel + formatCurrency(d.gain, loc, curr)].forEach(function (t, i) {
             if (i > 0) tooltip.appendChild(document.createElement('br'));
@@ -1273,6 +1303,15 @@ document.getElementById('goalRealTerms').addEventListener('change', function() {
 // ============================================================
 //  SPARMÅL — beräkning
 // ============================================================
+function applyGoalTaxLabel(advType) {
+    var label = t('taxTypeCapitalGains');
+    if (state.goalIskOn && advType) {
+        if (advType === 'ISK')           label = t('taxTypeISK');
+        else if (advType === 'ASK_ANNUAL') label = t('taxTypeASK');
+    }
+    document.getElementById('goalTaxResultLabel').textContent = label;
+}
+
 function calculateGoal() {
     hideCalc();
     if (!validateInput('goalTarget', 1, 1000000000, true) ||
@@ -1346,22 +1385,23 @@ function calculateGoal() {
 
         var finalRes = simulateGoal(initialCap, 0, monthlyRateNet, years, state.goalIskOn, iskSchRate, fribelopp, goalConfig);
 
+        if (!isValidNumber(finalRes.netValue)) {
+            resultsEl.classList.remove('show');
+            timelineEl.classList.remove('show');
+            return;
+        }
+
         document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget, loc, curr);
         document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv, loc, curr);
         document.getElementById('goalTotalIn').textContent       = formatCurrency(initialCap, loc, curr);
         document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalRes.netValue - initialCap, 0), loc, curr);
         document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees, loc, curr);
 
-        if (state.goalIskOn && advType) {
-            if (advType === 'ISK')
-                document.getElementById('goalTaxResultLabel').textContent = t('taxTypeISK');
-            else if (advType === 'ASK_ANNUAL')
-                document.getElementById('goalTaxResultLabel').textContent = t('taxTypeASK');
-            else
-                document.getElementById('goalTaxResultLabel').textContent = t('taxTypeCapitalGains');
-        } else {
-            document.getElementById('goalTaxResultLabel').textContent = t('taxTypeCapitalGains');
-        }
+        var goalWarningEl = document.getElementById('goalWarning');
+        goalWarningEl.style.display = finalRes.netValue > 1e9 ? 'block' : 'none';
+        if (finalRes.netValue > 1e9) goalWarningEl.textContent = t('warningLargeNumbers');
+
+        applyGoalTaxLabel(advType);
         document.getElementById('goalTaxResult').textContent = formatCurrency(finalRes.tax, loc, curr);
 
         // Fördelningsdiagram
@@ -1369,7 +1409,8 @@ function calculateGoal() {
             { invested: t('legendInvested'), gain: t('legendGain') });
 
         // Tidslinje
-        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody');
+        var goalAskTaxNoSave = (state.goalIskOn && advType === 'ASK_ANNUAL') ? (c.askAnnualTax || 0.17) : undefined;
+        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', goalAskTaxNoSave);
         state.goalChartData = noSaveChartData;
         requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
 
@@ -1393,6 +1434,12 @@ function calculateGoal() {
     var finalNet = finalRes.netValue;
     var actualTax = finalRes.tax;
 
+    if (!isValidNumber(finalNet) || !isValidNumber(requiredMonthly)) {
+        resultsEl.classList.remove('show');
+        timelineEl.classList.remove('show');
+        return;
+    }
+
     var grossNoFees = computeFV(initialCap, requiredMonthly, monthlyRateGross, months);
     var fvWithFeesNoTax = computeFV(initialCap, requiredMonthly, monthlyRateNet, months);
     var totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
@@ -1407,12 +1454,12 @@ function calculateGoal() {
         else if (state.country === 'NO') accountTypeStr = 'ASK';
         else accountTypeStr = 'OSK';
     } else {
-        accountTypeStr = state.lang === 'sv' ? 'vanligt konto' : 'standard account';
+        accountTypeStr = t('goalStandardAccount');
     }
 
     monthlyEl.textContent = formatCurrency(Math.ceil(requiredMonthly), loc, curr) + ' ' + t('perMonth');
     monthlyNoteEl.textContent = (goalUnreachable ? '⚠️ ' + t('goalUnreachable') + ' — ' : '')
-        + (state.lang === 'sv' ? 'Under ' : 'Over ') + years + (state.lang === 'sv' ? ' år · ' : ' years · ') + accountTypeStr;
+        + t('goalUnder') + years + t('goalYearsSpan') + accountTypeStr;
 
     document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget, loc, curr);
     document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv, loc, curr);
@@ -1421,17 +1468,12 @@ function calculateGoal() {
     document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalNet - totalIn, 0), loc, curr);
     document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFees, loc, curr);
 
-    if (state.goalIskOn && advType) {
-        if (advType === 'ISK')
-            document.getElementById('goalTaxResultLabel').textContent = t('taxTypeISK');
-        else if (advType === 'ASK_ANNUAL')
-            document.getElementById('goalTaxResultLabel').textContent = t('taxTypeASK');
-        else
-            document.getElementById('goalTaxResultLabel').textContent = t('taxTypeCapitalGains');
-    } else {
-        document.getElementById('goalTaxResultLabel').textContent = t('taxTypeCapitalGains');
-    }
+    applyGoalTaxLabel(advType);
     document.getElementById('goalTaxResult').textContent = formatCurrency(actualTax, loc, curr);
+
+    var goalWarningEl = document.getElementById('goalWarning');
+    goalWarningEl.style.display = finalNet > 1e9 ? 'block' : 'none';
+    if (finalNet > 1e9) goalWarningEl.textContent = t('warningLargeNumbers');
 
     // Fördelningsdiagram
     var gainLabels = { invested: t('legendInvested'), gain: t('legendGain') };

@@ -125,7 +125,7 @@ function formatAmountHint(value, locale, currency) {
     if (n === 0) return '0 ' + getCurrencySymbol(currency);
     const grouped = new Intl.NumberFormat(locale).format(Math.round(n));
     const sym = getCurrencySymbol(currency);
-    const fmtDec = v => parseFloat(v.toFixed(2)).toString().replace('.', ',');
+    const fmtDec = v => { const s = parseFloat(v.toFixed(2)).toString(); return (locale === 'en-US' || locale === 'en-GB') ? s : s.replace('.', ','); };
     if (n >= 1e9)       return grouped + ' ' + sym + ' (' + fmtDec(n / 1e9) + ' ' + (locale === 'sv-SE' ? 'miljarder' : 'billion') + ')';
     if (n >= 1e6) { const m = n / 1e6; return grouped + ' ' + sym + ' (' + fmtDec(m) + (m === 1 ? ' ' + (locale === 'sv-SE' ? 'miljon' : 'million') : ' ' + (locale === 'sv-SE' ? 'miljoner' : 'million')) + ')'; }
     if (n >= 1e3)       return grouped + ' ' + sym;
@@ -263,8 +263,8 @@ function simulateDanishASK(initial, monthly, monthlyRateNet, years, annualTaxRat
         }
         let gainThisYear = balance - balanceBeforeYear - depositsThisYear;
 
-        // Framförbar förlust från tidigare år
-        if (carryForwardLoss > 0) {
+        // Framförbar förlust från tidigare år (används bara mot positiv vinst)
+        if (carryForwardLoss > 0 && gainThisYear > 0) {
             const used = Math.min(gainThisYear, carryForwardLoss);
             gainThisYear -= used;
             carryForwardLoss -= used;
@@ -275,7 +275,7 @@ function simulateDanishASK(initial, monthly, monthlyRateNet, years, annualTaxRat
             balance -= tax;
             totalTax += tax;
         } else if (gainThisYear < 0) {
-            carryForwardLoss = -gainThisYear;
+            carryForwardLoss += -gainThisYear;
         }
     }
     return { balance, totalTax };
@@ -293,7 +293,7 @@ function simulateDanishASK(initial, monthly, monthlyRateNet, years, annualTaxRat
 //    fradrag = genomsnittligt anskaffningsvärde × skjermingsrente
 //
 //  där skjermingsrenten sätts av Skatteetaten (typiskt 2–4 %).
-//  Modellen använder (startvärde + slutvärde) / 2 för årsgenomsnittet.
+//  Fradraget beräknas på kostnadsbasen vid årets ingång.
 // ============================================================
 function simulateNorwegianASK(initial, monthly, monthlyRateNet, years, capitalGainsTax, skjermingsrente) {
     let balance = initial;
