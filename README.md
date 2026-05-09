@@ -4,7 +4,7 @@
 
 Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för europeiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
 
-Stöd för **20 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
+Stöd för **19 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
 
 ## 🎯 Funktioner
 
@@ -14,7 +14,7 @@ Se hur ditt sparande växer år för år med:
 - Årlig avkastning (nominell ränta, månadsvis kapitalisering)
 - Förvaltningsavgifter (TER)
 - Landsspecifika skatteregler automatiskt
-- Skattegynnat konto per land (ISK, ASK, OSK, ISA, TBSZ, PIR m.fl.)
+- Skattegynnat konto per land (ISK, ASK, OSK, ISA, PIR, IKE m.fl.)
 - Inflationsjustering för realvärde
 
 ### Sparmål — Räkna ut månadssparande
@@ -28,7 +28,7 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 - **År-för-år tidslinje** — detaljerad tabell + interaktivt Canvas-diagram
 - **Ränta-på-ränta-explainer** — expanderbar förklaring med visuella staplar
 
-## 🌍 Länder och regioner (20 länder)
+## 🌍 Länder och regioner (19 länder)
 
 | Region | Länder |
 |--------|--------|
@@ -36,7 +36,8 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 | Västeuropa | 🇩🇪 Tyskland, 🇫🇷 Frankrike |
 | Brittiska öarna | 🇬🇧 Storbritannien, 🇮🇪 Irland |
 | Benelux | 🇳🇱 Nederländerna, 🇧🇪 Belgien |
-| Centraleuropa | 🇦🇹 Österrike, 🇵🇱 Polen, 🇨🇿 Tjeckien, 🇭🇺 Ungern |
+| Centraleuropa | 🇦🇹 Österrike |
+| Östeuropa | 🇵🇱 Polen, 🇨🇿 Tjeckien |
 | Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇬🇷 Grekland |
 | Baltikum | 🇪🇪 Estland, 🇱🇻 Lettland, 🇱🇹 Litauen |
 
@@ -48,10 +49,10 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 | `ISK` | Svensk schablonbeskattning (kvartalsformel) | Sverige (SE) |
 | `LAGER_ANNUAL` | Årlig lagerbeskatning med carry-forward | Danmark (DK) |
 | `DEFERRED_SKJERMING` | Uppskjuten skatt med skjermingsfradrag | Norge (NO) |
-| `DEFERRED_PLAIN` | Uppskjuten skatt utan avdrag (progressiv CGT) | Finland, Frankrike, Estland, Lettland, Litauen |
-| `TAX_FREE_WRAPPER` | Helt skattefri investeringsform | Storbritannien, Italien, Ungern |
+| `DEFERRED_PLAIN` | Uppskjuten skatt utan avdrag (progressiv CGT) | Finland, Estland, Lettland, Litauen |
+| `TAX_FREE_WRAPPER` | Helt skattefri investeringsform | Storbritannien, Polen |
 | `DUTCH_BOX3` | Förmögenhetsskatt (schablonavkastning) | Nederländerna (NL) |
-| `TIME_TEST_CGT` | Skattefritt efter X års innehav | Tjeckien, Slovakien, Slovenien, Kroatien, Luxemburg |
+| `TIME_TEST_CGT` | Skattefritt efter X års innehav | Tjeckien (standardkonto), Frankrike (PEA), Italien (PIR) |
 
 *Arkitekturen är designad för att göra nya länder triviala — ~20 rader konfiguration, noll kodändringar i beräknings- eller UI-logik (förutsatt att regimen redan finns).*
 
@@ -115,7 +116,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 | i18n | Dynamiskt lexikon, `data-i18n`-attribut |
 | Flaggor | Inline SVG, CSP-kompatibla |
 | Diagram | Canvas med tooltip + tangentbordsnavigering |
-| Tester | `node test.js` — 90 regressionstester (3 sviter) |
+| Tester | `node test.js` — 157 tester (3 sviter) |
 | Licens | MIT |
 
 ### Filstruktur
@@ -131,7 +132,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 │   ├── utils.js            # Validering och formatering
 │   ├── core.js             # Kärnberäkningar (FV, avgifter, CGT)
 │   ├── tax-regimes.js      # Pluggbar skatteregims-register (8 st)
-│   └── countries.js        # Landskonfiguration (20 länder) + regioner
+│   └── countries.js        # Landskonfiguration (19 länder) + regioner
 │
 ├── test.js                 # Node.js-testrunner
 └── _headers                # CSP- och säkerhetsheaders (Cloudflare Pages)

@@ -517,18 +517,18 @@ section('Svit 2: Regressionstest med pinnade facit');
 {
     var y1 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 95000, 0, null, { askAnnualTax: 0.17 });
     assert(
-        'LAGER_ANNUAL.simulateYear: forlustar 95k fran 100k -> carryState = 5000',
-        y1.taxPaid === 0 && y1.carryState === 5000,
-        'fick taxPaid ' + y1.taxPaid + ', carryState ' + y1.carryState
+        'LAGER_ANNUAL.simulateYear: forlustar 95k fran 100k -> carryState [{ amount: 5000, yearsLeft: 5 }]',
+        y1.taxPaid === 0 && Array.isArray(y1.carryState) && y1.carryState.length === 1 && y1.carryState[0].amount === 5000 && y1.carryState[0].yearsLeft === 5,
+        'fick taxPaid ' + y1.taxPaid + ', carryState ' + JSON.stringify(y1.carryState)
     );
 }
 
 {
-    var y2 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(95000, 105000, 0, 5000, { askAnnualTax: 0.17 });
+    var y2 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(95000, 105000, 0, [{ amount: 5000, yearsLeft: 5 }], { askAnnualTax: 0.17 });
     assert(
         'LAGER_ANNUAL.simulateYear: vinstar 105k fran 95k med 5k carry -> skatt pa 5k',
-        approx(y2.taxPaid, 850, 0.01) && y2.carryState === 0,
-        'fick taxPaid ' + y2.taxPaid + ', carryState ' + y2.carryState
+        approx(y2.taxPaid, 850, 0.01) && Array.isArray(y2.carryState) && y2.carryState.length === 0,
+        'fick taxPaid ' + y2.taxPaid + ', carryState ' + JSON.stringify(y2.carryState)
     );
 }
 

@@ -383,7 +383,7 @@ function updateCountryUI() {
     } else {
         taxDisplay = '\u2014';
     }
-    var taxDisplays = document.querySelectorAll('#taxRateDisplay, #advTaxRateDisplay');
+        var taxDisplays = document.querySelectorAll('#taxRateDisplay');
     taxDisplays.forEach(function(el) { el.textContent = taxDisplay; });
     var goalTaxDisplay = document.getElementById('goalTaxRateDisplay');
     if (goalTaxDisplay) goalTaxDisplay.textContent = taxDisplay;
@@ -518,7 +518,7 @@ function setupTaxAdvToggle(checkboxId, taxGroupId, stateKey, recalcFn, debounceM
     });
 }
 
-function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, regime, params) {
+function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, params) {
     years = Math.floor(years);
     var c = getCountry();
     var frag = document.createDocumentFragment();
@@ -923,7 +923,7 @@ function calculateAdvanced() {
     ['advSummary', 'advTimeline'].forEach(function(id) { document.getElementById(id).classList.add('show'); });
 
     // Tidslinje
-    var chartData = buildYearTimeline(years, initialCapital, monthlyAmount, monthlyRateNet, 'timelineBody', activeRegime, activeParams);
+    var chartData = buildYearTimeline(years, initialCapital, monthlyAmount, monthlyRateNet, 'timelineBody', activeParams);
     state.advChartData = chartData;
     if (state._advRafId) cancelAnimationFrame(state._advRafId);
     state._advRafId = requestAnimationFrame(function() { drawTimelineChart(chartData, 'timelineChart', 'chartTooltip', loc, curr, !!(c.taxAdvRegime)); });
@@ -1182,7 +1182,7 @@ function runAppTests() {
         var tmpTbody = document.createElement('tbody');
         tmpTbody.id = '_appTestTbody';
         document.body.appendChild(tmpTbody);
-        var cd = buildYearTimeline(3, 10000, 500, 0.07 / 12, '_appTestTbody', TAX_REGIMES.CGT_ONLY, { capitalGainsTax: 0.30 });
+        var cd = buildYearTimeline(3, 10000, 500, 0.07 / 12, '_appTestTbody', { capitalGainsTax: 0.30 });
         tst('buildYearTimeline: returnerar chartData med 4 punkter (\u00E5r 0\u20133)', cd.length === 4, 'fick ' + cd.length);
         tst('buildYearTimeline: chartData[0] har year=0, gain=0', cd[0].year === 0 && cd[0].gain === 0);
         tst('buildYearTimeline: chartData[3] har year, invested, gain, gross, netCGT, netRegime',
@@ -1378,7 +1378,7 @@ function calculateGoal() {
 
         renderBreakdown('goalChart', 'goalLegend', nominalTarget, initialCap, finalRes.netValue, totalFees, finalRes.totalTax, t(activeRegime.getUI().legendI18n));
 
-        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', activeRegime, activeParams);
+        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', activeParams);
         state.goalChartData = noSaveChartData;
         if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
         state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
@@ -1451,7 +1451,7 @@ function calculateGoal() {
 
     renderBreakdown('goalChart', 'goalLegend', nominalTarget, totalIn, finalNet, totalFeesResult, actualTax, t(activeRegime.getUI().legendI18n));
 
-    var goalChartData = buildYearTimeline(years, initialCap, requiredMonthly, monthlyRateNet, 'goalTableBody', activeRegime, activeParams);
+    var goalChartData = buildYearTimeline(years, initialCap, requiredMonthly, monthlyRateNet, 'goalTableBody', activeParams);
     state.goalChartData = goalChartData;
     if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
     state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip', loc, curr, !!(c.taxAdvRegime)); });

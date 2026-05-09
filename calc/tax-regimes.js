@@ -171,21 +171,30 @@ var TAX_REGIMES = (function() {
         simulateYear: function(balanceBefore, balanceAfter, deposits, carryState, params) {
             var annualTaxRate = (params.askAnnualTax !== undefined) ? params.askAnnualTax : 0.17;
             var gainThisYear = balanceAfter - balanceBefore - deposits;
-            var cf = carryState || 0;
+            var losses = Array.isArray(carryState) ? carryState.slice() : [];
 
-            if (cf > 0 && gainThisYear > 0) {
-                var used = Math.min(gainThisYear, cf);
-                gainThisYear -= used;
-                cf -= used;
+            if (gainThisYear > 0) {
+                for (var i = 0; i < losses.length && gainThisYear > 0; i++) {
+                    var used = Math.min(gainThisYear, losses[i].amount);
+                    gainThisYear -= used;
+                    losses[i].amount -= used;
+                    if (losses[i].amount <= 0) { losses.splice(i, 1); i--; }
+                }
+            }
+
+            for (var i = losses.length - 1; i >= 0; i--) {
+                losses[i].yearsLeft--;
+                if (losses[i].yearsLeft <= 0) { losses.splice(i, 1); }
             }
 
             if (gainThisYear > 0) {
                 var tax = gainThisYear * annualTaxRate;
-                return { newBalance: balanceAfter - tax, taxPaid: tax, carryState: cf };
+                return { newBalance: balanceAfter - tax, taxPaid: tax, carryState: losses };
             } else if (gainThisYear < 0) {
-                return { newBalance: balanceAfter, taxPaid: 0, carryState: cf + (-gainThisYear) };
+                losses.push({ amount: -gainThisYear, yearsLeft: 5 });
+                return { newBalance: balanceAfter, taxPaid: 0, carryState: losses };
             }
-            return { newBalance: balanceAfter, taxPaid: 0, carryState: cf };
+            return { newBalance: balanceAfter, taxPaid: 0, carryState: losses };
         },
 
         getUI: function() {
@@ -546,10 +555,17 @@ function runTests() {
     // 12. LAGER_ANNUAL — carry-forward: förlustår kvittas mot framtida vinst
     {
         var r = TAX_REGIMES.LAGER_ANNUAL.simulate(100000, 0, -0.10 / 12, 1, { askAnnualTax: 0.17 });
-        var r2 = TAX_REGIMES.LAGER_ANNUAL.simulate(100000, 0, 0.10 / 12, 1, { askAnnualTax: 0.17 });
         log('ASK: f\u00F6rlust\u00E5r ger 0 i skatt', r.totalTax === 0, 'skatt ' + r.totalTax + ', carry=' + (r.balance < 100000));
-        log('ASK: vinst\u00E5r efter f\u00F6rlust f\u00E5r samma skatt som rent vinst\u00E5r',
-            approx(r2.totalTax, (TAX_REGIMES.LAGER_ANNUAL.simulate(100000, 0, 0.10 / 12, 1, { askAnnualTax: 0.17 })).totalTax, 1));
+        // Testa carry-forward sekventiellt: förlustår (simulateYear) → vinstår med kvittning
+        var loss = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 90000, 0, null, { askAnnualTax: 0.17 });
+        // carryState: [{ amount: 10000, yearsLeft: 5 }]
+        var profit = TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 115000, 0, loss.carryState, { askAnnualTax: 0.17 });
+        // 25000 − 10000 = 15000 beskattningsbart × 0.17 = 2550
+        var noCarry = TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 115000, 0, null, { askAnnualTax: 0.17 });
+        // 25000 × 0.17 = 4250 (ingen kvittning)
+        log('ASK: carry-forward minskar skatten mot utan carry',
+            profit.taxPaid === 2550 && profit.taxPaid < noCarry.taxPaid,
+            'med carry: ' + profit.taxPaid + ', utan: ' + noCarry.taxPaid);
     }
 
     // 13. DEFERRED_SKJERMING (norsk ASK) — uppskjuten skatt med skjermingsfradrag
