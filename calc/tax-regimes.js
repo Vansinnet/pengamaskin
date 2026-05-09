@@ -124,8 +124,7 @@ var TAX_REGIMES = (function() {
             var annualTaxRate = (params.askAnnualTax !== undefined) ? params.askAnnualTax : 0.17;
             var balance = initial;
             var totalTax = 0;
-            var carryForwardLoss = 0;
-            var carryForwardYears = 0;
+            var losses = []; // [{amount, yearsLeft}] — vars sparas individuellt med egen åldersräknare
             var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
@@ -136,16 +135,25 @@ var TAX_REGIMES = (function() {
                 }
                 var gainThisYear = balance - balanceBeforeYear - depositsThisYear;
 
-                if (carryForwardLoss > 0 && gainThisYear > 0) {
-                    var used = Math.min(gainThisYear, carryForwardLoss);
-                    gainThisYear -= used;
-                    carryForwardLoss -= used;
+                // Kvitta vinster mot ackumulerade förluster (FIFO — äldst först)
+                if (gainThisYear > 0) {
+                    for (var i = 0; i < losses.length && gainThisYear > 0; i++) {
+                        var used = Math.min(gainThisYear, losses[i].amount);
+                        gainThisYear -= used;
+                        losses[i].amount -= used;
+                        if (losses[i].amount <= 0) {
+                            losses.splice(i, 1);
+                            i--;
+                        }
+                    }
                 }
 
-                // Danska carry-forward förfaller efter 5 år
-                carryForwardYears++;
-                if (carryForwardYears > 5 && carryForwardLoss > 0) {
-                    carryForwardLoss = 0;
+                // Åldra kvarvarande förluster EFTER kvittning
+                for (var i = losses.length - 1; i >= 0; i--) {
+                    losses[i].yearsLeft--;
+                    if (losses[i].yearsLeft <= 0) {
+                        losses.splice(i, 1);
+                    }
                 }
 
                 if (gainThisYear > 0) {
@@ -153,7 +161,8 @@ var TAX_REGIMES = (function() {
                     balance -= tax;
                     totalTax += tax;
                 } else if (gainThisYear < 0) {
-                    carryForwardLoss += -gainThisYear;
+                    // Ny förlust — 5 års framföranderätt från nästa år
+                    losses.push({ amount: -gainThisYear, yearsLeft: 5 });
                 }
             }
             return { balance: balance, totalTax: totalTax, netValue: balance };

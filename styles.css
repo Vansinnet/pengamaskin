@@ -895,8 +895,8 @@ table tbody tr:nth-child(even) { background: var(--table-even-row); }
 .tab-results .results { margin-top: 0; }
 
 @media (min-width: 900px) {
-    .container   { max-width: 1180px; }
-    .footer      { max-width: 1180px; }
+    .container   { max-width: 1400px; }
+    .footer      { max-width: 1400px; }
     .tab-layout  {
         display: grid;
         grid-template-columns: 290px minmax(260px, 340px) 1fr;

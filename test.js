@@ -721,7 +721,7 @@ section('Svit 2: Regressionstest med pinnade facit');
     var rate      = 0.07;
     var fees      = 0.005;
     var initial   = 0;
-    var rNet      = (rate - fees) / 100 / 12;
+    var rNet      = (rate - fees) / 12;
     var lo = 0, hi = target;
     for (var i = 0; i < 80; i++) {
         var mid = (lo + hi) / 2;

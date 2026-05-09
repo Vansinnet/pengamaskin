@@ -147,8 +147,8 @@ var I18N = {
         timelineTitle: '\uD83D\uDCC8 Tidslinje \u2014 \u00C5rlig tillv\u00E4xt',
         thYear: '\u00C5r',
         thInvested: 'Investerat',
-        thReturn: 'Avkastning',
-        thReturnPlus: 'Avkastning +',
+        thReturn: 'Ackumulerad avkastning',
+        thReturnPlus: 'Årlig avkastning',
         thReturnPlusTitle: '\u00C5rets avkastnings\u00F6kning j\u00E4mf\u00F6rt med f\u00F6reg\u00E5ende \u00E5r',
         thGrossValue: 'V\u00E4rde innan skatt',
         thNetCGT: 'Efter skatt (AF)',
@@ -290,8 +290,8 @@ var I18N = {
         timelineTitle: '\uD83D\uDCC8 Timeline \u2014 Annual growth',
         thYear: 'Year',
         thInvested: 'Invested',
-        thReturn: 'Return',
-        thReturnPlus: 'Return +',
+        thReturn: 'Accumulated return',
+        thReturnPlus: 'Yearly return',
         thReturnPlusTitle: 'Year-on-year increase in return compared to previous year',
         thGrossValue: 'Value before tax',
         thNetCGT: 'After tax (CGT)',
@@ -561,14 +561,28 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
         var delta = grossGain - prevGrossGain;
         prevGrossGain = grossGain;
 
-        var cgtTax;
+        var cgtTax = 0;
         if (cgtCountryParams.capitalGainsTaxBrackets) {
             cgtTax = computeCapitalGainsTax(grossGain, cgtCountryParams.capitalGainsTaxBrackets);
-        } else {
-            cgtTax = computeCapitalGainsTax(grossGain,
-                cgtCountryParams.capitalGainsTax,
-                cgtCountryParams.capitalGainsTaxThreshold,
-                cgtCountryParams.capitalGainsTaxHigh);
+        } else if (cgtCountryParams.capitalGainsTax !== undefined) {
+            if (cgtCountryParams.timeTestGraded) {
+                var timeRate = null;
+                for (var ti = 0; ti < cgtCountryParams.timeTestGraded.length; ti++) {
+                    var tb = cgtCountryParams.timeTestGraded[ti];
+                    if (tb.years === undefined || year < tb.years) {
+                        timeRate = tb.rate;
+                        break;
+                    }
+                }
+                if (timeRate !== null && timeRate > 0) cgtTax = grossGain * timeRate;
+            } else if (cgtCountryParams.timeTestThreshold !== undefined && year >= cgtCountryParams.timeTestThreshold) {
+                cgtTax = 0;
+            } else {
+                cgtTax = computeCapitalGainsTax(grossGain,
+                    cgtCountryParams.capitalGainsTax,
+                    cgtCountryParams.capitalGainsTaxThreshold,
+                    cgtCountryParams.capitalGainsTaxHigh);
+            }
         }
         var netCGT = grossBalance - cgtTax;
 
@@ -631,6 +645,13 @@ function renderBreakdown(chartElId, legendElId, base, invested, netValue, fees, 
     var fPct = Math.max((fees / base) * 100, 0);
     var tPct = Math.max(0, (taxAmt / base) * 100);
 
+    // Normalisera om summan överstiger 100 % (negativ nettoavkastning)
+    var total = iPct + gPct + fPct + tPct;
+    if (total > 100) {
+        var scale = 100 / total;
+        iPct *= scale; gPct *= scale; fPct *= scale; tPct *= scale;
+    }
+
     [[iPct, 'chart-invested'], [gPct, 'chart-interest'], [fPct, 'chart-fees'], [tPct, 'chart-taxes']].forEach(function(s) {
         var seg = document.createElement('div');
         seg.className = 'chart-segment ' + s[1];
@@ -663,7 +684,7 @@ function validateInput(id, min, max, isRequired) {
     var element = $(id);
     if (!element) return true;
 
-    var value = parseFloat(element.value);
+    var rawValue = element.value;
     var errorElement = $(id + 'Error');
 
     if (!errorElement) {
@@ -671,7 +692,7 @@ function validateInput(id, min, max, isRequired) {
         return false;
     }
 
-    if (isNaN(value) || element.value === '') {
+    if (rawValue === '') {
         if (isRequired) {
             errorElement.textContent = t('errorRequired');
             errorElement.classList.add('show');
@@ -681,6 +702,14 @@ function validateInput(id, min, max, isRequired) {
             return true;
         }
     }
+
+    if (!isValidNumber(rawValue)) {
+        errorElement.textContent = t('errorRequired');
+        errorElement.classList.add('show');
+        return false;
+    }
+
+    var value = parseFloat(rawValue);
 
     if (value < min) {
         errorElement.textContent = t('errorMin') + ' ' + min;
@@ -749,6 +778,12 @@ function switchTab(tabName, btnElement) {
 
     document.getElementById(tabName).classList.add('active');
     if (btnElement) { btnElement.classList.add('active'); btnElement.setAttribute('aria-selected', 'true'); }
+
+    // Töm väntande debounce och räkna om omedelbart så RAF får färsk data
+    clearTimeout(state.advTimeout);
+    clearTimeout(state.goalTimeout);
+    if (tabName === 'goal') calculateGoal();
+    else calculateAdvanced();
 
     requestAnimationFrame(function() {
         if (tabName === 'goal' && state.goalChartData.length > 0)
@@ -1103,7 +1138,7 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId, _loc, _curr, _showRe
         tooltip.style.left = tipX + 'px';
         tooltip.style.top = (clientY !== undefined ? clientY - bRect.top - 20 : yPos(dataPoints[idx].gross) - 10) + 'px';
         if (clientX === undefined) {
-            tooltip.style.top = (yPos(dataPoints[idx].gross) - 60) + 'px';
+            tooltip.style.top = Math.max(0, (yPos(dataPoints[idx].gross) - 60)) + 'px';
         }
     }
 
@@ -1331,7 +1366,7 @@ function calculateGoal() {
         document.getElementById('goalNominalTarget').textContent = formatCurrency(nominalTarget, loc, curr);
         document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv, loc, curr);
         document.getElementById('goalTotalIn').textContent       = formatCurrency(initialCap, loc, curr);
-        document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalRes.netValue - initialCap, 0), loc, curr);
+        document.getElementById('goalGain').textContent          = formatCurrency(finalRes.netValue - initialCap, loc, curr);
         document.getElementById('goalFeesResult').textContent   = formatCurrency(totalFees, loc, curr);
 
         var goalWarningEl = document.getElementById('goalWarning');
@@ -1404,7 +1439,7 @@ function calculateGoal() {
     document.getElementById('goalRealEquiv').textContent     = formatCurrency(realEquiv, loc, curr);
     document.getElementById('goalRealRow').style.display     = 'flex';
     document.getElementById('goalTotalIn').textContent       = formatCurrency(totalIn, loc, curr);
-    document.getElementById('goalGain').textContent          = formatCurrency(Math.max(finalNet - totalIn, 0), loc, curr);
+    document.getElementById('goalGain').textContent          = formatCurrency(finalNet - totalIn, loc, curr);
     document.getElementById('goalFeesResult').textContent    = formatCurrency(totalFeesResult, loc, curr);
 
     document.getElementById('goalTaxResultLabel').textContent = t(activeRegime.getUI().taxI18n);
@@ -1526,14 +1561,15 @@ function initCustomDropdown(containerId, options, initialValue, getLabelFn, onCh
             var div = document.createElement('div');
             div.className = 'custom-select-option';
             div.setAttribute('role', 'option');
+            div.setAttribute('tabindex', '-1');
             if (opt.value === selectedValue) div.classList.add('selected');
             var f = document.createElement('span');
             f.className = 'custom-select-option-flag';
             f.innerHTML = FLAGS[opt.flag] || '';
             div.appendChild(f);
-            var t = document.createElement('span');
-            t.textContent = getLabelFn(opt, lang);
-            div.appendChild(t);
+            var labelSpan = document.createElement('span');
+            labelSpan.textContent = getLabelFn(opt, lang);
+            div.appendChild(labelSpan);
             div.addEventListener('click', function() { selectOption(opt, div); });
             panel.appendChild(div);
             optionEls.push({ value: opt.value, el: div });
@@ -1560,7 +1596,15 @@ function initCustomDropdown(containerId, options, initialValue, getLabelFn, onCh
 
     trigger.addEventListener('click', function(e) {
         e.stopPropagation();
-        isOpen() ? close() : open();
+        if (isOpen()) { close(); return; }
+        var others = document.querySelectorAll('.custom-select-panel:not([hidden])');
+        for (var j = 0; j < others.length; j++) {
+            if (others[j] !== panel) {
+                others[j].setAttribute('hidden', '');
+                others[j].parentElement.classList.remove('open');
+            }
+        }
+        open();
     });
     document.addEventListener('click', function() { if (isOpen()) close(); });
     trigger.addEventListener('keydown', function(e) {

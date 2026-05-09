@@ -8,9 +8,13 @@
  */
 function isValidNumber(value) {
     if (typeof value === 'number') return !isNaN(value) && isFinite(value);
-    if (typeof value === 'string' && value.trim() === '') return false;
-    var n = parseFloat(value);
-    return !isNaN(n) && isFinite(n) && String(n) === String(value).trim();
+    if (typeof value === 'string') {
+        if (value.trim() === '') return false;
+        if (!/^\s*-?\d+(\.\d+)?\s*$/.test(value)) return false;
+        var n = parseFloat(value);
+        return !isNaN(n) && isFinite(n);
+    }
+    return false;
 }
 
 /**
@@ -53,7 +57,7 @@ function formatCurrency(value, locale, currency) {
  */
 function fmtDecimal(v, locale) {
     var s = parseFloat(v.toFixed(2)).toString();
-    return (locale === 'en-US' || locale === 'en-GB' || locale === 'en-CA') ? s : s.replace('.', ',');
+    return (locale.substring(0, 2) === 'en') ? s : s.replace('.', ',');
 }
 
 function formatAmountHint(value, locale, currency) {
