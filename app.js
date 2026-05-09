@@ -17,7 +17,9 @@ var state = {
     advChartData: [],
     goalChartData: [],
     advTimeout: null,
-    goalTimeout: null
+    goalTimeout: null,
+    _advRafId: null,
+    _goalRafId: null
 };
 
 // Cachade DOM-referenser
@@ -74,6 +76,7 @@ var I18N = {
         taxAdvDescription: 'Reglerna varierar per land \u2014 se f\u00F6rklaringen vid aktivering.',
         labelAdvRate: 'Schablonr\u00E4nta (%)',
         tipAdvRate: 'Den r\u00E4nta som styr skatten. Best\u00E4ms av staten varje \u00E5r.',
+        themeLabel: 'Tema',
         goalHeading: 'S\u00E5h\u00E4r mycket pengar vill jag ha',
         goalSubheading: 'Fyll i ditt m\u00E5l \u2014 s\u00E5 r\u00E4knar vi ut hur mycket du beh\u00F6ver spara varje m\u00E5nad.',
         labelGoalTarget: 'Jag vill ha',
@@ -105,7 +108,6 @@ var I18N = {
         goalTaxLabel: 'Skatt:',
         goalBreakdownTitle: 'F\u00F6rdelning',
         goalTimelineTitle: '\uD83D\uDCC8 Sparplan \u2014 \u00C5rlig tillv\u00E4xt',
-        goalThTotal: 'Slutv\u00E4rde',
         footerLicense: '\u00D6ppen k\u00E4llkod \u2014',
         footerUpdated: 'Senast uppdaterat: 8 maj 2026',
         footerGitHub: 'Visa k\u00E4llkoden p\u00E5 GitHub',
@@ -116,7 +118,6 @@ var I18N = {
         legendISKTax: 'ISK-skatt',
         legendASKTax: 'ASK-skatt',
         chartTooltipYear: '\u00C5r',
-        chartTooltipTotal: 'Totalt',
         chartTooltipInvested: 'Investerat',
         chartTooltipGain: 'Avkastning',
         chartAriaLabel: 'Diagram \u00F6ver \u00E5rlig tillv\u00E4xt. Anv\u00E4nd piltangenter f\u00F6r att bl\u00E4ddra mellan \u00E5ren.',
@@ -149,7 +150,13 @@ var I18N = {
         thReturn: 'Avkastning',
         thReturnPlus: 'Avkastning +',
         thReturnPlusTitle: '\u00C5rets avkastnings\u00F6kning j\u00E4mf\u00F6rt med f\u00F6reg\u00E5ende \u00E5r',
-        thTotal: 'Slutv\u00E4rde',
+        thGrossValue: 'V\u00E4rde innan skatt',
+        thNetCGT: 'Efter skatt (AF)',
+        chartLegendNetCGT: 'Efter skatt (AF)',
+        chartTooltipGross: 'V\u00E4rde innan skatt',
+        chartTooltipNetCGT: 'Efter skatt (AF)',
+        thRegimeNet: 'Regim-netto',
+        chartLegendRegime: 'Regim-netto',
         taxTypeISK: 'ISK-skatt (betalas separat):',
         taxTypeASK: 'ASK-skatt (dras fr\u00E5n kontot):',
         taxTypeCapitalGains: 'Skatt p\u00E5 kapitalvinst:',
@@ -212,6 +219,7 @@ var I18N = {
         taxAdvDescription: 'Rules vary by country \u2014 see explanation when activated.',
         labelAdvRate: 'Standard rate (%)',
         tipAdvRate: 'The rate that determines the tax. Set annually by the government.',
+        themeLabel: 'Theme',
         goalHeading: 'This is how much money I want',
         goalSubheading: 'Enter your goal \u2014 we\'ll calculate how much you need to save each month.',
         labelGoalTarget: 'I want',
@@ -243,7 +251,6 @@ var I18N = {
         goalTaxLabel: 'Tax:',
         goalBreakdownTitle: 'Breakdown',
         goalTimelineTitle: '\uD83D\uDCC8 Savings Plan \u2014 Annual growth',
-        goalThTotal: 'Net value',
         footerLicense: 'Open source \u2014',
         footerUpdated: 'Last updated: May 8, 2026',
         footerGitHub: 'View source code on GitHub',
@@ -254,7 +261,6 @@ var I18N = {
         legendISKTax: 'ISK tax',
         legendASKTax: 'ASK tax',
         chartTooltipYear: 'Year',
-        chartTooltipTotal: 'Total',
         chartTooltipInvested: 'Invested',
         chartTooltipGain: 'Return',
         chartAriaLabel: 'Chart showing annual growth. Use arrow keys to browse between years.',
@@ -287,7 +293,13 @@ var I18N = {
         thReturn: 'Return',
         thReturnPlus: 'Return +',
         thReturnPlusTitle: 'Year-on-year increase in return compared to previous year',
-        thTotal: 'Net value',
+        thGrossValue: 'Value before tax',
+        thNetCGT: 'After tax (CGT)',
+        chartLegendNetCGT: 'After tax (CGT)',
+        chartTooltipGross: 'Value before tax',
+        chartTooltipNetCGT: 'After tax (CGT)',
+        thRegimeNet: 'Regime net',
+        chartLegendRegime: 'Regime net',
         taxTypeISK: 'ISK tax (paid separately):',
         taxTypeASK: 'ASK tax (deducted from account):',
         taxTypeCapitalGains: 'Capital gains tax:',
@@ -328,23 +340,16 @@ function getLocale() {
 }
 
 // ============================================================
-//  UI-\u00F6vers\u00E4ttning
+//  UI-översättning
 // ============================================================
+var I18N_SELECTOR = '[data-i18n],[data-i18n-html],[data-i18n-tip],[data-i18n-aria],[data-i18n-title]';
 function translatePage() {
-    document.querySelectorAll('[data-i18n]').forEach(function(el) {
-        el.textContent = t(el.getAttribute('data-i18n'));
-    });
-    document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
-        el.innerHTML = t(el.getAttribute('data-i18n-html'));
-    });
-    document.querySelectorAll('[data-i18n-tip]').forEach(function(el) {
-        el.setAttribute('data-tip', t(el.getAttribute('data-i18n-tip')));
-    });
-    document.querySelectorAll('[data-i18n-aria]').forEach(function(el) {
-        el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
-    });
-    document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
-        el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
+    document.querySelectorAll(I18N_SELECTOR).forEach(function(el) {
+        if (el.hasAttribute('data-i18n'))       el.textContent        = t(el.getAttribute('data-i18n'));
+        if (el.hasAttribute('data-i18n-html'))  el.innerHTML          = t(el.getAttribute('data-i18n-html'));
+        if (el.hasAttribute('data-i18n-tip'))   el.setAttribute('data-tip',    t(el.getAttribute('data-i18n-tip')));
+        if (el.hasAttribute('data-i18n-aria'))  el.setAttribute('aria-label',  t(el.getAttribute('data-i18n-aria')));
+        if (el.hasAttribute('data-i18n-title')) el.setAttribute('title',       t(el.getAttribute('data-i18n-title')));
     });
     document.documentElement.lang = state.lang;
     document.title = t('appName') + ' \u2013 ' + t('appTagline');
@@ -449,6 +454,13 @@ function updateCountryUI() {
         }
     }
 
+    // Uppdatera regim-kolumnrubrik i tidslinjetabellerna
+    var regimeLabel = (c.taxAdvRegime && ui && ui.taxAdvLabel) ? ui.taxAdvLabel : t('thRegimeNet');
+    var advHdr = document.getElementById('advRegimeNetHeader');
+    var goalHdr = document.getElementById('goalRegimeNetHeader');
+    if (advHdr) { advHdr.textContent = regimeLabel; advHdr.style.display = c.taxAdvRegime ? '' : 'none'; }
+    if (goalHdr) { goalHdr.textContent = regimeLabel; goalHdr.style.display = c.taxAdvRegime ? '' : 'none'; }
+
     // Uppdatera beloppshints så att de reflekterar valt lands valuta
     [{ id: 'advInitialCapital', hint: 'advInitialCapitalHint' },
      { id: 'advMonthlyAmount',  hint: 'advMonthlyAmountHint' },
@@ -457,7 +469,7 @@ function updateCountryUI() {
         var input = document.getElementById(pair.id);
         var hint  = document.getElementById(pair.hint);
         if (input && hint && input.value !== '' && !isNaN(parseFloat(input.value))) {
-            hint.textContent = formatAmountHint(parseFloat(input.value), getLocale(), getCountry().currency);
+            hint.textContent = formatAmountHint(parseFloat(input.value), c.locale, c.currency);
         }
     });
 }
@@ -508,72 +520,98 @@ function setupTaxAdvToggle(checkboxId, taxGroupId, stateKey, recalcFn, debounceM
 
 function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, regime, params) {
     years = Math.floor(years);
+    var c = getCountry();
     var frag = document.createDocumentFragment();
     var chartData = [];
-    var balance = startCapital;
-    var invested = startCapital;
-    var prevGain = null;
-    var loc = getLocale();
-    var curr = getCountry().currency;
-    var carryState = null;
+    var loc = c.locale;
+    var curr = c.currency;
+    var cgtCountryParams = Object.assign({}, c.standardParams);
+    var prevGrossGain = 0;
+    var showRegimeCol = !!(c.taxAdvRegime && TAX_REGIMES[c.taxAdvRegime]);
+
+    // År 0
+    chartData.push({ year: 0, invested: startCapital, gain: 0, gross: startCapital, netCGT: startCapital, netRegime: startCapital });
+
+    var tr0 = document.createElement('tr');
+    var td0_1 = document.createElement('td'); td0_1.textContent = '0';
+    var td0_2 = document.createElement('td'); td0_2.textContent = formatCurrency(startCapital, loc, curr);
+    var td0_3 = document.createElement('td'); td0_3.textContent = formatCurrency(0, loc, curr);
+    var td0_4 = document.createElement('td'); td0_4.textContent = '\u2014'; td0_4.style.color = '#8b5a2b';
+    var td0_5 = document.createElement('td'); td0_5.appendChild(strongText(formatCurrency(startCapital, loc, curr)));
+    var td0_6 = document.createElement('td'); td0_6.appendChild(strongText(formatCurrency(startCapital, loc, curr)));
+    var td0_7 = document.createElement('td'); td0_7.appendChild(strongText(formatCurrency(startCapital, loc, curr)));
+    if (!showRegimeCol) td0_7.style.display = 'none';
+    [td0_1, td0_2, td0_3, td0_4, td0_5, td0_6, td0_7].forEach(function(c) { tr0.appendChild(c); });
+    frag.appendChild(tr0);
+
+    if (monthlyRateNet === 0) {
+        var yearlyFactor = 1;
+        var yearlyContrib = monthlyAmount * 12;
+    } else {
+        var yearlyFactor = Math.pow(1 + monthlyRateNet, 12);
+        var yearlyContrib = monthlyAmount * (yearlyFactor - 1) / monthlyRateNet;
+    }
+    var grossBalance = startCapital;
 
     for (var year = 1; year <= years; year++) {
-        var balBeforeYear = balance;
-        for (var m = 0; m < 12; m++) {
-            balance = balance * (1 + monthlyRateNet) + monthlyAmount;
-            invested += monthlyAmount;
+        grossBalance = grossBalance * yearlyFactor + yearlyContrib;
+        var monthsTotal = year * 12;
+        var invested = startCapital + monthlyAmount * monthsTotal;
+        var grossGain = grossBalance - invested;
+        var delta = grossGain - prevGrossGain;
+        prevGrossGain = grossGain;
+
+        var cgtTax;
+        if (cgtCountryParams.capitalGainsTaxBrackets) {
+            cgtTax = computeCapitalGainsTax(grossGain, cgtCountryParams.capitalGainsTaxBrackets);
+        } else {
+            cgtTax = computeCapitalGainsTax(grossGain,
+                cgtCountryParams.capitalGainsTax,
+                cgtCountryParams.capitalGainsTaxThreshold,
+                cgtCountryParams.capitalGainsTaxHigh);
+        }
+        var netCGT = grossBalance - cgtTax;
+
+        // Regimspecifikt netto (ISK, ASK, etc.) — alltid landets skattegynnade regim
+        var netRegime = netCGT;
+        if (c.taxAdvRegime && TAX_REGIMES[c.taxAdvRegime]) {
+            var advRegime = TAX_REGIMES[c.taxAdvRegime];
+            var advParams = Object.assign({}, c.taxAdvParams);
+            // Slå ihop användarjusterade slider-värden om de finns i params
+            if (params.iskSchablonRate !== undefined) advParams.iskSchablonRate = params.iskSchablonRate;
+            if (params.iskFribelopp !== undefined) advParams.iskFribelopp = params.iskFribelopp;
+            var rRes = advRegime.simulate(startCapital, monthlyAmount, monthlyRateNet, year, advParams);
+            if (rRes && isValidNumber(rRes.netValue)) netRegime = rRes.netValue;
         }
 
-        // Anropa regimens simulateYear f\u00F6r per-\u00E5r-justeringar (t.ex. dansk ASK-skatt)
-        var yrResult = regime.simulateYear(balBeforeYear, balance, monthlyAmount * 12, carryState, params);
-        balance = yrResult.newBalance;
-        carryState = yrResult.carryState;
-
-        // Slutv\u00E4rde efter skatt vid uttag detta \u00E5r
-        var simResult = regime.simulate(startCapital, monthlyAmount, monthlyRateNet, year, params);
-        var netValue = simResult.netValue;
-
-        var gain = netValue - invested;
-        var delta = prevGain === null ? null : gain - prevGain;
-        prevGain = gain;
-
-        chartData.push({ year: year, invested: invested, gain: gain, total: netValue });
+        chartData.push({ year: year, invested: invested, gain: grossGain, gross: grossBalance, netCGT: netCGT, netRegime: netRegime });
 
         var tr = document.createElement('tr');
-        var c1 = document.createElement('td');
-        c1.textContent = year;
-        tr.appendChild(c1);
-        var c2 = document.createElement('td');
-        c2.textContent = formatCurrency(invested, loc, curr);
-        tr.appendChild(c2);
-        var c3 = document.createElement('td');
-        c3.textContent = formatCurrency(gain, loc, curr);
-        tr.appendChild(c3);
+        var c1 = document.createElement('td'); c1.textContent = year;
+        var c2 = document.createElement('td'); c2.textContent = formatCurrency(invested, loc, curr);
+        var c3 = document.createElement('td'); c3.textContent = formatCurrency(grossGain, loc, curr);
         var c4 = document.createElement('td');
-        if (delta === null) {
-            c4.textContent = '\u2014';
-            c4.style.color = '#8b5a2b';
-        } else if (delta >= 0) {
-            c4.textContent = '+' + formatCurrency(delta, loc, curr);
-            c4.style.color = '#2d5016';
-            c4.style.fontWeight = '600';
-        } else {
-            c4.textContent = formatCurrency(delta, loc, curr);
-            c4.style.color = '#8b0000';
-            c4.style.fontWeight = '600';
-        }
-        tr.appendChild(c4);
-        var c5 = document.createElement('td');
-        var strong = document.createElement('strong');
-        strong.textContent = formatCurrency(netValue, loc, curr);
-        c5.appendChild(strong);
-        tr.appendChild(c5);
+        c4.textContent = (delta >= 0 ? '+' : '') + formatCurrency(delta, loc, curr);
+        c4.style.color = delta > 0 ? '#2d5016' : (delta < 0 ? '#8b0000' : '#8b5a2b');
+        if (delta > 0 || delta < 0) c4.style.fontWeight = '600';
+        var c5 = document.createElement('td'); c5.appendChild(strongText(formatCurrency(grossBalance, loc, curr)));
+        var c6 = document.createElement('td'); c6.appendChild(strongText(formatCurrency(netCGT, loc, curr)));
+        var c7 = document.createElement('td'); c7.appendChild(strongText(formatCurrency(netRegime, loc, curr)));
+        if (!showRegimeCol) c7.style.display = 'none';
+        [c1, c2, c3, c4, c5, c6, c7].forEach(function(c) { tr.appendChild(c); });
         frag.appendChild(tr);
     }
+
     var tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     tbody.appendChild(frag);
     return chartData;
+}
+
+function strongText(str) {
+    var s = document.createElement('strong');
+    s.textContent = str;
+    return s;
 }
 
 function renderBreakdown(chartElId, legendElId, base, invested, netValue, fees, taxAmt, taxLegendLabel) {
@@ -622,11 +660,11 @@ function validateInput(id, min, max, isRequired) {
     max = (max !== undefined) ? max : 100000000;
     isRequired = (isRequired !== undefined) ? isRequired : true;
 
-    var element = document.getElementById(id);
+    var element = $(id);
     if (!element) return true;
 
     var value = parseFloat(element.value);
-    var errorElement = document.getElementById(id + 'Error');
+    var errorElement = $(id + 'Error');
 
     if (!errorElement) {
         console.error('validateInput: inget error-element hittat f\u00F6r "' + id + '" \u2014 validering misslyckas');
@@ -665,21 +703,19 @@ function validateInput(id, min, max, isRequired) {
 //  Slider-lyssnare — Pengamaskin
 // ============================================================
 document.getElementById('fees').addEventListener('input', function() {
-    var val = parseFloat(this.value);
-    if (val < 0) this.value = 0;
-    if (val > 5) this.value = 5;
+    var val = Math.max(0, Math.min(5, parseFloat(this.value) || 0));
+    this.value = val;
     setFeesError(parseFloat($('advRate').value) || 0, val, $('feesError'));
-    $('feesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+    $('feesValue').textContent = val.toFixed(2) + '%';
     showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
 });
 
 document.getElementById('advInflation').addEventListener('input', function() {
-    var val = parseFloat(this.value);
-    if (val < 0) this.value = 0;
-    if (val > 10) this.value = 10;
-    document.getElementById('advInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+    var val = Math.max(0, Math.min(10, parseFloat(this.value) || 0));
+    this.value = val;
+    $('advInflationValue').textContent = val.toFixed(1) + '%';
     showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
@@ -689,7 +725,7 @@ setupTaxAdvToggle('taxAdvEnabled', 'taxRateGroup', 'taxAdvOn', calculateAdvanced
 
 document.getElementById('advRateSlider').addEventListener('input', function() {
     var val = parseFloat(this.value);
-    document.getElementById('advRateValue').textContent = val.toFixed(2) + '%';
+    $('advRateValue').textContent = val.toFixed(2) + '%';
     showCalc();
     clearTimeout(state.advTimeout);
     state.advTimeout = setTimeout(calculateAdvanced, 300);
@@ -735,7 +771,7 @@ function bindAmountHint(inputId, hintId) {
     if (!input || !hint) return;
     input.addEventListener('input', function() {
         var val = input.value;
-        if (isNaN(val) || val === '' || val === null) { hint.textContent = ''; return; }
+        if (val === '' || val === null || isNaN(parseFloat(val))) { hint.textContent = ''; return; }
         hint.textContent = formatAmountHint(parseFloat(val), getLocale(), getCountry().currency);
     });
 }
@@ -746,8 +782,29 @@ bindAmountHint('goalTarget',        'goalTargetHint');
 bindAmountHint('goalInitial',       'goalInitialHint');
 
 // ============================================================
-//  PENGAMASKIN — ber\u00E4kning (TAX_REGIMES-drivna)
+//  PENGAMASKIN — beräkning (TAX_REGIMES-drivna)
 // ============================================================
+function parseFees(elementId) {
+    return Math.max(0, Math.min(5, parseFloat($(elementId).value) || 0));
+}
+function parseInflation(elementId) {
+    return Math.max(0, Math.min(10, parseFloat($(elementId).value) || 0));
+}
+function pickRegimeAndParams(c, taxAdvStateKey, sliderId) {
+    var activeRegime, activeParams;
+    if (state[taxAdvStateKey] && c.taxAdvRegime) {
+        activeRegime = TAX_REGIMES[c.taxAdvRegime];
+        activeParams = Object.assign({}, c.taxAdvParams);
+        if (c.taxAdvRegime === 'ISK') {
+            var sliderVal = parseFloat(document.getElementById(sliderId).value);
+            activeParams.iskSchablonRate = isNaN(sliderVal) ? (c.taxAdvParams.iskSchablonRateDefault || 3.55) : sliderVal;
+        }
+    } else {
+        activeRegime = TAX_REGIMES[c.standardRegime];
+        activeParams = Object.assign({}, c.standardParams);
+    }
+    return { regime: activeRegime, params: activeParams };
+}
 function calculateAdvanced() {
     hideCalc();
     if (!validateInput('advInitialCapital', 0, 100000000, false) ||
@@ -762,16 +819,16 @@ function calculateAdvanced() {
     var loc = c.locale;
     var curr = c.currency;
 
-    var initialCapital  = parseFloat(document.getElementById('advInitialCapital').value) || 0;
-    var monthlyAmount   = parseFloat(document.getElementById('advMonthlyAmount').value)  || 0;
-    var annualRate      = parseFloat(document.getElementById('advRate').value)            || 0;
-    var years           = Math.floor(parseFloat(document.getElementById('advYears').value)) || 0;
-    var fees            = Math.max(0, Math.min(5, parseFloat(document.getElementById('fees').value) || 0));
-    var inflation       = Math.max(0, Math.min(10, parseFloat(document.getElementById('advInflation').value) || 0));
+    var initialCapital  = parseFloat($('advInitialCapital').value) || 0;
+    var monthlyAmount   = parseFloat($('advMonthlyAmount').value)  || 0;
+    var annualRate      = parseFloat($('advRate').value)            || 0;
+    var years           = Math.floor(parseFloat($('advYears').value));
+    if (!(years >= 1)) years = 0;
+    var fees            = parseFees('fees');
+    var inflation       = parseInflation('advInflation');
 
     setFeesError(annualRate, fees, $('feesError'), t('feesErrorNetNegative'));
 
-    var monthlyRateGross = annualRate / 100 / 12;
     var monthlyRateNet   = (annualRate - fees) / 100 / 12;
     var months = years * 12;
 
@@ -781,20 +838,9 @@ function calculateAdvanced() {
     var totalFees = grossValue - netAfterFees;
 
     var netValue, taxesOwed, accountBalance = null;
-    var activeRegime, activeParams;
-
-    if (state.taxAdvOn && c.taxAdvRegime) {
-        activeRegime = TAX_REGIMES[c.taxAdvRegime];
-        activeParams = Object.assign({}, c.taxAdvParams);
-        // Merge anv\u00E4ndarjusterade parametrar fr\u00E5n sliders
-        if (c.taxAdvRegime === 'ISK') {
-            var sliderVal = parseFloat(document.getElementById('advRateSlider').value);
-            activeParams.iskSchablonRate = isNaN(sliderVal) ? (c.taxAdvParams.iskSchablonRateDefault || 3.55) : sliderVal;
-        }
-    } else {
-        activeRegime = TAX_REGIMES[c.standardRegime];
-        activeParams = Object.assign({}, c.standardParams);
-    }
+    var rp = pickRegimeAndParams(c, 'taxAdvOn', 'advRateSlider');
+    var activeRegime = rp.regime;
+    var activeParams = rp.params;
 
     var result = activeRegime.simulate(initialCapital, monthlyAmount, monthlyRateNet, years, activeParams);
     accountBalance = result.balance;
@@ -829,8 +875,12 @@ function calculateAdvanced() {
     document.getElementById('advRealValue').textContent     = formatCurrency(realValue, loc, curr);
 
     var advWarning = document.getElementById('advWarning');
-    advWarning.style.display = netValue > 1e9 ? 'block' : 'none';
-    if (netValue > 1e9) advWarning.textContent = t('warningLargeNumbers');
+    if (netValue > 1e9) {
+        advWarning.style.display = 'block';
+        advWarning.textContent = t('warningLargeNumbers');
+    } else {
+        advWarning.style.display = 'none';
+    }
 
     // F\u00F6rdelningsdiagram
     renderBreakdown('advChart', 'advLegend', grossValue, totalInvested, netValue, totalFees, taxesOwed, t(regimeUI.legendI18n));
@@ -840,17 +890,18 @@ function calculateAdvanced() {
     // Tidslinje
     var chartData = buildYearTimeline(years, initialCapital, monthlyAmount, monthlyRateNet, 'timelineBody', activeRegime, activeParams);
     state.advChartData = chartData;
-    requestAnimationFrame(function() { drawTimelineChart(chartData); });
+    if (state._advRafId) cancelAnimationFrame(state._advRafId);
+    state._advRafId = requestAnimationFrame(function() { drawTimelineChart(chartData, 'timelineChart', 'chartTooltip', loc, curr, !!(c.taxAdvRegime)); });
 }
 
 // ============================================================
 //  TIDSLINJE — diagram (delas av Pengamaskin & Sparm\u00E5l)
 // ============================================================
-function drawTimelineChart(dataPoints, canvasId, tooltipId) {
+function drawTimelineChart(dataPoints, canvasId, tooltipId, _loc, _curr, _showRegimeLine) {
     canvasId = canvasId || 'timelineChart';
     tooltipId = tooltipId || 'chartTooltip';
     var canvas = document.getElementById(canvasId);
-    if (!canvas || !dataPoints || dataPoints.length === 0) return;
+    if (!canvas || !dataPoints || dataPoints.length < 2) return;
 
     var rect = canvas.getBoundingClientRect();
     var dpr = window.devicePixelRatio || 1;
@@ -865,7 +916,9 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     var plotW = W - PAD.left - PAD.right;
     var plotH = H - PAD.top - PAD.bottom;
 
-    var maxVal = Math.max.apply(null, dataPoints.map(function(d) { return d.total; })) * 1.05;
+    var showRegimeLine = _showRegimeLine !== undefined ? _showRegimeLine : !!(getCountry().taxAdvRegime);
+    var maxVal = Math.max.apply(null, dataPoints.map(function(d) { return showRegimeLine ? Math.max(d.gross, d.netRegime || 0) : d.gross; })) * 1.05;
+    if (maxVal <= 0) maxVal = 1;
     var minVal = 0;
     var range = maxVal - minVal || 1;
 
@@ -891,10 +944,11 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
         var label = v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' :
                     v >= 1000    ? (v / 1000).toFixed(0) + 'k' :
                     v.toFixed(0);
-        var sym = activeCurrencySym();
+        var sym = _curr ? getCurrencySymbol(_curr) : activeCurrencySym();
         ctx.fillText(label + ' ' + sym, PAD.left - 6, y + 4);
     }
 
+    // Fyllt omr\u00E5de: investerat (brunt)
     ctx.beginPath();
     ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
     dataPoints.forEach(function(d, i) { ctx.lineTo(xPos(i), yPos(d.invested)); });
@@ -904,33 +958,58 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     ctx.fillStyle = 'rgba(139,90,43,0.35)';
     ctx.fill();
 
+    // Linje: investerat
     ctx.beginPath();
     dataPoints.forEach(function(d, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(d.invested)) : ctx.lineTo(xPos(i), yPos(d.invested)); });
     ctx.strokeStyle = '#8b5a2b';
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    // Fyllt omr\u00E5de: avkastning (guld) mellan investerat och brutto
     ctx.beginPath();
     ctx.moveTo(xPos(0), yPos(dataPoints[0].invested));
-    dataPoints.forEach(function(d, i) { ctx.lineTo(xPos(i), yPos(d.total)); });
-    ctx.lineTo(xPos(dataPoints.length - 1), yPos(dataPoints[dataPoints.length - 1].invested));
-    for (var k = dataPoints.length - 1; k >= 0; k--) ctx.lineTo(xPos(k), yPos(dataPoints[k].invested));
+    dataPoints.forEach(function(d, i) { ctx.lineTo(xPos(i), yPos(d.gross)); });
+    var last = dataPoints.length - 1;
+    ctx.lineTo(xPos(last), yPos(dataPoints[last].invested));
+    for (var k = last; k >= 0; k--) ctx.lineTo(xPos(k), yPos(dataPoints[k].invested));
     ctx.closePath();
-    ctx.fillStyle = 'rgba(212,166,0,0.4)';
+    ctx.fillStyle = 'rgba(212,166,0,0.25)';
     ctx.fill();
 
+    // Linje: brutto (avkastningsomr\u00E5dets \u00F6verkant)
     ctx.beginPath();
-    dataPoints.forEach(function(d, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(d.total)) : ctx.lineTo(xPos(i), yPos(d.total)); });
+    dataPoints.forEach(function(d, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(d.gross)) : ctx.lineTo(xPos(i), yPos(d.gross)); });
     ctx.strokeStyle = '#d4a600';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
+    // Linje: netto efter CGT (gr\u00F6n/teal)
+    ctx.beginPath();
+    dataPoints.forEach(function(d, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(d.netCGT)) : ctx.lineTo(xPos(i), yPos(d.netCGT)); });
+    ctx.strokeStyle = '#2d8a6e';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Linje: regimspecifikt netto (ISK, ASK, etc.) — lila/purple, prickad
+    if (showRegimeLine) {
+        ctx.beginPath();
+        dataPoints.forEach(function(d, i) { i === 0 ? ctx.moveTo(xPos(i), yPos(d.netRegime)) : ctx.lineTo(xPos(i), yPos(d.netRegime)); });
+        ctx.strokeStyle = '#9b59b6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // \u00C5rsmark\u00F6rer p\u00E5 x-axeln
     ctx.fillStyle = '#6b4423';
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
     var step = Math.ceil(dataPoints.length / 10);
     dataPoints.forEach(function(d, i) {
-        if (i === 0 || (i + 1) % step === 0 || i === dataPoints.length - 1) {
+        if (i === 0 || (i + 1) % step === 0 || i === last) {
             var x = xPos(i);
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(107,68,35,0.4)';
@@ -944,6 +1023,7 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
         }
     });
 
+    // Axlar
     ctx.beginPath();
     ctx.strokeStyle = '#d4a600';
     ctx.lineWidth = 2;
@@ -952,20 +1032,36 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     ctx.lineTo(PAD.left + plotW, PAD.top + plotH);
     ctx.stroke();
 
+    // Legend
     var legY = H - 12;
     var legItems = [
-        { color: 'rgba(139,90,43,0.7)', label: t('chartLegendInvested') },
-        { color: 'rgba(212,166,0,0.8)', label: t('chartLegendReturn') }
+        { color: '#8b5a2b', label: t('chartLegendInvested') },
+        { color: '#d4a600', label: t('chartLegendReturn') },
+        { color: '#2d8a6e', label: t('chartLegendNetCGT'), dashed: true }
     ];
+    if (showRegimeLine) {
+        legItems.push({ color: '#9b59b6', label: t('chartLegendRegime'), dashed: true, dashShort: true });
+    }
     var legX = PAD.left;
     legItems.forEach(function(item) {
-        ctx.fillStyle = item.color;
-        ctx.fillRect(legX, legY - 8, 14, 10);
+        if (item.dashed) {
+            ctx.beginPath();
+            ctx.strokeStyle = item.color;
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash(item.dashShort ? [3, 4] : [5, 3]);
+            ctx.moveTo(legX, legY - 3);
+            ctx.lineTo(legX + 14, legY - 3);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        } else {
+            ctx.fillStyle = item.color;
+            ctx.fillRect(legX, legY - 8, 14, 10);
+        }
         ctx.fillStyle = '#6b4423';
         ctx.font = '10px Arial';
         ctx.textAlign = 'left';
         ctx.fillText(item.label, legX + 18, legY);
-        legX += 100;
+        legX += 120;
     });
 
     canvas.tabIndex = 0;
@@ -973,19 +1069,31 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
     canvas.setAttribute('aria-label', t('chartAriaLabel'));
     canvas.style.outline = 'none';
     var focusIdx = dataPoints.length - 1;
-    var loc = getLocale();
-    var curr = getCountry().currency;
+    var loc = _loc || getLocale();
+    var curr = _curr || getCountry().currency;
+
+    var _ttYear = t('chartTooltipYear') + ' ';
+    var _ttInvested = t('chartTooltipInvested') + ': ';
+    var _ttGross = t('chartTooltipGross') + ': ';
+    var _ttGain = t('chartTooltipGain') + ': ';
+    var _ttNetCGT = t('chartTooltipNetCGT') + ': ';
+    var _ttNetRegime = t('chartLegendRegime') + ': ';
 
     function showTooltip(idx, clientX, clientY) {
         if (idx < 0 || idx >= dataPoints.length) return;
         var d = dataPoints[idx];
         var tooltip = document.getElementById(tooltipId);
-        var yearLabel = t('chartTooltipYear') + ' ' + d.year;
-        var totalLabel = t('chartTooltipTotal') + ': ';
-        var investedLabel = t('chartTooltipInvested') + ': ';
-        var gainLabel = t('chartTooltipGain') + ': ';
+        var yearLabel = _ttYear + d.year;
         tooltip.textContent = '';
-        [yearLabel, totalLabel + formatCurrency(d.total, loc, curr), investedLabel + formatCurrency(d.invested, loc, curr), gainLabel + formatCurrency(d.gain, loc, curr)].forEach(function(textPart, i) {
+        var tooltipLines = [yearLabel,
+            _ttInvested + formatCurrency(d.invested, loc, curr),
+            _ttGross + formatCurrency(d.gross, loc, curr),
+            _ttGain + formatCurrency(d.gain, loc, curr),
+            _ttNetCGT + formatCurrency(d.netCGT, loc, curr)];
+        if (showRegimeLine) {
+            tooltipLines.push(_ttNetRegime + formatCurrency(d.netRegime, loc, curr));
+        }
+        tooltipLines.forEach(function(textPart, i) {
             if (i > 0) tooltip.appendChild(document.createElement('br'));
             tooltip.appendChild(document.createTextNode(textPart));
         });
@@ -993,9 +1101,9 @@ function drawTimelineChart(dataPoints, canvasId, tooltipId) {
         var bRect = canvas.getBoundingClientRect();
         var tipX = Math.min(clientX !== undefined ? clientX + 12 : xPos(idx) + 10, bRect.width - 160);
         tooltip.style.left = tipX + 'px';
-        tooltip.style.top = (clientY !== undefined ? clientY - bRect.top - 20 : yPos(dataPoints[idx].total) - 10) + 'px';
+        tooltip.style.top = (clientY !== undefined ? clientY - bRect.top - 20 : yPos(dataPoints[idx].gross) - 10) + 'px';
         if (clientX === undefined) {
-            tooltip.style.top = (yPos(dataPoints[idx].total) - 50) + 'px';
+            tooltip.style.top = (yPos(dataPoints[idx].gross) - 60) + 'px';
         }
     }
 
@@ -1040,17 +1148,17 @@ function runAppTests() {
         tmpTbody.id = '_appTestTbody';
         document.body.appendChild(tmpTbody);
         var cd = buildYearTimeline(3, 10000, 500, 0.07 / 12, '_appTestTbody', TAX_REGIMES.CGT_ONLY, { capitalGainsTax: 0.30 });
-        tst('buildYearTimeline: returnerar chartData med 3 \u00E5r', cd.length === 3, 'fick ' + cd.length);
-        tst('buildYearTimeline: chartData[0] har year, invested, gain, total',
-            cd[0].year === 1 && cd[0].invested > 0 && cd[0].total > 0);
-        tst('buildYearTimeline: chartData sista \u00E5r > f\u00F6rsta \u00E5r', cd[2].total > cd[0].total);
-        tst('buildYearTimeline: chartData[2] netto > investerat (avkastning > skatt)',
-            cd[2].total > cd[2].invested);
-        tst('buildYearTimeline: chartData sista \u00E5r > f\u00F6rsta \u00E5r', cd[2].total > cd[0].total);
+        tst('buildYearTimeline: returnerar chartData med 4 punkter (\u00E5r 0\u20133)', cd.length === 4, 'fick ' + cd.length);
+        tst('buildYearTimeline: chartData[0] har year=0, gain=0', cd[0].year === 0 && cd[0].gain === 0);
+        tst('buildYearTimeline: chartData[3] har year, invested, gain, gross, netCGT, netRegime',
+            cd[3].year === 3 && cd[3].invested > 0 && cd[3].gross > 0 && cd[3].netCGT > 0 && cd[3].netRegime > 0);
+        tst('buildYearTimeline: chartData sista \u00E5r > f\u00F6rsta \u00E5r', cd[3].gross > cd[0].gross);
+        tst('buildYearTimeline: chartData[3] brutto > investerat (avkastning > 0)',
+            cd[3].gross > cd[3].invested);
         var rows = tmpTbody.querySelectorAll('tr');
-        tst('buildYearTimeline: 3 rader i tbody', rows.length === 3);
-        tst('buildYearTimeline: f\u00F6rsta rad har 5 celler', rows[0].querySelectorAll('td').length === 5);
-        tst('buildYearTimeline: sista cell inneh\u00E5ller <strong>', rows[0].querySelectorAll('td')[4].querySelector('strong') !== null);
+        tst('buildYearTimeline: 4 rader i tbody (\u00E5r 0\u20133)', rows.length === 4);
+        tst('buildYearTimeline: f\u00F6rsta rad har 7 celler', rows[0].querySelectorAll('td').length === 7);
+        tst('buildYearTimeline: sista cell inneh\u00E5ller <strong>', rows[0].querySelectorAll('td')[6].querySelector('strong') !== null);
         document.body.removeChild(tmpTbody);
     })();
 
@@ -1102,15 +1210,19 @@ function runAppTests() {
 //  SPARM\u00C5L — slider-lyssnare
 // ============================================================
 document.getElementById('goalFees').addEventListener('input', function() {
-    $('goalFeesValue').textContent = parseFloat(this.value).toFixed(2) + '%';
-    setFeesError(parseFloat($('goalRate').value) || 0, parseFloat(this.value), $('goalFeesError'));
+    var val = Math.max(0, Math.min(5, parseFloat(this.value) || 0));
+    this.value = val;
+    $('goalFeesValue').textContent = val.toFixed(2) + '%';
+    setFeesError(parseFloat($('goalRate').value) || 0, val, $('goalFeesError'));
     showCalc();
     clearTimeout(state.goalTimeout);
     state.goalTimeout = setTimeout(calculateGoal, 300);
 });
 
 document.getElementById('goalInflation').addEventListener('input', function() {
-    document.getElementById('goalInflationValue').textContent = parseFloat(this.value).toFixed(1) + '%';
+    var val = Math.max(0, Math.min(10, parseFloat(this.value) || 0));
+    this.value = val;
+    $('goalInflationValue').textContent = val.toFixed(1) + '%';
     showCalc();
     clearTimeout(state.goalTimeout);
     state.goalTimeout = setTimeout(calculateGoal, 300);
@@ -1119,7 +1231,8 @@ document.getElementById('goalInflation').addEventListener('input', function() {
 setupTaxAdvToggle('goalTaxAdvEnabled', 'goalTaxGroup', 'goalTaxAdvOn', calculateGoal, 150);
 
 document.getElementById('goalAdvRateSlider').addEventListener('input', function() {
-    document.getElementById('goalAdvRateValue').textContent = parseFloat(this.value).toFixed(2) + '%';
+    var val = parseFloat(this.value);
+    $('goalAdvRateValue').textContent = val.toFixed(2) + '%';
     showCalc();
     clearTimeout(state.goalTimeout);
     state.goalTimeout = setTimeout(calculateGoal, 300);
@@ -1160,12 +1273,13 @@ function calculateGoal() {
     var loc = c.locale;
     var curr = c.currency;
 
-    var targetRaw  = parseFloat(document.getElementById('goalTarget').value)   || 0;
-    var initialCap = parseFloat(document.getElementById('goalInitial').value)  || 0;
-    var years      = Math.floor(parseFloat(document.getElementById('goalYears').value)) || 0;
-    var annualRate = parseFloat(document.getElementById('goalRate').value)     || 0;
-    var fees       = Math.max(0, Math.min(5, parseFloat(document.getElementById('goalFees').value) || 0));
-    var inflation  = Math.max(0, Math.min(10, parseFloat(document.getElementById('goalInflation').value) || 0));
+    var targetRaw  = parseFloat($('goalTarget').value)   || 0;
+    var initialCap = parseFloat($('goalInitial').value)  || 0;
+    var years      = Math.floor(parseFloat($('goalYears').value));
+    if (!(years >= 1)) years = 0;
+    var annualRate = parseFloat($('goalRate').value)     || 0;
+    var fees       = parseFees('goalFees');
+    var inflation  = parseInflation('goalInflation');
     var realTerms  = document.getElementById('goalRealTerms').checked;
 
     setFeesError(annualRate, fees, $('goalFeesError'), t('feesErrorGoal'));
@@ -1179,18 +1293,9 @@ function calculateGoal() {
     var realEquiv       = realTerms ? targetRaw : targetRaw / inflationFactor;
 
     // V\u00E4lj regim baserat p\u00E5 toggle
-    var activeRegime, activeParams;
-    if (state.goalTaxAdvOn && c.taxAdvRegime) {
-        activeRegime = TAX_REGIMES[c.taxAdvRegime];
-        activeParams = Object.assign({}, c.taxAdvParams);
-        if (c.taxAdvRegime === 'ISK') {
-            var sliderVal = parseFloat(document.getElementById('goalAdvRateSlider').value);
-            activeParams.iskSchablonRate = isNaN(sliderVal) ? (c.taxAdvParams.iskSchablonRateDefault || 3.55) : sliderVal;
-        }
-    } else {
-        activeRegime = TAX_REGIMES[c.standardRegime];
-        activeParams = Object.assign({}, c.standardParams);
-    }
+    var rp = pickRegimeAndParams(c, 'goalTaxAdvOn', 'goalAdvRateSlider');
+    var activeRegime = rp.regime;
+    var activeParams = rp.params;
 
     var resultsEl     = document.getElementById('goalSummary');
     var timelineEl    = document.getElementById('goalTimeline');
@@ -1219,6 +1324,7 @@ function calculateGoal() {
         if (!isValidNumber(finalRes.netValue)) {
             resultsEl.classList.remove('show');
             timelineEl.classList.remove('show');
+            if (typeof console !== 'undefined') console.warn('calculateGoal: finalRes.netValue is NaN');
             return;
         }
 
@@ -1239,31 +1345,37 @@ function calculateGoal() {
 
         var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', activeRegime, activeParams);
         state.goalChartData = noSaveChartData;
-        requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
+        if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
+        state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
         return;
     }
     noSavingsEl.style.display = 'none';
 
     // Bin\u00E4rs\u00F6kning f\u00F6r m\u00E5natligt sparande
     var lo = 0, hi = nominalTarget;
+    var lastResult = null;
     for (var i = 0; i < 80; i++) {
         var mid = (lo + hi) / 2;
-        if (activeRegime.simulate(initialCap, mid, monthlyRateNet, years, activeParams).netValue < nominalTarget) {
+        var res = activeRegime.simulate(initialCap, mid, monthlyRateNet, years, activeParams);
+        if (res.netValue < nominalTarget) {
             lo = mid;
         } else {
             hi = mid;
+            lastResult = res;
         }
+        if (hi - lo < 0.005) break;
     }
     var requiredMonthly = (lo + hi) / 2;
 
     var totalIn  = initialCap + requiredMonthly * months;
-    var finalRes = activeRegime.simulate(initialCap, requiredMonthly, monthlyRateNet, years, activeParams);
+    var finalRes = lastResult || activeRegime.simulate(initialCap, requiredMonthly, monthlyRateNet, years, activeParams);
     var finalNet = finalRes.netValue;
     var actualTax = finalRes.totalTax;
 
     if (!isValidNumber(finalNet) || !isValidNumber(requiredMonthly)) {
         resultsEl.classList.remove('show');
         timelineEl.classList.remove('show');
+        if (typeof console !== 'undefined') console.warn('calculateGoal: finalNet or requiredMonthly is invalid');
         return;
     }
 
@@ -1306,7 +1418,8 @@ function calculateGoal() {
 
     var goalChartData = buildYearTimeline(years, initialCap, requiredMonthly, monthlyRateNet, 'goalTableBody', activeRegime, activeParams);
     state.goalChartData = goalChartData;
-    requestAnimationFrame(function() { drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip'); });
+    if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
+    state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip', loc, curr, !!(c.taxAdvRegime)); });
 }
 
 // ============================================================
@@ -1318,7 +1431,6 @@ var FLAGS = {
     NO: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#BA0C2F"/><rect x="0" y="6" width="24" height="4" fill="#fff"/><rect x="7" y="0" width="4" height="16" fill="#fff"/><rect x="0" y="7" width="24" height="2" fill="#00205B"/><rect x="8" y="0" width="2" height="16" fill="#00205B"/></svg>',
     DK: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#C8102E"/><rect x="0" y="6" width="24" height="4" fill="#fff"/><rect x="7" y="0" width="4" height="16" fill="#fff"/></svg>',
     FI: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect x="0" y="6" width="24" height="4" fill="#003580"/><rect x="7" y="0" width="4" height="16" fill="#003580"/></svg>',
-    IS: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#02529C"/><rect x="0" y="6" width="24" height="4" fill="#fff"/><rect x="7" y="0" width="4" height="16" fill="#fff"/><rect x="0" y="7" width="24" height="2" fill="#DC1E35"/><rect x="8" y="0" width="2" height="16" fill="#DC1E35"/></svg>',
     // Västeuropa
     DE: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#000"/><rect y="5.33" width="24" height="5.33" fill="#DD0000"/><rect y="10.67" width="24" height="5.33" fill="#FFCE00"/></svg>',
     FR: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg>',
@@ -1330,33 +1442,17 @@ var FLAGS = {
     BE: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="8" height="16" fill="#000"/><rect x="8" width="8" height="16" fill="#FDDA24"/><rect x="16" width="8" height="16" fill="#EF3340"/></svg>',
     // Centraleuropa
     AT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#EF3340"/><rect y="5.33" width="24" height="5.33" fill="#fff"/></svg>',
-    CH: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#FF0000"/><rect x="10" y="4" width="4" height="8" fill="#fff"/><rect x="8" y="6" width="8" height="4" fill="#fff"/></svg>',
-    LI: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#002B7F"/><rect y="8" width="24" height="8" fill="#CE1126"/><rect x="6" y="3" width="3" height="4" fill="#FFD100"/></svg>',
-    LU: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#00A1DE"/><rect y="5.33" width="24" height="5.33" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#ED2939"/></svg>',
     // Sydeuropa
     IT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="8" height="16" fill="#009246"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#CE2B37"/></svg>',
     ES: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="4" fill="#AA151B"/><rect y="4" width="24" height="8" fill="#F1BF00"/><rect y="12" width="24" height="4" fill="#AA151B"/></svg>',
-    PT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#006600"/><rect x="8.5" width="7" height="16" fill="#FF0000"/><circle cx="10.5" cy="8" r="3.5" fill="#FF0"/><rect x="10" y="7.5" width="1" height="3" fill="#003399"/></svg>',
     GR: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="1.78" fill="#0D5EAF"/><rect y="1.78" width="24" height="1.78" fill="#fff"/><rect y="3.56" width="24" height="1.78" fill="#0D5EAF"/><rect y="5.33" width="24" height="1.78" fill="#fff"/><rect y="7.11" width="24" height="1.78" fill="#0D5EAF"/><rect y="8.89" width="24" height="1.78" fill="#fff"/><rect y="10.67" width="24" height="1.78" fill="#0D5EAF"/><rect y="12.44" width="24" height="1.78" fill="#fff"/><rect y="14.22" width="24" height="1.78" fill="#0D5EAF"/><rect x="0" y="0" width="10" height="8.89" fill="#0D5EAF"/><rect x="4" y="2.2" width="2" height="4.5" fill="#fff"/><rect x="3" y="3.3" width="4" height="2.2" fill="#fff"/></svg>',
-    CY: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><path d="M12 3 C12 4.5 15 6.5 16.5 6.5 C18 6.5 17 8 15.5 8.5 C14 9 13.5 8 12 8 C10.5 8 10 9 8.5 8.5 C7 8 6 6.5 7.5 6.5 C9 6.5 12 4.5 12 3Z" fill="#D4760A"/></svg>',
-    MT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="12" height="16" fill="#fff"/><rect x="12" width="12" height="16" fill="#CF142B"/></svg>',
-    MC: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#CE1126"/><rect y="8" width="24" height="8" fill="#fff"/></svg>',
-    AD: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="8" height="16" fill="#0018A8"/><rect x="8" width="8" height="16" fill="#FEDD00"/><rect x="16" width="8" height="16" fill="#D50032"/></svg>',
-    SM: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#fff"/><rect y="8" width="24" height="8" fill="#5EB6E4"/></svg>',
     // Baltikum
     EE: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#0072CE"/><rect y="5.33" width="24" height="5.33" fill="#000"/><rect y="10.67" width="24" height="5.33" fill="#fff"/></svg>',
     LV: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#9E3039"/><rect y="6.4" width="24" height="3.2" fill="#fff"/></svg>',
     LT: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#FDB913"/><rect y="5.33" width="24" height="5.33" fill="#006A44"/><rect y="10.67" width="24" height="5.33" fill="#C1272D"/></svg>',
     // Östeuropa
     PL: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#fff"/><rect y="8" width="24" height="8" fill="#DC143C"/></svg>',
-    CZ: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#fff"/><rect y="8" width="24" height="8" fill="#D7141A"/><polygon points="12,0 0,8 12,16" fill="#11457E"/></svg>',
-    SK: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect y="5.33" width="24" height="5.33" fill="#0B4EA2"/><rect y="10.67" width="24" height="5.33" fill="#EE1C25"/><rect x="0" y="0" width="10" height="9" fill="#fff"/><path d="M3 2 L5 6 L9 6 L6 9 L7 13 L3 10.5 L-1 13 L0 9 L-3 6 L1 6Z" fill="#EE1C25"/></svg>',
-    HU: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#CD2A3E"/><rect y="5.33" width="24" height="5.33" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#436F4D"/></svg>',
-    RO: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="8" height="16" fill="#002B7F"/><rect x="8" width="8" height="16" fill="#FCD116"/><rect x="16" width="8" height="16" fill="#CE1126"/></svg>',
-    BG: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect y="5.33" width="24" height="5.33" fill="#00966E"/><rect y="10.67" width="24" height="5.33" fill="#D62612"/></svg>',
-    // Balkan
-    HR: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#FF0000"/><rect y="5.33" width="24" height="5.33" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#171796"/></svg>',
-    SI: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="16" fill="#fff"/><rect y="5.33" width="24" height="5.33" fill="#005DA4"/><rect y="10.67" width="24" height="5.33" fill="#ED1C24"/></svg>'
+    CZ: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16"><rect width="24" height="8" fill="#fff"/><rect y="8" width="24" height="8" fill="#D7141A"/><polygon points="12,0 0,8 12,16" fill="#11457E"/></svg>'
 };
 
 var LANG_OPTIONS = [
@@ -1366,9 +1462,16 @@ var LANG_OPTIONS = [
 
 // Bygg landslista dynamiskt fr\u00E5n COUNTRY_CONFIG
 var CTRY_OPTIONS = [];
-Object.keys(COUNTRY_CONFIG).forEach(function(code) {
-    CTRY_OPTIONS.push({ value: code, flag: code });
-});
+for (var code in COUNTRY_CONFIG) {
+    if (Object.prototype.hasOwnProperty.call(COUNTRY_CONFIG, code))
+        CTRY_OPTIONS.push({ value: code, flag: code });
+}
+
+var THEME_OPTIONS = [
+    { value: 'default', flag: 'none', label: '\u2600\uFE0F Classic' },
+    { value: 'dark',    flag: 'none', label: '\uD83C\uDF19 Dark' },
+    { value: 'bank',    flag: 'none', label: '\uD83C\uDFE6 Bank' }
+];
 
 function getCountryLabel(opt, lang) {
     lang = lang || state.lang;
@@ -1407,8 +1510,12 @@ function initCustomDropdown(containerId, options, initialValue, getLabelFn, onCh
     function renderPanel(lang) {
         panel.innerHTML = '';
         optionEls = [];
-        // Sortera kopian alfabetiskt på landsnamn i aktuellt språk
+        // Sortera kopian: per region först, sedan namn
         var sorted = options.slice().sort(function(a, b) {
+            var ca = COUNTRY_CONFIG[a.value], cb = COUNTRY_CONFIG[b.value];
+            var ra = ca && ca.region && REGIONS[ca.region] ? REGIONS[ca.region].order : 99;
+            var rb = cb && cb.region && REGIONS[cb.region] ? REGIONS[cb.region].order : 99;
+            if (ra !== rb) return ra - rb;
             var la = getLabelFn(a, lang).toLowerCase();
             var lb = getLabelFn(b, lang).toLowerCase();
             if (la < lb) return -1;
@@ -1540,6 +1647,32 @@ var countryDropdown = initCustomDropdown(
     }
 );
 
+function applyTheme(theme) {
+    var html = document.documentElement;
+    html.classList.remove('theme-dark', 'theme-bank');
+    if (theme !== 'default') html.classList.add('theme-' + theme);
+    try { localStorage.setItem('pengamaskin-theme', theme); } catch(e) {
+        if (typeof console !== 'undefined') console.warn('Pengamaskinen: kunde inte spara tema', e);
+    }
+}
+
+var themeDropdown = initCustomDropdown(
+    'themeDropdown',
+    THEME_OPTIONS,
+    'dark',
+    function(opt) { return opt.label; },
+    function(value) { applyTheme(value); }
+);
+
+// Återställ sparat tema, annars använd 'dark' som standard
+(function() {
+    var saved;
+    try { saved = localStorage.getItem('pengamaskin-theme'); } catch(e) {}
+    var active = (saved) ? saved : 'dark';
+    applyTheme(active);
+    themeDropdown.setValue(active);
+})();
+
 // ============================================================
 //  Initialisering
 // ============================================================
@@ -1553,15 +1686,22 @@ window.addEventListener('load', function() {
     calculateAdvanced();
     calculateGoal();
 
-    if (location.hostname === 'localhost' ||
-        location.hostname === '127.0.0.1' ||
-        location.protocol === 'file:') {
+        if (location.hostname === 'localhost' ||
+            location.hostname === '127.0.0.1' ||
+            location.hostname === '0.0.0.0' ||
+            location.protocol === 'file:') {
         try { runTests(); } catch (e) { console.error('runTests fel:', e); }
         try { runAppTests(); } catch (e) { console.error('runAppTests fel:', e); }
     }
 });
 
 // Auto-ber\u00E4kna vid \u00E4ndringar — Pengamaskin
+var advBlurValidators = {
+    advInitialCapital: [0, 100000000, false],
+    advMonthlyAmount: [0, 1000000, false],
+    advRate: [0, 100, true],
+    advYears: [1, 100, true]
+};
 var advInputs = ['advInitialCapital', 'advMonthlyAmount', 'advRate', 'advYears'];
 advInputs.forEach(function(id) {
     var element = document.getElementById(id);
@@ -1576,10 +1716,8 @@ advInputs.forEach(function(id) {
             }
         });
         element.addEventListener('blur', function() {
-            if (id === 'advInitialCapital') validateInput(id, 0, 100000000, false);
-            if (id === 'advMonthlyAmount') validateInput(id, 0, 1000000, false);
-            if (id === 'advRate') validateInput(id, 0, 100, true);
-            if (id === 'advYears') validateInput(id, 1, 100, true);
+            var v = advBlurValidators[id];
+            if (v) validateInput(id, v[0], v[1], v[2]);
         });
     }
 });

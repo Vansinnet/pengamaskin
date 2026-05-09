@@ -28,7 +28,7 @@ var REGIONS = {
 
 var COUNTRY_CONFIG = {
     // ==========================================================
-    //  NORDEN (5 länder)
+    //  NORDEN (4 länder)
     // ==========================================================
 
     SE: {
@@ -36,7 +36,7 @@ var COUNTRY_CONFIG = {
         currency: 'SEK', locale: 'sv-SE', region: 'nordic',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.30 },
-        taxAdvRegime: 'ISK',
+        taxAdvRegime: 'ISK',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { iskSchablonGolv: 1.25, iskFribelopp: 300000, iskSchablonRateDefault: 3.55, iskSkatt: 0.30 },
         ui: {
             sv: {
@@ -59,7 +59,7 @@ var COUNTRY_CONFIG = {
         currency: 'NOK', locale: 'nb-NO', region: 'nordic',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.3784 },
-        taxAdvRegime: 'DEFERRED_SKJERMING',
+        taxAdvRegime: 'DEFERRED_SKJERMING',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { capitalGainsTax: 0.3784, skjermingsrente: 3.6 },
         ui: {
             sv: {
@@ -82,7 +82,7 @@ var COUNTRY_CONFIG = {
         currency: 'DKK', locale: 'da-DK', region: 'nordic',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.27, capitalGainsTaxHigh: 0.42, capitalGainsTaxThreshold: 67500, capitalGainsTaxBrackets: [{ threshold: 67500, rate: 0.27 }, { rate: 0.42 }] },
-        taxAdvRegime: 'LAGER_ANNUAL',
+        taxAdvRegime: 'LAGER_ANNUAL',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { askAnnualTax: 0.17 },
         ui: {
             sv: {
@@ -105,7 +105,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'fi-FI', region: 'nordic',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.30, capitalGainsTaxHigh: 0.34, capitalGainsTaxThreshold: 30000, capitalGainsTaxBrackets: [{ threshold: 30000, rate: 0.30 }, { rate: 0.34 }] },
-        taxAdvRegime: 'DEFERRED_PLAIN',
+        taxAdvRegime: 'DEFERRED_PLAIN',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { capitalGainsTax: 0.30, capitalGainsTaxHigh: 0.34, capitalGainsTaxThreshold: 30000, capitalGainsTaxBrackets: [{ threshold: 30000, rate: 0.30 }, { rate: 0.34 }] },
         ui: {
             sv: {
@@ -123,18 +123,6 @@ var COUNTRY_CONFIG = {
         }
     },
 
-    IS: {
-        code: 'IS', name: { sv: 'Island', en: 'Iceland' },
-        currency: 'ISK', locale: 'is-IS', region: 'nordic',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.22 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '' }
-        }
-    },
-
     // ==========================================================
     //  VÄSTEUROPA (2 länder)
     // ==========================================================
@@ -144,7 +132,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'de-DE', region: 'western',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.26375, capitalGainsTaxBrackets: [{ threshold: 1000, rate: 0 }, { rate: 0.26375 }] },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: {
                 taxAdvLabel: '',
@@ -166,25 +154,26 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'fr-FR', region: 'western',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.30 },
-        // Förenkling: PEA modelleras med 17,2 % direkt (antar 5+ års innehav).
-        // Innan 5 år gäller 30 % (12,8 % IR + 17,2 % CSG). En korrekt modell
-        // skulle kräva TIME_TEST_CGT med 5-års tröskel + regimbyte vid tröskeln.
-        taxAdvRegime: 'DEFERRED_PLAIN',
-        taxAdvParams: { capitalGainsTax: 0.172 },
+        // PEA: 5-års tröskel för skattelättnad. TIME_TEST_CGT med graderade brytpunkter.
+        taxAdvRegime: 'TIME_TEST_CGT',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
+        taxAdvParams: {
+            timeTestGraded: [
+                { years: 5, rate: 0.30 },
+                { rate: 0.172 }
+            ]
+        },
         ui: {
             sv: {
                 taxAdvLabel: 'PEA (Plan d\'Épargne en Actions)',
-                taxAdvDesc: 'Skattegynnat aktiesparkonto — endast sociala avgifter (17,2 %) efter 5 år, max 150 000 €.',
-                taxAdvTip: 'PEA: efter 5 år betalar du endast CSG/CRDS (17,2 %) på vinsten vid uttag. Max 150 000 € insättningar.',
-                taxAdvSliderHint: 'Standard: 30 % (12,8 % IR + 17,2 % CSG). PEA efter 5 år: endast 17,2 % CSG.',
-                simplificationNote: 'Förenkling: PEA-kontot antar att du håller investeringen i 5+ år (17,2 % skatt). Innan 5 år gäller 30 %.'
+                taxAdvDesc: 'Skattegynnat aktiesparkonto — 30 % skatt under 5 år, därefter 17,2 % (CSG/CRDS). Max 150 000 €.',
+                taxAdvTip: 'PEA: under 5 år betalar du 30 % (12,8 % IR + 17,2 % CSG). Efter 5 år endast 17,2 % CSG. Max 150 000 € insättningar.',
+                taxAdvSliderHint: 'Standard: 30 % (12,8 % IR + 17,2 % CSG). PEA: 30 % under 5 år, därefter 17,2 % CSG.'
             },
             en: {
                 taxAdvLabel: 'PEA (Equity Savings Plan)',
-                taxAdvDesc: 'Tax-advantaged stock account — only social charges (17.2%) after 5 years, max €150,000.',
-                taxAdvTip: 'PEA: after 5 years, only CSG/CRDS (17.2%) applies on withdrawal gains. Max €150,000 deposits.',
-                taxAdvSliderHint: 'Standard: 30% (12.8% income tax + 17.2% CSG). PEA after 5 years: only 17.2% CSG.',
-                simplificationNote: 'Simplification: The PEA account assumes you hold for 5+ years (17.2% tax). Before 5 years, 30% applies.'
+                taxAdvDesc: 'Tax-advantaged stock account — 30% tax under 5 years, then 17.2% (CSG/CRDS). Max €150,000.',
+                taxAdvTip: 'PEA: under 5 years you pay 30% (12.8% income tax + 17.2% CSG). After 5 years only 17.2% CSG. Max €150,000 deposits.',
+                taxAdvSliderHint: 'Standard: 30% (12.8% income tax + 17.2% CSG). PEA: 30% under 5 years, then 17.2% CSG.'
             }
         }
     },
@@ -198,7 +187,7 @@ var COUNTRY_CONFIG = {
         currency: 'GBP', locale: 'en-GB', region: 'british',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.18, capitalGainsTaxHigh: 0.24, capitalGainsTaxThreshold: 37700, capitalGainsTaxBrackets: [{ threshold: 3000, rate: 0 }, { threshold: 40700, rate: 0.18 }, { rate: 0.24 }] },
-        taxAdvRegime: 'TAX_FREE_WRAPPER',
+        taxAdvRegime: 'TAX_FREE_WRAPPER',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: {},
         ui: {
             sv: {
@@ -221,7 +210,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'en-IE', region: 'british',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.33, capitalGainsTaxBrackets: [{ threshold: 1270, rate: 0 }, { rate: 0.33 }] },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: {
                 taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '',
@@ -243,7 +232,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'nl-NL', region: 'benelux',
         standardRegime: 'DUTCH_BOX3',
         standardParams: { deemedReturn: 0.0604, taxRate: 0.36, exemption: 57000 },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: {
                 taxAdvLabel: '',
@@ -265,7 +254,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'nl-BE', region: 'benelux',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.10, capitalGainsTaxBrackets: [{ threshold: 10000, rate: 0 }, { rate: 0.10 }] },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: {
                 taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '',
@@ -279,7 +268,7 @@ var COUNTRY_CONFIG = {
     },
 
     // ==========================================================
-    //  CENTRALEUROPA (4 länder)
+    //  CENTRALEUROPA (1 land)
     // ==========================================================
 
     AT: {
@@ -287,51 +276,58 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'de-AT', region: 'central',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.275 },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'KESt (Kapitalertragsteuer) 27,5 % på kapitalvinster och utdelningar.' },
             en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'KESt (Kapitalertragsteuer) 27.5% on capital gains and dividends.' }
         }
     },
 
-    CH: {
-        code: 'CH', name: { sv: 'Schweiz', en: 'Switzerland' },
-        currency: 'CHF', locale: 'de-CH', region: 'central',
+    // ==========================================================
+    //  ÖSTEUROPA (2 länder)
+    // ==========================================================
+
+    PL: {
+        code: 'PL', name: { sv: 'Polen', en: 'Poland' },
+        currency: 'PLN', locale: 'pl-PL', region: 'eastern',
         standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
+        standardParams: { capitalGainsTax: 0.19 },
+        // IKE (Indywidualne Konto Emerytalne): max ~24 000 PLN/år, 0 % skatt.
+        // IKZE (Indywidualne Konto Zabezpieczenia Emerytalnego): max ~12 000 PLN/år,
+        // insättningar avdragsgilla, uttag beskattas som inkomst (10 %).
+        // Modellerar IKE (enklare, populärare).
+        taxAdvRegime: 'TAX_FREE_WRAPPER',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
+        taxAdvParams: {},
         ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Ingen federal kapitalvinstskatt för privata investerare. Kantonal förmögenhetsskatt tillkommer.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'No federal CGT for private investors. Cantonal wealth tax applies separately.' }
+            sv: {
+                taxAdvLabel: 'IKE (Indywidualne Konto Emerytalne)',
+                taxAdvDesc: 'Helt skattefritt pensionssparkonto — 0 % skatt på avkastning och uttag, max ~24 000 PLN/år.',
+                taxAdvTip: 'IKE: helt skattefritt. Ingen kapitalvinstskatt, ingen inkomstskatt på utdelningar. Max ~24 000 PLN per år.',
+                taxAdvSliderHint: 'Vanligt konto: 19 % kapitalvinstskatt (rycza\u0142t). IKE: 0 % skatt.'
+            },
+            en: {
+                taxAdvLabel: 'IKE (Individual Retirement Account)',
+                taxAdvDesc: 'Completely tax-free retirement account — 0% tax on gains and withdrawals, max ~24,000 PLN/yr.',
+                taxAdvTip: 'IKE: completely tax-free. No CGT, no income tax on dividends. Max ~24,000 PLN per year.',
+                taxAdvSliderHint: 'Standard account: 19% CGT (rycza\u0142t). IKE: 0% tax.'
+            }
         }
     },
 
-    LI: {
-        code: 'LI', name: { sv: 'Liechtenstein', en: 'Liechtenstein' },
-        currency: 'CHF', locale: 'de-LI', region: 'central',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
+    CZ: {
+        code: 'CZ', name: { sv: 'Tjeckien', en: 'Czechia' },
+        currency: 'CZK', locale: 'cs-CZ', region: 'eastern',
+        standardRegime: 'TIME_TEST_CGT',
+        standardParams: { timeTestThreshold: 3, capitalGainsTax: 0.15 },
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Ingen kapitalvinstskatt för privata investerare. Förmögenhetsskatt tillkommer.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'No CGT for private investors. Wealth tax applies.' }
-        }
-    },
-
-    LU: {
-        code: 'LU', name: { sv: 'Luxemburg', en: 'Luxembourg' },
-        currency: 'EUR', locale: 'fr-LU', region: 'central',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0 % kapitalvinstskatt efter 6 månaders innehav. Inom 6 mån: progressiv inkomstskatt.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0% CGT after 6 months holding period. Within 6 months: progressive income tax.' }
+            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 15 %. Skattefritt efter 3 års innehav (tidstest).' },
+            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 15%. Tax-free after 3 years holding (time test).' }
         }
     },
 
     // ==========================================================
-    //  SYDEUROPA (9 länder)
+    //  SYDEUROPA (3 länder)
     // ==========================================================
 
     IT: {
@@ -339,25 +335,22 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'it-IT', region: 'southern',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.26 },
-        // Förenkling: PIR modelleras som helt skattefri (TAX_FREE_WRAPPER).
-        // I verkligheten krävs 5 års innehav + minst 70 % i italienska/EU-bolag.
-        // Innan 5 år återtas skatteförmånen. Antar långsiktigt sparande.
-        taxAdvRegime: 'TAX_FREE_WRAPPER',
-        taxAdvParams: {},
+        // PIR: 5-års tröskel för skattefrihet. TIME_TEST_CGT hanterar tröskeln.
+        // Kvalificerade investeringar (minst 70 % i italienska/EU-bolag) antas uppfyllda.
+        taxAdvRegime: 'TIME_TEST_CGT',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
+        taxAdvParams: { timeTestThreshold: 5, capitalGainsTax: 0.26 },
         ui: {
             sv: {
                 taxAdvLabel: 'PIR (Piano Individuale di Risparmio)',
-                taxAdvDesc: 'Helt skattefri efter 5 år — max €40 000/år, €200 000 totalt i kvalificerade investeringar.',
-                taxAdvTip: 'PIR: helt skattefritt på avkastning efter 5 års innehav. Investerar i italienska och europeiska bolag.',
-                taxAdvSliderHint: 'Standard: 26 % kapitalvinstskatt. PIR efter 5 år: 0 % skatt.',
-                simplificationNote: 'Förenkling: PIR-kontot antar 5+ års innehav och kvalificerade investeringar. Innan 5 år återtas skatteförmånen.'
+                taxAdvDesc: 'Skattefri efter 5 år, 26 % CGT under 5 år — max €40 000/år, €200 000 totalt.',
+                taxAdvTip: 'PIR: 26 % kapitalvinstskatt under de första 5 åren. Därefter helt skattefritt. Investerar i italienska och europeiska bolag.',
+                taxAdvSliderHint: 'Standard: 26 % kapitalvinstskatt. PIR: 26 % under 5 år, därefter 0 % skatt.'
             },
             en: {
                 taxAdvLabel: 'PIR (Individual Savings Plan)',
-                taxAdvDesc: 'Completely tax-free after 5 years — max €40,000/year, €200,000 total in qualifying investments.',
-                taxAdvTip: 'PIR: completely tax-free on returns after 5 years holding. Invests in Italian and European companies.',
-                taxAdvSliderHint: 'Standard: 26% CGT. PIR after 5 years: 0% tax.',
-                simplificationNote: 'Simplification: The PIR account assumes 5+ years holding and qualifying investments. Before 5 years, the tax benefit is reclaimed.'
+                taxAdvDesc: 'Tax-free after 5 years, 26% CGT under 5 years — max €40,000/year, €200,000 total.',
+                taxAdvTip: 'PIR: 26% CGT during the first 5 years. Then completely tax-free. Invests in Italian and European companies.',
+                taxAdvSliderHint: 'Standard: 26% CGT. PIR: 26% under 5 years, then 0% tax.'
             }
         }
     },
@@ -367,30 +360,10 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'es-ES', region: 'southern',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.19, capitalGainsTaxHigh: 0.26, capitalGainsTaxThreshold: 200000, capitalGainsTaxBrackets: [{ threshold: 6000, rate: 0.19 }, { threshold: 50000, rate: 0.21 }, { threshold: 200000, rate: 0.23 }, { rate: 0.26 }] },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Progressiv kapitalvinstskatt: 19 % upp till €6 000, 21 % €6k–€50k, 23 % €50k–€200k, 26 % över.' },
             en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Progressive CGT: 19% up to €6,000, 21% €6k–€50k, 23% €50k–€200k, 26% above.' }
-        }
-    },
-
-    PT: {
-        code: 'PT', name: { sv: 'Portugal', en: 'Portugal' },
-        currency: 'EUR', locale: 'pt-PT', region: 'southern',
-        // Förenkling: Alltid 28 % kapitalvinstskatt. I verkligheten kan innehav
-        // >1 år inkluderas i IRS (inkomstdeklarationen) och beskattas med
-        // progressiv inkomstskatt (14,5–48 %), vilket kan vara lägre eller högre.
-        // Modellen kan inte avgöra användarens marginalskattesats.
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.28 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 28 % på aktier/fonder. Innehav >1 år kan ge lägre skatt om inkluderat i IRS.',
-                   simplificationNote: 'Förenkling: Alltid 28 % kapitalvinstskatt. Innehav >1 år kan i verkligheten deklareras som inkomst (14,5–48 % progressivt), vilket kan vara lägre.'
-            },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 28% on stocks/funds. Holdings >1 year may qualify for lower rate if included in IRS.',
-                   simplificationNote: 'Simplification: Always 28% CGT. Holdings >1 year may in reality be declared as income (14.5–48% progressive), which may be lower.'
-            }
         }
     },
 
@@ -399,70 +372,10 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'el-GR', region: 'southern',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.15 },
-        taxAdvRegime: null, taxAdvParams: null,
+        taxAdvRegime: null, taxAdvParams: null,  // Döljs i UI:t — ingen separat skattegynnad kontotyp för landet
         ui: {
             sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 15 % på noterade aktier och fonder.' },
             en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 15% on listed stocks and funds.' }
-        }
-    },
-
-    CY: {
-        code: 'CY', name: { sv: 'Cypern', en: 'Cyprus' },
-        currency: 'EUR', locale: 'el-CY', region: 'southern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0 % kapitalvinstskatt på aktier och värdepapper. CGT gäller endast fast egendom.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0% CGT on shares and securities. CGT only applies to real estate.' }
-        }
-    },
-
-    MT: {
-        code: 'MT', name: { sv: 'Malta', en: 'Malta' },
-        currency: 'EUR', locale: 'mt-MT', region: 'southern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0 % kapitalvinstskatt för ej domicilerade personer. 15 % för domicilerade på vissa tillgångar.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: '0% CGT for non-domiciled individuals. 15% for domiciled on certain assets.' }
-        }
-    },
-
-    MC: {
-        code: 'MC', name: { sv: 'Monaco', en: 'Monaco' },
-        currency: 'EUR', locale: 'fr-MC', region: 'southern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Ingen kapitalvinstskatt för monegaskiska medborgare och residenter.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'No CGT for Monegasque citizens and residents.' }
-        }
-    },
-
-    AD: {
-        code: 'AD', name: { sv: 'Andorra', en: 'Andorra' },
-        currency: 'EUR', locale: 'ca-AD', region: 'southern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Ingen kapitalvinstskatt på aktier och värdepapper.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'No CGT on stocks and securities.' }
-        }
-    },
-
-    SM: {
-        code: 'SM', name: { sv: 'San Marino', en: 'San Marino' },
-        currency: 'EUR', locale: 'it-SM', region: 'southern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.0 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Ingen kapitalvinstskatt för privatpersoner på finansiella tillgångar.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'No CGT for individuals on financial assets.' }
         }
     },
 
@@ -475,7 +388,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'et-EE', region: 'baltics',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.22 },
-        taxAdvRegime: 'DEFERRED_PLAIN',
+        taxAdvRegime: 'DEFERRED_PLAIN',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { capitalGainsTax: 0.22 },
         ui: {
             sv: {
@@ -498,7 +411,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'lv-LV', region: 'baltics',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.20 },
-        taxAdvRegime: 'DEFERRED_PLAIN',
+        taxAdvRegime: 'DEFERRED_PLAIN',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { capitalGainsTax: 0.20 },
         ui: {
             sv: {
@@ -521,7 +434,7 @@ var COUNTRY_CONFIG = {
         currency: 'EUR', locale: 'lt-LT', region: 'baltics',
         standardRegime: 'CGT_ONLY',
         standardParams: { capitalGainsTax: 0.15 },
-        taxAdvRegime: 'DEFERRED_PLAIN',
+        taxAdvRegime: 'DEFERRED_PLAIN',  // Visas i UI:t (kolumn/diagramlinje) — separat skattegynnad kontotyp
         taxAdvParams: { capitalGainsTax: 0.15 },
         ui: {
             sv: {
@@ -540,136 +453,8 @@ var COUNTRY_CONFIG = {
     },
 
     // ==========================================================
-    //  ÖSTEUROPA (6 länder)
+    //  BALKAN (0 länder)
     // ==========================================================
-
-    PL: {
-        code: 'PL', name: { sv: 'Polen', en: 'Poland' },
-        currency: 'PLN', locale: 'pl-PL', region: 'eastern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.19 },
-        taxAdvRegime: 'TAX_FREE_WRAPPER',
-        taxAdvParams: {},
-        ui: {
-            sv: {
-                taxAdvLabel: 'IKE (Indywidualne Konto Emerytalne)',
-                taxAdvDesc: 'Skattefritt pensionssparkonto — ingen kapitalvinstskatt vid uttag efter 60 års ålder.',
-                taxAdvTip: 'IKE: helt skattefritt vid uttag efter 60 års ålder. Insättningsgräns ~20 000 PLN/år. IKZE finns också (avdragsgilla insättningar, lägre skatt vid uttag).',
-                taxAdvSliderHint: 'Standard: 19 % kapitalvinstskatt (podatek Belki). IKE: 0 % skatt vid uttag.'
-            },
-            en: {
-                taxAdvLabel: 'IKE (Individual Retirement Account)',
-                taxAdvDesc: 'Tax-free retirement account — no capital gains tax on withdrawal after age 60.',
-                taxAdvTip: 'IKE: completely tax-free on withdrawal after 60. Contribution limit ~20,000 PLN/year. IKZE also available (deductible contributions, lower tax at withdrawal).',
-                taxAdvSliderHint: 'Standard: 19% CGT (Belka tax). IKE: 0% tax on withdrawal.'
-            }
-        }
-    },
-
-    CZ: {
-        code: 'CZ', name: { sv: 'Tjeckien', en: 'Czechia' },
-        currency: 'CZK', locale: 'cs-CZ', region: 'eastern',
-        standardRegime: 'TIME_TEST_CGT',
-        standardParams: { timeTestThreshold: 3, capitalGainsTax: 0.15 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 15 %. Skattefritt efter 3 års innehav (tidstest).' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 15%. Tax-free after 3 years holding (time test).' }
-        }
-    },
-
-    SK: {
-        code: 'SK', name: { sv: 'Slovakien', en: 'Slovakia' },
-        currency: 'EUR', locale: 'sk-SK', region: 'eastern',
-        standardRegime: 'TIME_TEST_CGT',
-        standardParams: { timeTestThreshold: 1, capitalGainsTax: 0.19 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 19 %. Skattefritt efter 1 års innehav (börsnoterade aktier).' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 19%. Tax-free after 1 year holding (listed shares).' }
-        }
-    },
-
-    HU: {
-        code: 'HU', name: { sv: 'Ungern', en: 'Hungary' },
-        currency: 'HUF', locale: 'hu-HU', region: 'eastern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.28 },
-        // Förenkling: TBSZ modelleras som helt skattefri (TAX_FREE_WRAPPER).
-        // I verkligheten: social avgift (13 % SZOCHO) minskar gradvis år 1–5,
-        // därefter 0 %. Modellen antar 5+ års innehav. En korrekt modell skulle
-        // kräva en ny regim med årlig nedtrappning av social avgift.
-        taxAdvRegime: 'TAX_FREE_WRAPPER',
-        taxAdvParams: {},
-        ui: {
-            sv: {
-                taxAdvLabel: 'TBSZ (Tartós Befektetési Számla)',
-                taxAdvDesc: 'Långsiktigt investeringskonto — helt skattefritt efter 5 år, ingen insättningsgräns.',
-                taxAdvTip: 'TBSZ: efter 5 år helt skattefritt. Social avgift (13 %) minskar gradvis under de första 5 åren.',
-                taxAdvSliderHint: 'Standard: 28 % (15 % SZJA + 13 % SZOCHO). TBSZ efter 5 år: 0 % skatt.',
-                simplificationNote: 'Förenkling: TBSZ-kontot antar 5+ års innehav (0 % skatt). År 1–5 minskar social avgift (13 %) gradvis — detta är ej modellerat.'
-            },
-            en: {
-                taxAdvLabel: 'TBSZ (Long-term Investment Account)',
-                taxAdvDesc: 'Long-term investment account — completely tax-free after 5 years, no contribution limit.',
-                taxAdvTip: 'TBSZ: after 5 years completely tax-free. Social contribution (13%) decreases gradually over first 5 years.',
-                taxAdvSliderHint: 'Standard: 28% (15% SZJA + 13% SZOCHO). TBSZ after 5 years: 0% tax.',
-                simplificationNote: 'Simplification: The TBSZ account assumes 5+ years holding (0% tax). Years 1–5: social contribution (13%) decreases gradually — not modeled.'
-            }
-        }
-    },
-
-    RO: {
-        code: 'RO', name: { sv: 'Rumänien', en: 'Romania' },
-        currency: 'RON', locale: 'ro-RO', region: 'eastern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.10 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 10 % på aktier och fonder.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 10% on stocks and funds.' }
-        }
-    },
-
-    BG: {
-        code: 'BG', name: { sv: 'Bulgarien', en: 'Bulgaria' },
-        currency: 'BGN', locale: 'bg-BG', region: 'eastern',
-        standardRegime: 'CGT_ONLY',
-        standardParams: { capitalGainsTax: 0.10 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 10 % på börsnoterade aktier och fonder.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 10% on listed stocks and funds.' }
-        }
-    },
-
-    // ==========================================================
-    //  BALKAN (2 länder)
-    // ==========================================================
-
-    HR: {
-        code: 'HR', name: { sv: 'Kroatien', en: 'Croatia' },
-        currency: 'EUR', locale: 'hr-HR', region: 'balkans',
-        standardRegime: 'TIME_TEST_CGT',
-        standardParams: { timeTestThreshold: 2, capitalGainsTax: 0.12 },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 12 %. Skattefritt efter 2 års innehav.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 12%. Tax-free after 2 years holding.' }
-        }
-    },
-
-    SI: {
-        code: 'SI', name: { sv: 'Slovenien', en: 'Slovenia' },
-        currency: 'EUR', locale: 'sl-SI', region: 'balkans',
-        standardRegime: 'TIME_TEST_CGT',
-        standardParams: { capitalGainsTax: 0.25, timeTestGraded: [{ years: 5, rate: 0.25 }, { years: 10, rate: 0.20 }, { years: 15, rate: 0.15 }, { rate: 0 }] },
-        taxAdvRegime: null, taxAdvParams: null,
-        ui: {
-            sv: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'Kapitalvinstskatt 25 % (år 0–5), minskar till 0 % efter 15 års innehav.' },
-            en: { taxAdvLabel: '', taxAdvDesc: '', taxAdvTip: '', taxAdvSliderHint: 'CGT 25% (year 0–5), decreases to 0% after 15 years holding.' }
-        }
-    }
 };
 
 // ============================================================
@@ -677,5 +462,9 @@ var COUNTRY_CONFIG = {
 //  Returnerar Sverige som fallback om koden saknas.
 // ============================================================
 function getCountryConfig(code) {
-    return COUNTRY_CONFIG[code] || COUNTRY_CONFIG.SE;
+    if (!COUNTRY_CONFIG[code]) {
+        if (typeof console !== 'undefined') console.warn('Pengamaskinen: ok\u00E4nd landskod "' + code + '", fallback till SE');
+        return COUNTRY_CONFIG.SE;
+    }
+    return COUNTRY_CONFIG[code];
 }

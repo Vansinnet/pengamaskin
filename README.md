@@ -4,7 +4,7 @@
 
 Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för europeiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
 
-Stöd för **35 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
+Stöd för **20 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
 
 ## 🎯 Funktioner
 
@@ -28,19 +28,17 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 - **År-för-år tidslinje** — detaljerad tabell + interaktivt Canvas-diagram
 - **Ränta-på-ränta-explainer** — expanderbar förklaring med visuella staplar
 
-## 🌍 Länder och regioner (35 länder)
+## 🌍 Länder och regioner (20 länder)
 
 | Region | Länder |
 |--------|--------|
-| Norden | 🇸🇪 Sverige, 🇳🇴 Norge, 🇩🇰 Danmark, 🇫🇮 Finland, 🇮🇸 Island |
-| Västeuropa | 🇩🇪 Tyskland, 🇫🇷 Frankrike, 🇦🇹 Österrike, 🇨🇭 Schweiz, 🇱🇮 Liechtenstein |
+| Norden | 🇸🇪 Sverige, 🇳🇴 Norge, 🇩🇰 Danmark, 🇫🇮 Finland |
+| Västeuropa | 🇩🇪 Tyskland, 🇫🇷 Frankrike |
 | Brittiska öarna | 🇬🇧 Storbritannien, 🇮🇪 Irland |
-| Benelux | 🇳🇱 Nederländerna, 🇧🇪 Belgien, 🇱🇺 Luxemburg |
-| Centraleuropa | 🇵🇱 Polen, 🇨🇿 Tjeckien, 🇸🇰 Slovakien, 🇭🇺 Ungern |
-| Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇵🇹 Portugal, 🇬🇷 Grekland, 🇨🇾 Cypern, 🇲🇹 Malta, 🇲🇨 Monaco, 🇦🇩 Andorra, 🇸🇲 San Marino |
+| Benelux | 🇳🇱 Nederländerna, 🇧🇪 Belgien |
+| Centraleuropa | 🇦🇹 Österrike, 🇵🇱 Polen, 🇨🇿 Tjeckien, 🇭🇺 Ungern |
+| Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇬🇷 Grekland |
 | Baltikum | 🇪🇪 Estland, 🇱🇻 Lettland, 🇱🇹 Litauen |
-| Östeuropa | 🇷🇴 Rumänien, 🇧🇬 Bulgarien |
-| Balkan | 🇭🇷 Kroatien, 🇸🇮 Slovenien |
 
 ### Skatteregimer (8 st, pluggbara)
 
@@ -133,7 +131,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 │   ├── utils.js            # Validering och formatering
 │   ├── core.js             # Kärnberäkningar (FV, avgifter, CGT)
 │   ├── tax-regimes.js      # Pluggbar skatteregims-register (8 st)
-│   └── countries.js        # Landskonfiguration (35 länder) + regioner
+│   └── countries.js        # Landskonfiguration (20 länder) + regioner
 │
 ├── test.js                 # Node.js-testrunner
 └── _headers                # CSP- och säkerhetsheaders (Cloudflare Pages)

@@ -22,6 +22,16 @@ var TAX_REGIMES = (function() {
         return { newBalance: balanceAfter, taxPaid: 0, carryState: carryState };
     }
 
+    function _applyCGT(gain, params) {
+        if (params.capitalGainsTaxBrackets) {
+            return computeCapitalGainsTax(gain, params.capitalGainsTaxBrackets);
+        }
+        return computeCapitalGainsTax(gain,
+            params.capitalGainsTax,
+            params.capitalGainsTaxThreshold,
+            params.capitalGainsTaxHigh);
+    }
+
     // ------------------------------------------------------------
     //  CGT_ONLY — standard kapitalvinstskatt vid uttag
     //  Används av: alla länders standardkonton
@@ -34,15 +44,7 @@ var TAX_REGIMES = (function() {
             var fv = computeFV(initial, monthly, monthlyRateNet, months);
             var totalIn = initial + monthly * months;
             var gain = fv - totalIn;
-            var tax;
-            if (params.capitalGainsTaxBrackets) {
-                tax = computeCapitalGainsTax(gain, params.capitalGainsTaxBrackets);
-            } else {
-                tax = computeCapitalGainsTax(gain,
-                    params.capitalGainsTax,
-                    params.capitalGainsTaxThreshold,
-                    params.capitalGainsTaxHigh);
-            }
+            var tax = _applyCGT(gain, params);
             return { balance: fv, totalTax: tax, netValue: fv - tax };
         },
 
@@ -70,22 +72,24 @@ var TAX_REGIMES = (function() {
             var fribelopp = (params.iskFribelopp !== undefined) ? params.iskFribelopp : ISK_FRIBELOPP_DEFAULT;
             var iskSkatt = (params.iskSkatt !== undefined) ? params.iskSkatt : ISK_SKATT;
             var schablonGolv = (params.iskSchablonGolv !== undefined) ? params.iskSchablonGolv : ISK_SCHABLON_GOLV;
-            var schablonRanta = (params.iskSchablonRate !== undefined) ? params.iskSchablonRate : 3.55;
+            var schablonRanta = (params.iskSchablonRate !== undefined) ? params.iskSchablonRate
+                : (params.iskSchablonRateDefault !== undefined) ? params.iskSchablonRateDefault : 3.55;
 
             var balance = initial;
             var totalISKtax = 0;
             var insattningarPerAr = monthly * 12;
             var effectiveSchablonRanta = Math.max(schablonRanta, schablonGolv);
+            var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
                 var q1 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * (1 + monthlyRateNet) + monthly; }
+                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
                 var q2 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * (1 + monthlyRateNet) + monthly; }
+                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
                 var q3 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * (1 + monthlyRateNet) + monthly; }
+                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
                 var q4 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * (1 + monthlyRateNet) + monthly; }
+                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
 
                 var kapitalunderlag = (q1 + q2 + q3 + q4 + insattningarPerAr) / 4;
                 var beskattningsbartUnderlag = Math.max(0, kapitalunderlag - fribelopp);
@@ -121,12 +125,14 @@ var TAX_REGIMES = (function() {
             var balance = initial;
             var totalTax = 0;
             var carryForwardLoss = 0;
+            var carryForwardYears = 0;
+            var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
                 var balanceBeforeYear = balance;
                 var depositsThisYear = monthly * 12;
                 for (var m = 0; m < 12; m++) {
-                    balance = balance * (1 + monthlyRateNet) + monthly;
+                    balance = balance * growth + monthly;
                 }
                 var gainThisYear = balance - balanceBeforeYear - depositsThisYear;
 
@@ -134,6 +140,12 @@ var TAX_REGIMES = (function() {
                     var used = Math.min(gainThisYear, carryForwardLoss);
                     gainThisYear -= used;
                     carryForwardLoss -= used;
+                }
+
+                // Danska carry-forward förfaller efter 5 år
+                carryForwardYears++;
+                if (carryForwardYears > 5 && carryForwardLoss > 0) {
+                    carryForwardLoss = 0;
                 }
 
                 if (gainThisYear > 0) {
@@ -189,19 +201,21 @@ var TAX_REGIMES = (function() {
         simulate: function(initial, monthly, monthlyRateNet, years, params) {
             var capitalGainsTax = (params.capitalGainsTax !== undefined) ? params.capitalGainsTax : 0.3784;
             var skjermingsrente = (params.skjermingsrente !== undefined) ? params.skjermingsrente : 2.5;
+            var skjermingsrate = skjermingsrente / 100;
             var balance = initial;
             var costBasis = initial;
             var accumulatedFradrag = 0;
+            var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
                 var basisBefore = costBasis;
                 for (var m = 0; m < 12; m++) {
-                    balance = balance * (1 + monthlyRateNet) + monthly;
+                    balance = balance * growth + monthly;
                     costBasis += monthly;
                 }
-                accumulatedFradrag += basisBefore * (skjermingsrente / 100);
+                accumulatedFradrag += basisBefore * skjermingsrate;
                 if (monthly > 0) {
-                    accumulatedFradrag += monthly * 12 * 0.5 * (skjermingsrente / 100);
+                    accumulatedFradrag += monthly * 12 * 0.5 * skjermingsrate;
                 }
             }
 
@@ -238,15 +252,7 @@ var TAX_REGIMES = (function() {
             var fv = computeFV(initial, monthly, monthlyRateNet, months);
             var totalIn = initial + monthly * months;
             var gain = fv - totalIn;
-            var tax;
-            if (params.capitalGainsTaxBrackets) {
-                tax = computeCapitalGainsTax(gain, params.capitalGainsTaxBrackets);
-            } else {
-                tax = computeCapitalGainsTax(gain,
-                    params.capitalGainsTax,
-                    params.capitalGainsTaxThreshold,
-                    params.capitalGainsTaxHigh);
-            }
+            var tax = _applyCGT(gain, params);
             return { balance: fv, totalTax: tax, netValue: fv - tax };
         },
 
@@ -294,6 +300,7 @@ var TAX_REGIMES = (function() {
                         break;
                     }
                 }
+                if (rate === null) rate = params.capitalGainsTax || 0.25;
                 if (rate === 0) return { balance: fv, totalTax: 0, netValue: fv };
                 var tax = gain * rate;
                 return { balance: fv, totalTax: tax, netValue: fv - tax };
@@ -303,15 +310,7 @@ var TAX_REGIMES = (function() {
                 return { balance: fv, totalTax: 0, netValue: fv };
             }
 
-            var tax;
-            if (params.capitalGainsTaxBrackets) {
-                tax = computeCapitalGainsTax(gain, params.capitalGainsTaxBrackets);
-            } else {
-                tax = computeCapitalGainsTax(gain,
-                    params.capitalGainsTax,
-                    params.capitalGainsTaxThreshold,
-                    params.capitalGainsTaxHigh);
-            }
+            var tax = _applyCGT(gain, params);
             return { balance: fv, totalTax: tax, netValue: fv - tax };
         },
 
@@ -330,7 +329,7 @@ var TAX_REGIMES = (function() {
 
     // ------------------------------------------------------------
     //  TAX_FREE_WRAPPER — helt skattefri investeringsform
-    //  UK ISA, italiensk PIR, ungersk TBSZ.
+    //  UK ISA, polsk IKE.
     //  Ingen skatt alls — varken årlig eller vid uttag.
     // ------------------------------------------------------------
     var TAX_FREE_WRAPPER = {
@@ -370,11 +369,12 @@ var TAX_REGIMES = (function() {
             var exemption = (params.exemption !== undefined) ? params.exemption : 57000;
             var balance = initial;
             var totalTax = 0;
+            var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
                 var balanceJan1 = balance;
                 for (var m = 0; m < 12; m++) {
-                    balance = balance * (1 + monthlyRateNet) + monthly;
+                    balance = balance * growth + monthly;
                 }
                 totalTax += Math.max(0, balanceJan1 - exemption) * deemedReturn * taxRate;
             }
@@ -432,16 +432,16 @@ function simulateGoal(initial, monthly, monthlyRateNet, years, iskOn, iskSchRate
     var regimeId = config.taxAdvantagedType || config.taxRegime || 'ISK';
     var regime = TAX_REGIMES[regimeId] || TAX_REGIMES.ISK;
 
-    // Bygg params från config
+    // Bygg params från config — alla kända fält kopieras
     var params = {};
-    if (config.askAnnualTax !== undefined) params.askAnnualTax = config.askAnnualTax;
-    if (config.iskSkatt !== undefined) params.iskSkatt = config.iskSkatt;
-    if (config.iskSchablonGolv !== undefined) params.iskSchablonGolv = config.iskSchablonGolv;
-    if (config.skjermingsrente !== undefined) params.skjermingsrente = config.skjermingsrente;
-    if (config.capitalGainsTax !== undefined) params.capitalGainsTax = config.capitalGainsTax;
-    if (config.capitalGainsTaxHigh !== undefined) params.capitalGainsTaxHigh = config.capitalGainsTaxHigh;
-    if (config.capitalGainsTaxThreshold !== undefined) params.capitalGainsTaxThreshold = config.capitalGainsTaxThreshold;
-    if (config.capitalGainsTaxBrackets !== undefined) params.capitalGainsTaxBrackets = config.capitalGainsTaxBrackets;
+    var paramKeys = ['askAnnualTax', 'iskSkatt', 'iskSchablonGolv', 'iskSchablonRateDefault',
+        'skjermingsrente', 'capitalGainsTax', 'capitalGainsTaxHigh',
+        'capitalGainsTaxThreshold', 'capitalGainsTaxBrackets',
+        'timeTestThreshold', 'timeTestGraded', 'deemedReturn', 'taxRate', 'exemption'];
+    for (var i = 0; i < paramKeys.length; i++) {
+        var k = paramKeys[i];
+        if (config[k] !== undefined) params[k] = config[k];
+    }
 
     // ISK-specifika parametrar
     if (regimeId === 'ISK') {

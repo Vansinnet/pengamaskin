@@ -39,8 +39,9 @@ try {
         'return {\n' +
         '    computeFV, computeGrossValue, computeNetAfterFees,\n' +
         '    computeCapitalGainsTax, isValidNumber, formatCurrency, formatAmountHint,\n' +
-        '    TAX_REGIMES, simulateGoal, runTests, getCountryConfig, COUNTRY_CONFIG,\n' +
-        '    KAPITALVINSTSKATT, ISK_SKATT, ISK_SCHABLON_GOLV, ISK_FRIBELOPP_DEFAULT\n' +
+'        TAX_REGIMES, simulateGoal, runTests, getCountryConfig, COUNTRY_CONFIG,\n' +
+'        getCurrencySymbol,\n' +
+'        KAPITALVINSTSKATT, ISK_SKATT, ISK_SCHABLON_GOLV, ISK_FRIBELOPP_DEFAULT\n' +
         '};'
     );
     calc = factory(Intl, console, Math, Number, parseFloat, isNaN, isFinite);
@@ -57,6 +58,9 @@ var computeCapitalGainsTax  = calc.computeCapitalGainsTax;
 var simulateGoal            = calc.simulateGoal;
 var runTests                = calc.runTests;
 var TAX_REGIMES             = calc.TAX_REGIMES;
+var getCurrencySymbol       = calc.getCurrencySymbol;
+var getCountryConfig        = calc.getCountryConfig;
+var COUNTRY_CONFIG          = calc.COUNTRY_CONFIG;
 
 // -- Hj\u00E4lpfunktioner -----------------------------------------------------------
 
@@ -131,6 +135,35 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
+// -- computeFV large numbers ------------------------------------------------
+
+{
+    var fv = computeFV(1000000, 0, 0.10 / 12, 360);
+    assert(
+        'computeFV: 1 Mkr @ 10%/ar i 30 ar ~= 19 837 399 kr',
+        approx(fv, 19837399, 10),
+        'fick ' + fv.toFixed(0)
+    );
+}
+
+{
+    var fv = computeFV(0, 10000, 0.08 / 12, 480);
+    assert(
+        'computeFV: 10 000 kr/man @ 8%/ar i 40 ar ~= 34 910 070 kr',
+        approx(fv, 34910070, 100),
+        'fick ' + fv.toFixed(0)
+    );
+}
+
+{
+    var fv = computeFV(100000, 0, 0.20 / 12, 12);
+    assert(
+        'computeFV: 100k @ 20%/ar manadsvis 1 ar ~= 121 939 kr',
+        approx(fv, 121939, 1),
+        'fick ' + fv.toFixed(2)
+    );
+}
+
 // -- computeGrossValue --------------------------------------------------------
 
 {
@@ -152,6 +185,15 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
+{
+    var v = computeGrossValue(0, 1000, 5, 5);
+    assert(
+        'computeGrossValue: 1 000 kr/man @ 5%/ar i 5 ar ~= 68 006 kr',
+        approx(v, 68006, 1),
+        'fick ' + v.toFixed(2)
+    );
+}
+
 // -- computeNetAfterFees ------------------------------------------------------
 
 {
@@ -168,6 +210,33 @@ section('Svit 2: Regressionstest med pinnade facit');
     assert(
         'computeNetAfterFees: negativ nettoranta ger lagre varde an startkapitalet',
         v < 100000,
+        'fick ' + v.toFixed(2)
+    );
+}
+
+{
+    var v = computeNetAfterFees(50000, 500, 8, 1, 10);
+    assert(
+        'computeNetAfterFees: 50k + 500/man @ 8% - 1% avgift i 10 ar ~= 187 035 kr',
+        approx(v, 187035, 10),
+        'fick ' + v.toFixed(2)
+    );
+}
+
+{
+    var v = computeNetAfterFees(0, 2000, 12, 2, 25);
+    assert(
+        'computeNetAfterFees: 2 000/man @ 12% - 2% avgift i 25 ar ~= 2 653 667 kr',
+        approx(v, 2653667, 50),
+        'fick ' + v.toFixed(0)
+    );
+}
+
+{
+    var v = computeNetAfterFees(100000, 0, 5, 0.5, 20);
+    assert(
+        'computeNetAfterFees: 100k @ 5% - 0,5% avgift i 20 ar ~= 245 547 kr',
+        approx(v, 245547, 5),
         'fick ' + v.toFixed(2)
     );
 }
@@ -255,6 +324,62 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
+// -- computeCapitalGainsTax edge cases ----------------------------------------
+
+{
+    var tax = computeCapitalGainsTax(100000, 0, 0, 0);
+    assert(
+        'computeCapitalGainsTax: rate = 0 -> ingen skatt oavsett vinst',
+        tax === 0,
+        'fick ' + tax
+    );
+}
+
+{
+    var tax = computeCapitalGainsTax(100000, undefined);
+    assert(
+        'computeCapitalGainsTax: rate undefined -> fallback KAPITALVINSTSKATT (30 %)',
+        approx(tax, 30000, 1),
+        'fick ' + tax
+    );
+}
+
+{
+    var tax = computeCapitalGainsTax(50000, 0.25, 50000);
+    assert(
+        'computeCapitalGainsTax: vinst = 50k, threshold = 50k -> platt 25 % (ej rateHigh)',
+        approx(tax, 12500, 1),
+        'fick ' + tax
+    );
+}
+
+{
+    var tax = computeCapitalGainsTax(100000, 0.20, 0, 0.25);
+    assert(
+        'computeCapitalGainsTax: threshold = 0 med rateHigh -> allt pa rateHigh',
+        approx(tax, 25000, 1),
+        'fick ' + tax
+    );
+}
+
+{
+    var tax = computeCapitalGainsTax(200000, 0.20, 100000, 0.30);
+    assert(
+        'computeCapitalGainsTax: 200k, 20% upp till 100k, 30% over ~= 50 000',
+        approx(tax, 50000, 1),
+        'fick ' + tax
+    );
+}
+
+{
+    var tax = computeCapitalGainsTax(0.01, 0.30);
+    assert(
+        'computeCapitalGainsTax: minimal vinst avrundas korrekt',
+        tax >= 0 && tax <= 1 && tax > 0,
+        'fick ' + tax
+    );
+}
+
 // -- TAX_REGIMES med bracket-array ---------------------------------------------
 
 {
@@ -288,6 +413,131 @@ section('Svit 2: Regressionstest med pinnade facit');
         'DEFERRED_SKJERMING: insattningar ger hogre fradrag -> lagre skatt an utan',
         rWithDep.totalTax < rNoDep.totalTax || (rWithDep.balance - rWithDep.totalTax) > (rNoDep.balance - rNoDep.totalTax),
         'utan insattning: skatt=' + rNoDep.totalTax.toFixed(0) + ', med: skatt=' + rWithDep.totalTax.toFixed(0)
+    );
+}
+
+// -- DUTCH_BOX3 regression ----------------------------------------------------
+
+{
+    var r = TAX_REGIMES.DUTCH_BOX3.simulate(100000, 0, 0.07 / 12, 1, {});
+    assert(
+        'DUTCH_BOX3: 100k @ 7%, 1 ar -> skatt ~= 935 kr, netto ~= 106 294 kr',
+        approx(r.totalTax, 935, 5) && approx(r.netValue, 106294, 5),
+        'fick skatt ' + r.totalTax.toFixed(0) + ', netto ' + r.netValue.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.DUTCH_BOX3.simulate(200000, 1000, 0.06 / 12, 3, {});
+    assert(
+        'DUTCH_BOX3: 200k + 1000/man @ 6%, 3 ar -> skatt > 0, netto < saldo',
+        r.totalTax > 0 && r.netValue < r.balance && r.balance > 200000,
+        'fick skatt ' + r.totalTax.toFixed(0) + ', netto ' + r.netValue.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.DUTCH_BOX3.simulate(20000, 0, 0, 5, {});
+    assert(
+        'DUTCH_BOX3: 20k (under exemption 57k), 5 ar -> skatt = 0',
+        r.totalTax === 0,
+        'fick skatt ' + r.totalTax.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.DUTCH_BOX3.simulate(500000, 0, 0.08 / 12, 10, {});
+    assert(
+        'DUTCH_BOX3: 500k @ 8%, 10 ar -> netto > 500k, skatt > 0',
+        r.netValue > 500000 && r.totalTax > 0,
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.totalTax.toFixed(0)
+    );
+}
+
+// -- TAX_FREE_WRAPPER regression ----------------------------------------------
+
+{
+    var r = TAX_REGIMES.TAX_FREE_WRAPPER.simulate(50000, 1000, 0.06 / 12, 8, {});
+    assert(
+        'TAX_FREE_WRAPPER: 50k + 1000/man @ 6%, 8 ar -> skatt = 0, saldo > 150k',
+        r.totalTax === 0 && r.balance > 150000,
+        'fick skatt ' + r.totalTax + ', saldo ' + r.balance.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.TAX_FREE_WRAPPER.simulate(0, 5000, 0.10 / 12, 20, {});
+    assert(
+        'TAX_FREE_WRAPPER: 5 000/man @ 10%, 20 ar -> skatt = 0, saldo > 3,5 Mkr',
+        r.totalTax === 0 && r.balance > 3500000,
+        'fick skatt ' + r.totalTax + ', saldo ' + r.balance.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.TAX_FREE_WRAPPER.simulate(100000, 0, 0, 10, {});
+    assert(
+        'TAX_FREE_WRAPPER: 100k, 0% avkastning, 10 ar -> oforandrat saldo, ingen skatt',
+        r.totalTax === 0 && r.balance === 100000,
+        'fick skatt ' + r.totalTax + ', saldo ' + r.balance
+    );
+}
+
+// -- LAGER_ANNUAL regression --------------------------------------------------
+
+{
+    var r = TAX_REGIMES.LAGER_ANNUAL.simulate(100000, 0, 0.07 / 12, 3, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL: 100k @ 7%, 3 ar, 17% skatt -> saldo ~= 119 103 kr, skatt ~= 3 913 kr',
+        approx(r.balance, 119103, 10) && approx(r.totalTax, 3913, 10) && r.netValue === r.balance,
+        'fick saldo ' + r.balance.toFixed(0) + ', skatt ' + r.totalTax.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.LAGER_ANNUAL.simulate(50000, 2000, 0.05 / 12, 5, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL: 50k + 2000/man @ 5%, 5 ar -> netto = saldo, skatt > 0',
+        r.netValue === r.balance && r.totalTax > 0,
+        'fick saldo ' + r.balance.toFixed(0) + ', skatt ' + r.totalTax.toFixed(0)
+    );
+}
+
+{
+    var r = TAX_REGIMES.LAGER_ANNUAL.simulate(100000, 0, -0.10 / 12, 2, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL: 100k, -10%/ar, 2 ar -> forlust, skatt = 0, saldo < 100k',
+        r.totalTax === 0 && r.balance < 100000,
+        'fick skatt ' + r.totalTax + ', saldo ' + r.balance.toFixed(0)
+    );
+}
+
+// -- simulateYear (LAGER_ANNUAL) direkttest -----------------------------------
+
+{
+    var y1 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 95000, 0, null, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL.simulateYear: forlustar 95k fran 100k -> carryState = 5000',
+        y1.taxPaid === 0 && y1.carryState === 5000,
+        'fick taxPaid ' + y1.taxPaid + ', carryState ' + y1.carryState
+    );
+}
+
+{
+    var y2 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(95000, 105000, 0, 5000, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL.simulateYear: vinstar 105k fran 95k med 5k carry -> skatt pa 5k',
+        approx(y2.taxPaid, 850, 0.01) && y2.carryState === 0,
+        'fick taxPaid ' + y2.taxPaid + ', carryState ' + y2.carryState
+    );
+}
+
+{
+    var y = TAX_REGIMES.CGT_ONLY.simulateYear(100000, 107229, 0, null, {});
+    assert(
+        'simulateYear (no-op): CGT_ONLY returnerar balanceAfter oforandrat',
+        y.newBalance === 107229 && y.taxPaid === 0,
+        'fick newBalance ' + y.newBalance + ', taxPaid ' + y.taxPaid
     );
 }
 
@@ -505,6 +755,44 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
+// -- simulateGoal med specifika skatteregimer ----------------------------------
+
+{
+    var r = simulateGoal(100000, 0, 0.07 / 12, 3, true, 0, undefined, { taxAdvantagedType: 'LAGER_ANNUAL', askAnnualTax: 0.17 });
+    assert(
+        'simulateGoal LAGER_ANNUAL: 100k @ 7%, 3 ar -> netto ~= 119 103 kr',
+        approx(r.netValue, 119103, 10),
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
+    );
+}
+
+{
+    var r = simulateGoal(0, 1000, 0.06 / 12, 5, true, 0, undefined, { taxAdvantagedType: 'TAX_FREE_WRAPPER' });
+    assert(
+        'simulateGoal TAX_FREE_WRAPPER: 1 000/man @ 6%, 5 ar -> netto ~= 69 770 kr, skatt 0',
+        approx(r.netValue, 69770, 5) && r.tax === 0,
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax
+    );
+}
+
+{
+    var r = simulateGoal(100000, 0, 0.07 / 12, 5, true, 0, undefined, { taxAdvantagedType: 'DEFERRED_SKJERMING', capitalGainsTax: 0.3784, skjermingsrente: 3.6 });
+    assert(
+        'simulateGoal DEFERRED_SKJERMING: 100k @ 7%, 5 ar -> netto > 120k, skatt > 0',
+        r.netValue > 120000 && r.tax > 0,
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
+    );
+}
+
+{
+    var r = simulateGoal(100000, 0, 0.07 / 12, 1, true, 0, undefined, { taxAdvantagedType: 'DUTCH_BOX3', deemedReturn: 0.0604, taxRate: 0.36, exemption: 57000 });
+    assert(
+        'simulateGoal DUTCH_BOX3: 100k @ 7%, 1 ar -> netto ~= 106 294 kr',
+        approx(r.netValue, 106294, 5),
+        'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
+    );
+}
+
 // Snapshot efter Svit 2
 var svit2Passed = totalPassed - builtIn.passed;
 var svit2Failed = totalFailed - builtIn.failed;
@@ -520,6 +808,54 @@ var isValidNumber    = calc.isValidNumber;
 var formatCurrency   = calc.formatCurrency;
 var formatAmountHint = calc.formatAmountHint;
 
+// -- getCurrencySymbol ---------------------------------------------------------
+
+assert('getCurrencySymbol: SEK -> "kr"', getCurrencySymbol('SEK') === 'kr');
+assert('getCurrencySymbol: NOK, DKK, ISK -> "kr"', getCurrencySymbol('NOK') === 'kr' && getCurrencySymbol('DKK') === 'kr' && getCurrencySymbol('ISK') === 'kr');
+assert('getCurrencySymbol: EUR -> "€"', getCurrencySymbol('EUR') === '€');
+assert('getCurrencySymbol: GBP -> "£"', getCurrencySymbol('GBP') === '£');
+assert('getCurrencySymbol: USD, CAD -> "$"', getCurrencySymbol('USD') === '$' && getCurrencySymbol('CAD') === '$');
+assert('getCurrencySymbol: PLN -> "zł"', getCurrencySymbol('PLN') === 'zł');
+assert('getCurrencySymbol: CZK -> "Kč"', getCurrencySymbol('CZK') === 'Kč');
+assert('getCurrencySymbol: RON -> "lei"', getCurrencySymbol('RON') === 'lei');
+assert('getCurrencySymbol: BGN -> "лв"', getCurrencySymbol('BGN') === 'лв');
+assert('getCurrencySymbol: CHF -> "CHF"', getCurrencySymbol('CHF') === 'CHF');
+assert('getCurrencySymbol: okand valuta -> "?"', getCurrencySymbol('XYZ') === '?');
+assert('getCurrencySymbol: HUF -> "Ft"', getCurrencySymbol('HUF') === 'Ft');
+
+// -- getCountryConfig ----------------------------------------------------------
+
+{
+    var c = getCountryConfig('SE');
+    assert('getCountryConfig: SE -> code = SE, region = nordic', c.code === 'SE' && c.region === 'nordic');
+}
+{
+    var c = getCountryConfig('DE');
+    assert('getCountryConfig: DE -> code = DE, currency = EUR', c.code === 'DE' && c.currency === 'EUR');
+}
+{
+    var c = getCountryConfig('ZZ');
+    assert('getCountryConfig: okand kod ZZ -> fallback SE', c.code === 'SE');
+}
+{
+    var c = getCountryConfig('GB');
+    assert('getCountryConfig: GB -> standardRegime = CGT_ONLY, taxAdvRegime = TAX_FREE_WRAPPER', c.standardRegime === 'CGT_ONLY' && c.taxAdvRegime === 'TAX_FREE_WRAPPER');
+}
+{
+    var c = getCountryConfig('NL');
+    assert('getCountryConfig: NL -> standardRegime = DUTCH_BOX3, taxAdvRegime = null', c.standardRegime === 'DUTCH_BOX3' && c.taxAdvRegime === null);
+}
+{
+    var c = getCountryConfig('CZ');
+    assert('getCountryConfig: CZ -> standardRegime = TIME_TEST_CGT', c.standardRegime === 'TIME_TEST_CGT');
+}
+{
+    assert('COUNTRY_CONFIG: alla lander har locale- och currency-falt', Object.keys(COUNTRY_CONFIG).every(function(k) { return COUNTRY_CONFIG[k].locale && COUNTRY_CONFIG[k].currency; }));
+}
+{
+    assert('COUNTRY_CONFIG: alla lander har standardRegime som finns i TAX_REGIMES', Object.keys(COUNTRY_CONFIG).every(function(k) { var c = COUNTRY_CONFIG[k]; return TAX_REGIMES[c.standardRegime] !== undefined; }));
+}
+
 // -- isValidNumber ------------------------------------------------------------
 
 assert('isValidNumber: heltal', isValidNumber(42));
@@ -529,6 +865,14 @@ assert('isValidNumber: negativt', isValidNumber(-100));
 assert('isValidNumber: NaN -> false', !isValidNumber(NaN));
 assert('isValidNumber: Infinity -> false', !isValidNumber(Infinity));
 assert('isValidNumber: strang -> false', !isValidNumber('abc'));
+
+// -- isValidNumber string inputs ----------------------------------------------
+assert('isValidNumber: numerisk strang "42" -> true', isValidNumber('42'));
+assert('isValidNumber: numerisk strang "3.14" -> true', isValidNumber('3.14'));
+assert('isValidNumber: numerisk strang "-100" -> true', isValidNumber('-100'));
+assert('isValidNumber: strang med spaces " 42 " -> true', isValidNumber(' 42 '));
+assert('isValidNumber: tom strang -> false', !isValidNumber(''));
+assert('isValidNumber: bara spaces "   " -> false', !isValidNumber('   '));
 
 // -- formatCurrency -----------------------------------------------------------
 
@@ -551,6 +895,39 @@ assert('isValidNumber: strang -> false', !isValidNumber('abc'));
 {
     var s = formatCurrency(-5000);
     assert('formatCurrency: -5 000 \u2192 "\u22125\u00a0000\u00a0kr"', s === '\u22125\u00a0000\u00a0kr', 'fick: ' + s);
+}
+
+// -- formatCurrency med olika locale/valuta -----------------------------------
+
+{
+    var s = formatCurrency(1000, 'de-DE', 'EUR');
+    assert('formatCurrency: 1 000 € (de-DE) -> innehaller "1.000" och "€"',
+        s.indexOf('1.000') >= 0 && s.indexOf('€') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatCurrency(1000000, 'en-GB', 'GBP');
+    assert('formatCurrency: 1 000 000 GBP (en-GB) -> innehaller "£"',
+        s.indexOf('£') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatCurrency(5000, 'en-US', 'USD');
+    assert('formatCurrency: 5 000 USD (en-US) -> innehaller "$"',
+        s.indexOf('$') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatCurrency(1500000, 'pl-PL', 'PLN');
+    assert('formatCurrency: 1 500 000 PLN -> innehaller "zł"',
+        s.indexOf('zł') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatCurrency(100000, 'nb-NO', 'NOK');
+    assert('formatCurrency: 100 000 NOK (nb-NO) -> innehaller "kr"',
+        s.indexOf('kr') >= 0,
+        'fick: ' + s);
 }
 
 // -- formatAmountHint ---------------------------------------------------------
@@ -613,6 +990,40 @@ assert('isValidNumber: strang -> false', !isValidNumber('abc'));
 {
     var s = formatAmountHint(1e12);
     assert('formatAmountHint: 1 000 miljarder -> "miljarder"', s.indexOf('miljarder') >= 0, 'fick: ' + s);
+}
+
+// -- formatAmountHint med olika locale/valuta ---------------------------------
+{
+    var s = formatAmountHint(1500000, 'de-DE', 'EUR');
+    assert('formatAmountHint: 1,5 M€ (de-DE) -> innehaller "," och "€"',
+        s.indexOf(',') >= 0 && s.indexOf('€') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(1000000, 'en-GB', 'GBP');
+    assert('formatAmountHint: £1 million (en-GB) -> innehaller "£" och "million"',
+        s.indexOf('£') >= 0 && s.indexOf('million') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(2000000, 'en-US', 'USD');
+    assert('formatAmountHint: $2 million (en-US) -> innehaller "$" och "million"',
+        s.indexOf('$') >= 0 && s.indexOf('million') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(3000000000, 'en-GB', 'GBP');
+    assert('formatAmountHint: £3 billion -> innehaller "billion"',
+        s.indexOf('billion') >= 0,
+        'fick: ' + s);
+}
+{
+    var s = formatAmountHint(0, 'de-DE', 'EUR');
+    assert('formatAmountHint: 0 € -> "0 €"', s.indexOf('0') >= 0 && s.indexOf('€') >= 0, 'fick: ' + s);
+}
+{
+    var s = formatAmountHint(1000, 'pl-PL', 'PLN');
+    assert('formatAmountHint: 1 000 PLN -> innehaller "zł"', s.indexOf('zł') >= 0, 'fick: ' + s);
 }
 
 

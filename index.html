@@ -9,7 +9,7 @@
     <meta name="googlebot" content="index, follow">
     <meta name="language" content="Swedish">
     <meta name="revisit-after" content="7 days">
-    <title data-i18n="title">Pengamaskinen – Gratis investeringskalkylator för sparande och ISK</title>
+    <title>Pengamaskinen – Gratis investeringskalkylator för sparande och ISK</title>
 
     <meta name="description" content="Pengamaskinen – gratis investeringskalkylator. Beräkna ränta-på-ränta, ISK-skatt enligt Skatteverkets formel, förvaltningsavgifter och inflation. Perfekt för svenska sparare.">
     <meta name="keywords" content="investeringskalkylator, sparakalkylator, ränta på ränta, ISK kalkylator, investeringsplan, sparmål, förvaltningsavgifter, inflation, kapitalvinst, aktiesparande, fondkalkyl, ekonomisk kalkyl, Sverige">
@@ -70,7 +70,12 @@
     <script src="calc/countries.js?v=1778280505"></script>
 </head>
 <body>
-    <a href="#advanced" class="skip-link" data-i18n="skipLink">Hoppa till innehållet</a>
+    <noscript>
+        <div style="background:#fff3cd;color:#856404;border:2px solid #ffc107;padding:16px;margin:20px;border-radius:8px;font-family:Arial,sans-serif;text-align:center;font-size:14px;">
+            Pengamaskinen kr\u00E4ver JavaScript f\u00F6r att fungera. Var god aktivera JavaScript i din webbl\u00E4sare.
+        </div>
+    </noscript>
+    <a href="#advanced" class="skip-link" data-i18n="skipLink">Hoppa till inneh\u00E5llet</a>
     <div class="page-container">
         <div class="container">
             <div class="page-header">
@@ -82,6 +87,17 @@
                     <div class="header-extras">
                         <!-- Språk- och landsväljare -->
                         <div class="settings-group" id="settingsGroup">
+                            <div class="settings-label">
+                                <span data-i18n="themeLabel">Tema</span>
+                                <div class="custom-select" id="themeDropdown">
+                                    <button type="button" class="custom-select-trigger" aria-haspopup="listbox">
+                                        <span class="custom-select-flag" style="display:none"></span>
+                                        <span class="custom-select-text"></span>
+                                        <span class="custom-select-arrow">▼</span>
+                                    </button>
+                                    <div class="custom-select-panel" role="listbox" hidden></div>
+                                </div>
+                            </div>
                             <div class="settings-label">
                                 <span data-i18n="langLabel">Språk</span>
                                 <div class="custom-select" id="langDropdown">
@@ -105,7 +121,7 @@
                                 </div>
                             </div>
                         </div>
-                        <button type="button" class="rpr-toggle" id="rprToggle" aria-expanded="false">
+                        <button type="button" class="rpr-toggle" id="rprToggle" aria-expanded="false" aria-controls="rprBody">
                             <span data-i18n="rprToggle">💡 Vad är ränta-på-ränta-effekten?</span>
                             <span class="rpr-arrow">▼</span>
                         </button>
@@ -306,11 +322,7 @@
                     <div style="position:relative; margin-bottom:15px;">
                         <canvas id="timelineChart" width="470" height="260"
                             style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
-                        <div id="chartTooltip" style="
-                            display:none; position:absolute; background:#6b4423; color:#f4d03f;
-                            padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
-                            pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-                            border:1px solid #d4a600; z-index:10;"></div>
+                        <div id="chartTooltip" class="chart-tooltip"></div>
                     </div>
                     <div class="table-container">
                         <table id="timelineTable">
@@ -320,7 +332,9 @@
                                     <th data-i18n="thInvested">Investerat</th>
                                     <th data-i18n="thReturn">Avkastning</th>
                                     <th data-i18n-title="thReturnPlusTitle" data-i18n="thReturnPlus">Avkastning +</th>
-                                    <th data-i18n="thTotal">Slutvärde</th>
+                                    <th data-i18n="thGrossValue">Värde innan skatt</th>
+                                    <th data-i18n="thNetCGT">Efter skatt (AF)</th>
+                                    <th id="advRegimeNetHeader" data-i18n="thRegimeNet">Regim-netto</th>
                                 </tr>
                             </thead>
                             <tbody id="timelineBody"></tbody>
@@ -489,11 +503,7 @@
                     <div style="position:relative; margin-bottom:15px;">
                         <canvas id="goalTimelineChart" width="470" height="260"
                             style="width:100%; border-radius:10px; border:2px solid #d4a600; background:rgba(255,255,255,0.85); display:block;"></canvas>
-                        <div id="goalChartTooltip" style="
-                            display:none; position:absolute; background:#6b4423; color:#f4d03f;
-                            padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700;
-                            pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
-                            border:1px solid #d4a600; z-index:10;"></div>
+                        <div id="goalChartTooltip" class="chart-tooltip"></div>
                     </div>
                     <div class="table-container">
                         <table id="goalTable">
@@ -503,7 +513,9 @@
                                     <th data-i18n="thInvested">Investerat</th>
                                     <th data-i18n="thReturn">Avkastning</th>
                                     <th data-i18n-title="thReturnPlusTitle" data-i18n="thReturnPlus">Avkastning +</th>
-                                    <th data-i18n="goalThTotal">Slutvärde</th>
+                                    <th data-i18n="thGrossValue">Värde innan skatt</th>
+                                    <th data-i18n="thNetCGT">Efter skatt (AF)</th>
+                                    <th id="goalRegimeNetHeader" data-i18n="thRegimeNet">Regim-netto</th>
                                 </tr>
                             </thead>
                             <tbody id="goalTableBody"></tbody>

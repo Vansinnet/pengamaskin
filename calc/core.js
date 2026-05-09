@@ -12,8 +12,8 @@ function computeFV(initial, monthly, monthlyRate, months) {
     if (monthlyRate === 0) {
         return Number(initial) + monthly * months;
     }
-    return initial * Math.pow(1 + monthlyRate, months)
-         + monthly * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+    var growth = Math.pow(1 + monthlyRate, months);
+    return initial * growth + monthly * (growth - 1) / monthlyRate;
 }
 
 /**
@@ -77,8 +77,8 @@ function computeCapitalGainsTax(gain, rate, threshold, rateHigh) {
     }
 
     rate = (rate !== undefined) ? rate : KAPITALVINSTSKATT;
-    if (threshold === undefined || rateHigh === undefined || gain <= threshold) {
+    if (rateHigh === undefined || gain <= (threshold || 0)) {
         return gain * rate;
     }
-    return threshold * rate + (gain - threshold) * rateHigh;
+    return (threshold || 0) * rate + (gain - (threshold || 0)) * rateHigh;
 }
