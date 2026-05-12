@@ -171,7 +171,9 @@ var TAX_REGIMES = (function() {
         simulateYear: function(balanceBefore, balanceAfter, deposits, carryState, params) {
             var annualTaxRate = (params.askAnnualTax !== undefined) ? params.askAnnualTax : 0.17;
             var gainThisYear = balanceAfter - balanceBefore - deposits;
-            var losses = Array.isArray(carryState) ? carryState.slice() : [];
+            var losses = Array.isArray(carryState)
+                ? carryState.map(function(l) { return { amount: l.amount, yearsLeft: l.yearsLeft }; })
+                : [];
 
             if (gainThisYear > 0) {
                 for (var i = 0; i < losses.length && gainThisYear > 0; i++) {
@@ -318,7 +320,11 @@ var TAX_REGIMES = (function() {
                         break;
                     }
                 }
-                if (rate === null) rate = params.capitalGainsTax || 0.25;
+                if (rate === null) {
+                    if (typeof console !== 'undefined')
+                        console.warn('TIME_TEST_CGT: timeTestGraded saknar öppen sista bracket — kontrollera landkonfigurationen');
+                    rate = params.capitalGainsTax || 0.25;
+                }
                 if (rate === 0) return { balance: fv, totalTax: 0, netValue: fv };
                 var tax = gain * rate;
                 return { balance: fv, totalTax: tax, netValue: fv - tax };

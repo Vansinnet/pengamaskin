@@ -541,6 +541,36 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
+// -- simulateYear immutable input carrryState (Bug 1) --------------------------
+
+{
+    var sy1 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 90000, 0, null, { askAnnualTax: 0.17 });
+    var before = JSON.stringify(sy1.carryState);
+    TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 120000, 0, sy1.carryState, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL.simulateYear: muterar ej input carryState (deep copy)',
+        JSON.stringify(sy1.carryState) === before,
+        'before ' + before + ', after ' + JSON.stringify(sy1.carryState)
+    );
+}
+
+// -- LAGER_ANNUAL 6-year loss carry-forward expiry (Bug 1 verification) --------
+
+{
+    var c = null;
+    c = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 90000, 0, null, { askAnnualTax: 0.17 }).carryState;
+    for (var i = 2; i <= 6; i++) {
+        var res = TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 90000, 0, c, { askAnnualTax: 0.17 });
+        c = res.carryState;
+    }
+    var r7 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 105000, 0, c, { askAnnualTax: 0.17 });
+    assert(
+        'LAGER_ANNUAL.simulateYear: forlust fran ar 1 kan INTE kvittas ar 7 (carry ar 2-6, borta ar 7)',
+        Math.abs(r7.taxPaid - 15000 * 0.17) < 0.01,
+        'fick taxPaid ' + r7.taxPaid
+    );
+}
+
 // -- simulateGoal med bracket-array via config ---------------------------------
 
 {

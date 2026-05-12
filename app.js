@@ -565,17 +565,7 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
         if (cgtCountryParams.capitalGainsTaxBrackets) {
             cgtTax = computeCapitalGainsTax(grossGain, cgtCountryParams.capitalGainsTaxBrackets);
         } else if (cgtCountryParams.capitalGainsTax !== undefined) {
-            if (cgtCountryParams.timeTestGraded) {
-                var timeRate = null;
-                for (var ti = 0; ti < cgtCountryParams.timeTestGraded.length; ti++) {
-                    var tb = cgtCountryParams.timeTestGraded[ti];
-                    if (tb.years === undefined || year < tb.years) {
-                        timeRate = tb.rate;
-                        break;
-                    }
-                }
-                if (timeRate !== null && timeRate > 0) cgtTax = grossGain * timeRate;
-            } else if (cgtCountryParams.timeTestThreshold !== undefined && year >= cgtCountryParams.timeTestThreshold) {
+            if (cgtCountryParams.timeTestThreshold !== undefined && year >= cgtCountryParams.timeTestThreshold) {
                 cgtTax = 0;
             } else {
                 cgtTax = computeCapitalGainsTax(grossGain,
@@ -1195,6 +1185,24 @@ function runAppTests() {
         tst('buildYearTimeline: f\u00F6rsta rad har 7 celler', rows[0].querySelectorAll('td').length === 7);
         tst('buildYearTimeline: sista cell inneh\u00E5ller <strong>', rows[0].querySelectorAll('td')[6].querySelector('strong') !== null);
         document.body.removeChild(tmpTbody);
+    })();
+
+    // Test C: CZ timeTestThreshold i buildYearTimeline CGT-kolumn
+    (function() {
+        var prevCountry = state.country;
+        state.country = 'CZ';
+        var tmpTbody = document.createElement('tbody');
+        tmpTbody.id = '_appTestCZTbody';
+        document.body.appendChild(tmpTbody);
+        var cd = buildYearTimeline(4, 100000, 0, 0.10 / 12, '_appTestCZTbody', {});
+        tst('buildYearTimeline CZ: \u00E5r 3 (>= threshold 3) ger netCGT = gross (cgtTax=0)',
+            Math.abs(cd[3].netCGT - cd[3].gross) < 1,
+            'cd[3].gross=' + cd[3].gross.toFixed(0) + ', netCGT=' + cd[3].netCGT.toFixed(0));
+        tst('buildYearTimeline CZ: \u00E5r 1 (< threshold 3) ger netCGT < gross (cgtTax > 0)',
+            cd[1].netCGT < cd[1].gross,
+            'cd[1].gross=' + cd[1].gross.toFixed(0) + ', netCGT=' + cd[1].netCGT.toFixed(0));
+        document.body.removeChild(tmpTbody);
+        state.country = prevCountry;
     })();
 
     (function() {
