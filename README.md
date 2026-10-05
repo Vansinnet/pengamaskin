@@ -24,60 +24,78 @@ En gratis kalkylator som visar hur ett sparande växer, och hur mycket skatt, av
 | Skatt vid försäljning | Allt antas säljas i slutet av sista året |
 | Inflation | Realvärde = netto / (1 + inflation)^år |
 
-Landsspecifika förenklingar står i appen under *Skatteregler i …* och i `src/rules/countries.js`.
+Landsspecifika förenklingar står i appen under *Skatteregler i …* och i `src/rules/countries.ts`.
 
 ## Kod
 
-Inga beroenden och inget byggsteg. Webbläsaren laddar ES-moduler direkt.
+Svelte 5 och TypeScript, byggt med Vite till statiska filer. Inga beroenden i webbläsaren utöver det Svelte kompilerar in, inga externa anrop. Sidan förrenderas vid bygget, så hela kalkylatorn syns innan JavaScript har laddats.
 
 ```
-index.html, styles.css, fonts/     sidan (Schibsted Grotesk, OFL-licens)
+index.html                         sidans <head> (metadata, JSON-LD)
+public/_headers                    säkerhetsheaders och CSP för Cloudflare Pages
+scripts/prerender.js               efter bygget: förrendera sidan, lägg in CSP-hashen
 src/
-  main.js                          start, formulär och händelser
-  rules/countries.js               skatteregler per land — ren data med källor
+  main.ts, entry-server.ts         start i webbläsaren (hydrering) och vid förrenderingen
+  App.svelte                       tillstånd: språk, land, tema och formulär
+  styles.css, assets/fonts/        stilmall och typsnitt (Schibsted Grotesk, OFL-licens)
+  rules/
+    countries.ts                   skatteregler per land — ren data med källor
+    types.ts                       typer: varje regim har egna parametrar
   engine/
-    simulate.js                    den enda månadsloopen → huvudbok (en rad per år)
+    simulate.ts                    den enda månadsloopen → huvudbok (en rad per år)
     regimes/                       en fil per skatteregel (ISK, dansk ASK, Box 3 …)
-    account.js                     vanligt/skattegynnat konto, insättningstak
-    caps.js, tax.js, goal.js       tak, skatt på vinst, sparmål (intervallhalvering)
+    account.ts                     vanligt/skattegynnat konto, insättningstak
+    caps.ts, tax.ts, goal.ts       tak, skatt på vinst, sparmål (intervallhalvering)
   view/
-    model.js                       indata → allt som visas (ren funktion, testad)
-    accounts.js, chart.js, panels.js   ritar korten, diagrammet och förklaringarna
-  i18n/sv.js, en.js                alla texter
-tests/                             node --test
+    model.ts                       indata → allt som visas (ren funktion, testad)
+    inputs.ts, prefs.ts            formulärets validering, sparade val
+    *.svelte                       komponenterna (formulär, konton, diagram, tabell …)
+  i18n/sv.ts, en.ts                alla texter (samma nycklar, typkontrollerat)
+tests/                             Vitest
 ```
 
 Flödet är **regler → motor → vymodell → vy**. Sammanfattning, diagram och tabell läser alla från samma huvudbok och kan därför inte visa olika siffror.
 
 ### Köra lokalt
 
+Kräver Node 22.12 eller senare.
+
 ```bash
-python3 -m http.server 8000      # eller valfri statisk server, öppna http://localhost:8000
-npm test                         # Node 20+
+npm install
+npm run dev        # utvecklingsserver på http://localhost:5173
+npm test           # tester (Vitest)
+npm run check      # typkontroll (svelte-check)
+npm run build      # bygger till dist/
+npm run preview    # visar bygget på http://localhost:4173
 ```
+
+### Cloudflare Pages
+
+| Inställning | Värde |
+|---|---|
+| Byggkommando | `npm run build` |
+| Utdatamapp | `dist` |
+| Node-version | från `.node-version` (22) |
 
 ### Lägga till ett land
 
-1. Lägg till landet i `src/rules/countries.js` med en befintlig regim och dess parametrar.
-2. Lägg till landets flagga i `src/view/flags.js`.
-3. Kör `npm test`. Testerna kontrollerar texter, regim och valuta för alla länder.
+1. Lägg till landskoden i `CountryCode` i `src/rules/types.ts`.
+2. Lägg till landet i `src/rules/countries.ts` med en befintlig regim och dess parametrar. TypeScript säger till om en parameter saknas eller är fel.
+3. Lägg till landets flagga i `src/view/flags.ts` (krävs av typen).
+4. Kör `npm run check` och `npm test`. Testerna kontrollerar texter, regim och valuta för alla länder.
 
-En ny skatteregel skrivs som en ny fil i `src/engine/regimes/`. Den kan reagera vid årets början (`yearStart`), varje månad (`month`) och vid årets slut (`yearEnd`), och anger vad det skulle kosta i skatt att sälja allt (`taxIfSold`).
+En ny skatteregel skrivs som en ny fil i `src/engine/regimes/`, med sina parametrar i `src/rules/types.ts`. Den kan reagera vid årets början (`yearStart`), varje månad (`month`) och vid årets slut (`yearEnd`), och anger vad det skulle kosta i skatt att sälja allt (`taxIfSold`).
 
 ### Årlig uppdatering
 
-`tests/rules.test.js` misslyckas när kalenderåret passerat `RULES_YEAR`. Så här uppdaterar du:
+`tests/rules.test.ts` misslyckas när kalenderåret passerat `RULES_YEAR`. Så här uppdaterar du:
 
-1. Gå igenom varje land i `src/rules/countries.js` mot källorna i `sources`. Kontrollera satser, fribelopp, tak och schablonräntor (t.ex. ISK).
+1. Gå igenom varje land i `src/rules/countries.ts` mot källorna i `sources`. Kontrollera satser, fribelopp, tak och schablonräntor (t.ex. ISK).
 2. Höj `RULES_YEAR` och `RULES_VERIFIED`.
 
 ### Content Security Policy
 
-CSP:n finns både i `_headers` (Cloudflare Pages) och som meta-tagg i `index.html`. `script-src` innehåller en hash för JSON-LD-blocket. Om blocket ändras räknar du om hashen och uppdaterar båda ställena:
-
-```bash
-python3 -c "import re,hashlib,base64;h=open('index.html').read();m=re.search(r'ld\+json\">(.*?)</script>',h,re.S);print(base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode())"
-```
+CSP:n står i `public/_headers` och tillåter bara filer från samma ursprung (`'self'`) plus JSON-LD-blocket i `index.html`. Vid bygget räknar `scripts/prerender.js` ut hashen för JSON-LD-blocket, skriver in den i `dist/_headers` och lägger samma CSP som meta-tagg i `dist/index.html`. Bygget avbryts om sidan skulle innehålla inline-skript eller `style`-attribut, eftersom CSP:n blockerar dem. Dynamiska mått sätts därför via `element.style` i webbläsaren, aldrig som attribut.
 
 ## Ansvarsfriskrivning
 

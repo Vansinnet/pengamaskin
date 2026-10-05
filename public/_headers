@@ -1,0 +1,43 @@
+# ============================================================
+#  Säkerhetsheaders för Pengamaskinen (Cloudflare Pages)
+#
+#  Kopieras till dist/ vid bygget. scripts/prerender.js ersätter
+#  'sha256-JSONLD' med hashen av JSON-LD-blocket i index.html och
+#  lägger samma CSP som meta-tagg i HTML:en (utan frame-ancestors,
+#  som inte fungerar i meta). Ändra CSP:n bara här.
+#
+#  Allt laddas från samma ursprung: index.html, /assets/*.js,
+#  /assets/*.css och /assets/*.woff2.
+#  Inga externa skript, fonter, bilder eller API:er.
+# ============================================================
+
+/*
+  # --- Content Security Policy (primär — meta-taggen är fallback) ---
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-JSONLD'; style-src 'self'; font-src 'self'; img-src data:; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+
+  # --- Förhindra MIME-type-sniffing ---
+  X-Content-Type-Options: nosniff
+
+  # --- Förhindra clickjacking (inbäddning i iframe) ---
+  X-Frame-Options: DENY
+
+  # --- Tvinga HTTPS (HSTS) ---
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # --- Läck ingen referrer-information ---
+  Referrer-Policy: no-referrer
+
+  # --- Blocka ALLA onödiga webbläsar-API:er ---
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()
+
+  # --- Isolera browsing-kontexten (cross-origin-skydd) ---
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+  # Äldre skydd (harmlösa, skadar inte)
+  X-Download-Options: noopen
+  X-Permitted-Cross-Domain-Policies: none
+
+# Filer med innehållshash i namnet ändras aldrig — låt webbläsaren cacha dem i ett år.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
