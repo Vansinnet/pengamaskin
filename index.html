@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-ZzvA/cIj6aXdcVN9VJ4xW2fDiZozW4l62bLT6BmkUBE='; style-src 'self'; font-src 'self'; img-src data:; form-action 'none'; base-uri 'none'; upgrade-insecure-requests">
+  <!-- Content-Security-Policy läggs in här vid bygget (scripts/prerender.js) -->
   <title>Pengamaskinen – investeringskalkylator med skatt, avgifter och inflation</title>
   <meta name="description" content="Gratis kalkylator för sparande i 19 europeiska länder. Se hur ränta-på-ränta, skatt (ISK, ASK, ISA m.fl.), avgifter och inflation påverkar ditt sparande – eller räkna ut vad du behöver spara för att nå ett mål.">
   <link rel="canonical" href="https://pengamaskin.pages.dev">
@@ -16,143 +16,12 @@
   <meta name="theme-color" content="#F3F5F0" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0E1716" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23B7862A'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23F3F5F0' stroke-width='1.5'/%3E%3Cpath d='M12 22V10h5a3.5 3.5 0 0 1 0 7h-5' fill='none' stroke='%23F3F5F0' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="preload" href="fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="preload" href="/src/assets/fonts/schibsted-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Pengamaskinen","url":"https://pengamaskin.pages.dev","applicationCategory":"FinanceApplication","operatingSystem":"Any","inLanguage":["sv","en"],"isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0"},"author":{"@type":"Person","name":"Vansinnet"},"description":"Investeringskalkylator för 19 europeiska länder med skatteregler, avgifter, inflation och sparmål."}</script>
-  <script type="module" src="src/main.js"></script>
+  <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
-  <a class="skip" href="#inputs" data-t="skipLink">Hoppa till kalkylatorn</a>
   <noscript><p class="noscript">Pengamaskinen behöver JavaScript.</p></noscript>
-
-  <header class="masthead">
-    <div class="brand">
-      <svg class="coin" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15"/><circle cx="16" cy="16" r="11" class="coin-ring"/><path d="M12 22V10h5a3.5 3.5 0 0 1 0 7h-5" class="coin-p"/></svg>
-      <div>
-        <h1 data-t="appName">Pengamaskinen</h1>
-        <p class="tagline" data-t="tagline">Se hur ditt sparande växer — och vad skatt, avgifter och inflation tar.</p>
-      </div>
-    </div>
-    <div class="settings">
-      <label class="setting">
-        <span data-t="settingsCountry">Land</span>
-        <span class="select-with-flag"><img id="flag" alt="" width="20" height="14"><select id="country"></select></span>
-      </label>
-      <label class="setting">
-        <span data-t="settingsLanguage">Språk</span>
-        <select id="lang"><option value="sv">Svenska</option><option value="en">English</option></select>
-      </label>
-      <button type="button" id="theme" class="theme-toggle">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sun" d="M12 4V2m0 20v-2m8-8h2M2 12h2m13.66-5.66 1.41-1.41M4.93 19.07l1.41-1.41m0-11.32L4.93 4.93m14.14 14.14-1.41-1.41M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/><path class="moon" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>
-      </button>
-    </div>
-  </header>
-
-  <main class="layout">
-    <form id="inputs" class="inputs" novalidate>
-      <fieldset class="mode">
-        <legend data-t="modeLegend">Vad vill du räkna ut?</legend>
-        <label><input type="radio" name="mode" value="save" checked><span data-t="modeSave">Vad blir mitt sparande värt?</span></label>
-        <label><input type="radio" name="mode" value="goal"><span data-t="modeGoal">Hur mycket behöver jag spara?</span></label>
-      </fieldset>
-
-      <h2 class="section-title" data-t="inputsTitle">Dina siffror</h2>
-
-      <div class="field" data-mode="goal">
-        <label for="target"><span data-t="target">Mitt mål</span> <output for="target" id="target-out"></output></label>
-        <div class="input-unit"><input id="target" name="target" type="number" inputmode="decimal" min="1" max="1000000000" step="any" value="1000000" aria-describedby="target-help target-error"><span class="unit" data-currency></span></div>
-        <p class="help" id="target-help" data-t="targetHelp"></p>
-        <label class="check"><input type="checkbox" id="targetReal" name="targetReal"><span data-t="targetReal">Målet är i dagens pengar</span></label>
-        <p class="error" id="target-error"></p>
-      </div>
-
-      <div class="field">
-        <label for="initial"><span data-t="initial">Startkapital</span> <output for="initial" id="initial-out"></output></label>
-        <div class="input-unit"><input id="initial" name="initial" type="number" inputmode="decimal" min="0" max="100000000" step="any" value="10000" aria-describedby="initial-help initial-error"><span class="unit" data-currency></span></div>
-        <p class="help" id="initial-help" data-t="initialHelp"></p>
-        <p class="error" id="initial-error"></p>
-      </div>
-
-      <div class="field" data-mode="save">
-        <label for="monthly"><span data-t="monthly">Sparar per månad</span> <output for="monthly" id="monthly-out"></output></label>
-        <div class="input-unit"><input id="monthly" name="monthly" type="number" inputmode="decimal" min="0" max="1000000" step="any" value="1000" aria-describedby="monthly-help monthly-error"><span class="unit" data-currency></span></div>
-        <p class="help" id="monthly-help" data-t="monthlyHelp"></p>
-        <p class="error" id="monthly-error"></p>
-      </div>
-
-      <div class="field">
-        <label for="years" data-t="years">Antal år</label>
-        <div class="input-unit"><input id="years" name="years" type="number" inputmode="numeric" min="1" max="100" step="1" value="20" aria-describedby="years-error"><span class="unit" data-t="unitYears">år</span></div>
-        <p class="error" id="years-error"></p>
-      </div>
-
-      <div class="field">
-        <label for="returnPct" data-t="return">Förväntad avkastning per år</label>
-        <div class="input-unit"><input id="returnPct" name="returnPct" type="number" inputmode="decimal" min="-50" max="100" step="0.1" value="7" aria-describedby="returnPct-help returnPct-error"><span class="unit">%</span></div>
-        <p class="help" id="returnPct-help" data-t="returnHelp"></p>
-        <p class="error" id="returnPct-error"></p>
-      </div>
-
-      <div class="field">
-        <label for="feePct"><span data-t="fee">Avgift per år</span> <output for="feePct" id="feePct-out"></output></label>
-        <input id="feePct" name="feePct" type="range" min="0" max="5" step="0.05" value="0.3" aria-describedby="feePct-help feePct-error">
-        <p class="help" id="feePct-help" data-t="feeHelp"></p>
-        <p class="error warn" id="feePct-error"></p>
-      </div>
-
-      <div class="field">
-        <label for="inflationPct"><span data-t="inflation">Inflation per år</span> <output for="inflationPct" id="inflationPct-out"></output></label>
-        <input id="inflationPct" name="inflationPct" type="range" min="0" max="10" step="0.1" value="2" aria-describedby="inflationPct-help">
-        <p class="help" id="inflationPct-help" data-t="inflationHelp"></p>
-      </div>
-
-      <div class="field" id="adjust-field" hidden>
-        <label for="adjust"><span id="adjust-label"></span> <output for="adjust" id="adjust-out"></output></label>
-        <input id="adjust" name="adjust" type="range">
-        <p class="help" id="adjust-help"></p>
-      </div>
-
-      <section class="rules" aria-labelledby="rules-title">
-        <h2 class="section-title" id="rules-title"></h2>
-        <dl id="rules-list"></dl>
-        <p class="note" id="rules-notes"></p>
-        <p class="meta"><span id="rules-year"></span> <span id="rules-sources"></span></p>
-      </section>
-    </form>
-
-    <div class="results" id="results">
-      <h2 class="result-title" id="result-title" aria-live="polite"></h2>
-      <p class="goal-note" id="goal-note"></p>
-      <div class="accounts" id="accounts"></div>
-
-      <details class="panel">
-        <summary data-t="explainTitle">Så räknade vi</summary>
-        <div id="explain"></div>
-      </details>
-
-      <section class="panel timeline" aria-labelledby="timeline-title">
-        <h2 class="section-title" id="timeline-title" data-t="timelineTitle">År för år</h2>
-        <p class="timeline-note" id="timeline-note"></p>
-        <div id="chart" class="chart"></div>
-        <div id="chart-readout" class="readout" aria-live="polite"></div>
-        <details>
-          <summary id="table-toggle"></summary>
-          <div class="table-wrap"><table id="table"></table></div>
-        </details>
-      </section>
-
-      <details class="panel">
-        <summary data-t="compoundTitle">Vad är ränta-på-ränta?</summary>
-        <p data-t="compoundText"></p>
-        <div id="compound"></div>
-      </details>
-    </div>
-  </main>
-
-  <footer class="footer">
-    <p class="quote" data-t="quote"></p>
-    <p data-t="footerDisclaimer"></p>
-    <p><span id="footer-verified"></span> <a href="https://github.com/Vansinnet/pengamaskin" data-t="footerSource">Öppen källkod</a></p>
-  </footer>
+  <div id="app"><!--app--></div>
 </body>
 </html>
