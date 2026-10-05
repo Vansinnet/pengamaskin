@@ -41,18 +41,23 @@ Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje
 | Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇬🇷 Grekland |
 | Baltikum | 🇪🇪 Estland, 🇱🇻 Lettland, 🇱🇹 Litauen |
 
-### Skatteregimer (8 st, pluggbara)
+### Skatteregimer (9 st, pluggbara)
 
 | Regim | Beskrivning | Används av |
 |-------|------------|-----------|
-| `CGT_ONLY` | Kapitalvinstskatt vid uttag | Alla länders standardkonton |
+| `CGT_ONLY` | Kapitalvinstskatt vid försäljning (valfritt: Teilfreistellung, årlig fondschablon) | De flesta länders standardkonton |
 | `ISK` | Svensk schablonbeskattning (kvartalsformel) | Sverige (SE) |
-| `LAGER_ANNUAL` | Årlig lagerbeskatning med carry-forward | Danmark (DK) |
-| `DEFERRED_SKJERMING` | Uppskjuten skatt med skjermingsfradrag | Norge (NO) |
+| `LAGER_ANNUAL` | Årlig lagerbeskattning, förluster förs fram utan tidsgräns | Danmark (DK) |
+| `DEFERRED_SKJERMING` | Skatt vid uttag med skjermingsfradrag (oanvänd skjerming växer) | Norge (ASK + vanligt konto) |
 | `DEFERRED_PLAIN` | Uppskjuten skatt utan avdrag (progressiv CGT) | Finland, Estland, Lettland, Litauen |
 | `TAX_FREE_WRAPPER` | Helt skattefri investeringsform | Storbritannien, Polen |
 | `DUTCH_BOX3` | Förmögenhetsskatt (schablonavkastning) | Nederländerna (NL) |
-| `TIME_TEST_CGT` | Skattefritt efter X års innehav | Tjeckien (standardkonto), Frankrike (PEA), Italien (PIR) |
+| `TIME_TEST_CGT` | Skattefritt efter X års innehav — per köp eller per konto | Tjeckien (standardkonto), Frankrike (PEA), Italien (PIR) |
+| `EXIT_TAX` | Irländsk exit tax på fonder med deemed disposal vart 8:e år | Irland (IE) |
+
+**Insättningstak:** skattegynnade konton med tak (ISA, IKE, PIR, PEA, OSK, dansk ASK) anges med `taxAdvCap` i `countries.js`. Det som inte ryms beräknas automatiskt på landets standardkonto och resultaten summeras (`simulateAccount` i `tax-regimes.js`).
+
+**Skattesatser:** gäller inkomstår 2026. Landsspecifika förenklingar visas i appen under landsvalet.
 
 *Arkitekturen är designad för att göra nya länder triviala — ~20 rader konfiguration, noll kodändringar i beräknings- eller UI-logik (förutsatt att regimen redan finns).*
 
@@ -102,7 +107,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 | Avgifter | 0,5 % |
 | Konto | ISK |
 
-**Resultat:** Investerat: 410 000 kr · Slutvärde: ~2 800 000 kr (efter ISK-skatt) · Avkastning: ~2 390 000 kr netto.
+**Resultat (schablonränta 3,55 %):** Investerat: 410 000 kr · Kontots värde: ~1 456 000 kr · ISK-skatt totalt: ~92 000 kr · Netto efter skatt: ~1 364 000 kr.
 
 *Notera: Exemplet är simulerat. Verklig avkastning varierar.*
 
@@ -116,7 +121,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 | i18n | Dynamiskt lexikon, `data-i18n`-attribut |
 | Flaggor | Inline SVG, CSP-kompatibla |
 | Diagram | Canvas med tooltip + tangentbordsnavigering |
-| Tester | `node test.js` — 157 tester (3 sviter) |
+| Tester | `node test.js` — 187 tester (3 sviter) |
 | Licens | MIT |
 
 ### Filstruktur
@@ -131,7 +136,7 @@ Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
 │   ├── constants.js        # Lagstadgade skattekontanter (fallback)
 │   ├── utils.js            # Validering och formatering
 │   ├── core.js             # Kärnberäkningar (FV, avgifter, CGT)
-│   ├── tax-regimes.js      # Pluggbar skatteregims-register (8 st)
+│   ├── tax-regimes.js      # Skatteregimer (9 st) + insättningstak (simulateAccount)
 │   └── countries.js        # Landskonfiguration (19 länder) + regioner
 │
 ├── test.js                 # Node.js-testrunner

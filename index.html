@@ -66,8 +66,8 @@
     <script src="calc/constants.js"></script>
     <script src="calc/utils.js"></script>
     <script src="calc/core.js"></script>
-    <script src="calc/tax-regimes.js"></script>
-    <script src="calc/countries.js?v=1778280505"></script>
+    <script src="calc/tax-regimes.js?v=1791206444"></script>
+    <script src="calc/countries.js?v=1791206444"></script>
 </head>
 <body>
     <noscript>
@@ -300,6 +300,7 @@
                     <div id="advWarning" class="warning-message" style="display: none;" data-i18n="warningLargeNumbers">
                         ⚠️ Mycket stora tal kan ha begränsad precision
                     </div>
+                    <div id="advCapNote" class="simplification-note" role="note"></div>
 
                     <div class="final-value">
                         <div class="result-row">
@@ -333,7 +334,7 @@
                                     <th data-i18n="thReturn">Ackumulerad avkastning</th>
                                     <th data-i18n-title="thReturnPlusTitle" data-i18n="thReturnPlus">Årlig avkastning</th>
                                     <th data-i18n="thGrossValue">Värde innan skatt</th>
-                                    <th data-i18n="thNetCGT">Efter skatt (AF)</th>
+                                    <th data-i18n="thNetCGT">Efter skatt (vanligt konto)</th>
                                     <th id="advRegimeNetHeader" data-i18n="thRegimeNet">Regim-netto</th>
                                 </tr>
                             </thead>
@@ -488,6 +489,7 @@
                     <div id="goalWarning" class="warning-message" style="display: none;" data-i18n="warningLargeNumbers">
                         ⚠️ Mycket stora tal kan ha begränsad precision
                     </div>
+                    <div id="goalCapNote" class="simplification-note" role="note"></div>
 
                     <div class="breakdown" style="margin-top:20px;">
                         <div class="breakdown-title" data-i18n="goalBreakdownTitle">Fördelning</div>
@@ -514,7 +516,7 @@
                                     <th data-i18n="thReturn">Ackumulerad avkastning</th>
                                     <th data-i18n-title="thReturnPlusTitle" data-i18n="thReturnPlus">Årlig avkastning</th>
                                     <th data-i18n="thGrossValue">Värde innan skatt</th>
-                                    <th data-i18n="thNetCGT">Efter skatt (AF)</th>
+                                    <th data-i18n="thNetCGT">Efter skatt (vanligt konto)</th>
                                     <th id="goalRegimeNetHeader" data-i18n="thRegimeNet">Regim-netto</th>
                                 </tr>
                             </thead>
@@ -543,6 +545,6 @@
         </footer>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=1791206444"></script>
 </body>
 </html>
