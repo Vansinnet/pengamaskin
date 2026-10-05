@@ -1,156 +1,86 @@
-# Pengamaskinen – Europeisk investeringskalkylator
+# Pengamaskinen
 
-**🌐 [Öppna Pengamaskinen →](https://pengamaskin.pages.dev)**
+**[Öppna Pengamaskinen →](https://pengamaskin.pages.dev)**
 
-Pengamaskinen är en **gratis, webbaserad investeringskalkylator** för europeiska sparare. Beräkna hur dina pengar växer med ränta-på-ränta, landsspecifika skatteregler, förvaltningsavgifter och inflation — allt på en sida, utan registrering.
+En gratis kalkylator som visar hur ett sparande växer, och hur mycket skatt, avgifter och inflation tar. Den har stöd för 19 europeiska länder och deras skatteregler. Kalkylatorn finns på svenska och engelska och har ljust och mörkt tema.
 
-Stöd för **19 europeiska länder** med respektive lands skattesystem och kontotyper. Tillgänglig på både **svenska och engelska**.
+## Vad den gör
 
-## 🎯 Funktioner
+- **Två lägen.** *Vad blir mitt sparande värt?* räknar fram slutvärdet från startkapital och månadssparande. *Hur mycket behöver jag spara?* räknar baklänges från ett mål. Målet kan anges i dagens pengar.
+- **Konton sida vid sida.** Landets vanliga konto jämförs alltid med landets skattegynnade konto (ISK, ASK, ISA, PEA …), och det som ger mest markeras.
+- **Pengarnas väg.** Varje konto visar vägen från insatt belopp till slutsumma: insatt, plus avkastning, minus avgifter, minus skatt, kvar efter skatt och värdet i dagens pengar.
+- **Så räknade vi.** Landets formel visas med användarens egna siffror.
+- **År för år.** Ett diagram (tangentbordsstyrt) och en tabell.
+- **Ränta-på-ränta.** Insättningar, enkel ränta och ränta-på-ränta jämförs med användarens egna siffror.
+- **Insättningstak.** Det som inte ryms i ett skattegynnat konto räknas automatiskt på vanligt konto.
 
-### Pengamaskin — Beräkna framtida värde
-Se hur ditt sparande växer år för år med:
-- Startkapital och månadligt sparande
-- Årlig avkastning (nominell ränta, månadsvis kapitalisering)
-- Förvaltningsavgifter (TER)
-- Landsspecifika skatteregler automatiskt
-- Skattegynnat konto per land (ISK, ASK, OSK, ISA, PIR, IKE m.fl.)
-- Inflationsjustering för realvärde
+## Antaganden
 
-### Sparmål — Räkna ut månadssparande
-Sätt ett målbelopp och få svar på frågan "Hur mycket måste jag spara varje månad?"
-- Målbelopp (nominellt eller i dagens pengar)
-- Tidsperiod
-- Binärsökning för exakt månadsbelopp
+| | |
+|---|---|
+| Avkastning | Effektiv årsavkastning före avgifter. Månadsfaktor = ((1 + avkastning) × (1 − avgift))^(1/12) |
+| Avgift | Dras löpande på kapitalet (som en fonds TER) |
+| Insättningar | I slutet av varje månad; startkapitalet 1 januari år 1 |
+| Skatt vid försäljning | Allt antas säljas i slutet av sista året |
+| Inflation | Realvärde = netto / (1 + inflation)^år |
 
-### Visualisering
-- **Fördelningsdiagram** — hur fördelas slutvärdet på insatt kapital, avkastning, avgifter och skatt?
-- **År-för-år tidslinje** — detaljerad tabell + interaktivt Canvas-diagram
-- **Ränta-på-ränta-explainer** — expanderbar förklaring med visuella staplar
+Landsspecifika förenklingar står i appen under *Skatteregler i …* och i `src/rules/countries.js`.
 
-## 🌍 Länder och regioner (19 länder)
+## Kod
 
-| Region | Länder |
-|--------|--------|
-| Norden | 🇸🇪 Sverige, 🇳🇴 Norge, 🇩🇰 Danmark, 🇫🇮 Finland |
-| Västeuropa | 🇩🇪 Tyskland, 🇫🇷 Frankrike |
-| Brittiska öarna | 🇬🇧 Storbritannien, 🇮🇪 Irland |
-| Benelux | 🇳🇱 Nederländerna, 🇧🇪 Belgien |
-| Centraleuropa | 🇦🇹 Österrike |
-| Östeuropa | 🇵🇱 Polen, 🇨🇿 Tjeckien |
-| Sydeuropa | 🇮🇹 Italien, 🇪🇸 Spanien, 🇬🇷 Grekland |
-| Baltikum | 🇪🇪 Estland, 🇱🇻 Lettland, 🇱🇹 Litauen |
-
-### Skatteregimer (9 st, pluggbara)
-
-| Regim | Beskrivning | Används av |
-|-------|------------|-----------|
-| `CGT_ONLY` | Kapitalvinstskatt vid försäljning (valfritt: Teilfreistellung, årlig fondschablon) | De flesta länders standardkonton |
-| `ISK` | Svensk schablonbeskattning (kvartalsformel) | Sverige (SE) |
-| `LAGER_ANNUAL` | Årlig lagerbeskattning, förluster förs fram utan tidsgräns | Danmark (DK) |
-| `DEFERRED_SKJERMING` | Skatt vid uttag med skjermingsfradrag (oanvänd skjerming växer) | Norge (ASK + vanligt konto) |
-| `DEFERRED_PLAIN` | Uppskjuten skatt utan avdrag (progressiv CGT) | Finland, Estland, Lettland, Litauen |
-| `TAX_FREE_WRAPPER` | Helt skattefri investeringsform | Storbritannien, Polen |
-| `DUTCH_BOX3` | Förmögenhetsskatt (schablonavkastning) | Nederländerna (NL) |
-| `TIME_TEST_CGT` | Skattefritt efter X års innehav — per köp eller per konto | Tjeckien (standardkonto), Frankrike (PEA), Italien (PIR) |
-| `EXIT_TAX` | Irländsk exit tax på fonder med deemed disposal vart 8:e år | Irland (IE) |
-
-**Insättningstak:** skattegynnade konton med tak (ISA, IKE, PIR, PEA, OSK, dansk ASK) anges med `taxAdvCap` i `countries.js`. Det som inte ryms beräknas automatiskt på landets standardkonto och resultaten summeras (`simulateAccount` i `tax-regimes.js`).
-
-**Skattesatser:** gäller inkomstår 2026. Landsspecifika förenklingar visas i appen under landsvalet.
-
-*Arkitekturen är designad för att göra nya länder triviala — ~20 rader konfiguration, noll kodändringar i beräknings- eller UI-logik (förutsatt att regimen redan finns).*
-
-## 💡 Användning
-
-1. **Öppna** [pengamaskin.pages.dev](https://pengamaskin.pages.dev)
-2. **Välj land** i dropdown-menyn — skatteparametrar och kontotyper anpassas automatiskt
-3. **Välj språk** — svenska eller engelska, oberoende av valt land
-4. **Fyll i** dina siffror — resultatet uppdateras i realtid (auto-beräkning)
-5. **Experimentera** — ändra värden för att jämföra scenarier
-
-## 🛡️ Säkerhet & integritet
-
-- **Ingen server:** All beräkning sker i din webbläsare
-- **Ingen datainsamling:** Vi sparar inte din data
-- **Inga externa beroenden:** Vanilla JavaScript, inga CDN:er, inga trackers
-- **Open Source:** MIT-licens — fritt att använda och modifiera
-- **CSP-skyddad:** Content Security Policy förhindrar externa angrepp
-- **Offline-kapabel:** Fungerar utan nätverksanslutning efter första laddning
-
-## 📊 Matematiska antaganden
-
-### Ränta-på-ränta
-Månadsvis kapitalisering med end-of-month-insättningar:
-```
-FV = P(1+r)^n + PMT × [((1+r)^n − 1) / r]
-```
-Där `r = årsränta / 12`, `n = år × 12`, `PMT = månadsinsättning`.
-
-### Avgifter
-`nettoränta = annualRate − fees` — avgifter modelleras som reducerad nettotillväxttakt.
-
-### Inflation
-`Realvärde = nominellt värde / (1 + inflation)^år` — sammansatt diskontering.
-
-## 📖 Exempel
-
-**Scenario:** Du sparar 1 000 kr/månad under 30 år, börjar med 50 000 kr, svensk ISK.
-
-| Inställning | Värde |
-|-------------|-------|
-| Land | Sverige |
-| Startkapital | 50 000 kr |
-| Månadligt | 1 000 kr |
-| Avkastning | 7 % årlig |
-| Period | 30 år |
-| Avgifter | 0,5 % |
-| Konto | ISK |
-
-**Resultat (schablonränta 3,55 %):** Investerat: 410 000 kr · Kontots värde: ~1 456 000 kr · ISK-skatt totalt: ~92 000 kr · Netto efter skatt: ~1 364 000 kr.
-
-*Notera: Exemplet är simulerat. Verklig avkastning varierar.*
-
-## 🔧 Teknisk information
-
-| Egenskap | Detalj |
-|----------|--------|
-| Språk | JavaScript (vanilla, inga ramverk) |
-| Styling | CSS3 (guld/brun-tema, flexbox, responsiv grid) |
-| Arkitektur | `calc/` — rena beräkningsfunktioner (5 filer) + `app.js` (UI) |
-| i18n | Dynamiskt lexikon, `data-i18n`-attribut |
-| Flaggor | Inline SVG, CSP-kompatibla |
-| Diagram | Canvas med tooltip + tangentbordsnavigering |
-| Tester | `node test.js` — 187 tester (3 sviter) |
-| Licens | MIT |
-
-### Filstruktur
+Inga beroenden och inget byggsteg. Webbläsaren laddar ES-moduler direkt.
 
 ```
-/
-├── index.html              # UI-struktur (HTML + event-attribut)
-├── styles.css              # All styling
-├── app.js                  # UI-logik, i18n, state, DOM, canvas
-│
-├── calc/                   # Beräkningsbibliotek — rena funktioner
-│   ├── constants.js        # Lagstadgade skattekontanter (fallback)
-│   ├── utils.js            # Validering och formatering
-│   ├── core.js             # Kärnberäkningar (FV, avgifter, CGT)
-│   ├── tax-regimes.js      # Skatteregimer (9 st) + insättningstak (simulateAccount)
-│   └── countries.js        # Landskonfiguration (19 länder) + regioner
-│
-├── test.js                 # Node.js-testrunner
-└── _headers                # CSP- och säkerhetsheaders (Cloudflare Pages)
+index.html, styles.css, fonts/     sidan (Schibsted Grotesk, OFL-licens)
+src/
+  main.js                          start, formulär och händelser
+  rules/countries.js               skatteregler per land — ren data med källor
+  engine/
+    simulate.js                    den enda månadsloopen → huvudbok (en rad per år)
+    regimes/                       en fil per skatteregel (ISK, dansk ASK, Box 3 …)
+    account.js                     vanligt/skattegynnat konto, insättningstak
+    caps.js, tax.js, goal.js       tak, skatt på vinst, sparmål (intervallhalvering)
+  view/
+    model.js                       indata → allt som visas (ren funktion, testad)
+    accounts.js, chart.js, panels.js   ritar korten, diagrammet och förklaringarna
+  i18n/sv.js, en.js                alla texter
+tests/                             node --test
 ```
 
-## 📮 Feedback & bidrag
+Flödet är **regler → motor → vymodell → vy**. Sammanfattning, diagram och tabell läser alla från samma huvudbok och kan därför inte visa olika siffror.
 
-Har du förslag på förbättringar? Hittade du en bugg? Skapa ett [GitHub issue](https://github.com/Vansinnet/pengamaskin/issues) eller en pull request!
+### Köra lokalt
 
-## ⚠️ Ansvarsfriskrivning
+```bash
+python3 -m http.server 8000      # eller valfri statisk server, öppna http://localhost:8000
+npm test                         # Node 20+
+```
 
-Pengamaskinen är ett **utbildningsverktyg**. Skatteregler kan ändras — kontrollera alltid mot respektive lands skattemyndighet för aktuella satser. Använd siffrorna som vägledning, inte som garantier. För personlig finansiell rådgivning, kontakta en licensierad rådgivare.
+### Lägga till ett land
 
----
+1. Lägg till landet i `src/rules/countries.js` med en befintlig regim och dess parametrar.
+2. Lägg till landets flagga i `src/view/flags.js`.
+3. Kör `npm test`. Testerna kontrollerar texter, regim och valuta för alla länder.
 
-**🌐 [Starta Pengamaskinen nu →](https://pengamaskin.pages.dev)**
+En ny skatteregel skrivs som en ny fil i `src/engine/regimes/`. Den kan reagera vid årets början (`yearStart`), varje månad (`month`) och vid årets slut (`yearEnd`), och anger vad det skulle kosta i skatt att sälja allt (`taxIfSold`).
+
+### Årlig uppdatering
+
+`tests/rules.test.js` misslyckas när kalenderåret passerat `RULES_YEAR`. Så här uppdaterar du:
+
+1. Gå igenom varje land i `src/rules/countries.js` mot källorna i `sources`. Kontrollera satser, fribelopp, tak och schablonräntor (t.ex. ISK).
+2. Höj `RULES_YEAR` och `RULES_VERIFIED`.
+
+### Content Security Policy
+
+CSP:n finns både i `_headers` (Cloudflare Pages) och som meta-tagg i `index.html`. `script-src` innehåller en hash för JSON-LD-blocket. Om blocket ändras räknar du om hashen och uppdaterar båda ställena:
+
+```bash
+python3 -c "import re,hashlib,base64;h=open('index.html').read();m=re.search(r'ld\+json\">(.*?)</script>',h,re.S);print(base64.b64encode(hashlib.sha256(m.group(1).encode()).digest()).decode())"
+```
+
+## Ansvarsfriskrivning
+
+Pengamaskinen är en förenklad modell för att förstå sparande. Den är inte finansiell rådgivning. Kontrollera alltid reglerna hos skattemyndigheten.
+
+MIT-licens.
