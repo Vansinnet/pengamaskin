@@ -1,28 +1,83 @@
 // ============================================================
 //  calc/tax-regimes.js — Pluggbar skatteregims-register
 //
-//  Varje regim är ett självständigt objekt med tre metoder:
-//    simulate()      — full flerårssimulering
-//    simulateYear()  — per-år-justering för tidslinje
-//    getUI()         — metadata för UI-rendering (etiketter etc.)
+//  Varje regim är ett självständigt objekt med:
+//    simulateSchedule() — kärnsimulering över ett insättningsschema
+//    simulate()         — bekvämlighetsvariant (startkapital + fast
+//                         månadsbelopp), bygger schemat och anropar
+//                         simulateSchedule()
+//    simulateYear()     — per-år-justering (används av LAGER_ANNUAL)
+//    getUI()            — metadata för UI-rendering (etiketter etc.)
+//
+//  Insättningsschema: array med längd months + 1.
+//    deps[0]  = startkapital (insatt vid t = 0, 1 januari år 1)
+//    deps[m]  = insättning vid slutet av månad m (m = 1..months)
+//  Alla regimer använder samma konvention som computeFV():
+//    saldo = saldo × (1 + r) + insättning   (end-of-month)
+//
+//  Ett schema (i stället för fast månadsbelopp) behövs för att
+//  kunna hantera insättningstak: det som inte ryms i det
+//  skattegynnade kontot flyttas till standardkontot (se
+//  simulateAccount längst ned).
 //
 //  Lägg till en ny regim HÄR — en gång. Länder som refererar
 //  regim-ID:t i countries.js får automatiskt rätt beräkning.
 //
-//  Beroenden: core.js (computeFV, computeCapitalGainsTax),
+//  Beroenden: core.js (computeCapitalGainsTax),
 //             constants.js (ISK_SKATT, ISK_SCHABLON_GOLV, ISK_FRIBELOPP_DEFAULT)
 // ============================================================
+
+/**
+ * Bygger ett insättningsschema för startkapital + fast månadsbelopp.
+ */
+function makeDepositSchedule(initial, monthly, months) {
+    var deps = new Array(months + 1);
+    deps[0] = Number(initial) || 0;
+    var mo = Number(monthly) || 0;
+    for (var m = 1; m <= months; m++) deps[m] = mo;
+    return deps;
+}
+
+function sumSchedule(deps) {
+    var s = 0;
+    for (var i = 0; i < deps.length; i++) s += deps[i];
+    return s;
+}
 
 var TAX_REGIMES = (function() {
 
     // ------------------------------------------------------------
-    //  Gemensam no-op simulateYear (används av alla utom LAGER_ANNUAL)
+    //  Gemensamma hjälpfunktioner
     // ------------------------------------------------------------
     function simulateYearNoOp(balanceBefore, balanceAfter, deposits, carryState) {
         return { newBalance: balanceAfter, taxPaid: 0, carryState: carryState };
     }
 
+    function withSchedule(regime) {
+        regime.simulate = function(initial, monthly, monthlyRateNet, years, params) {
+            var deps = makeDepositSchedule(initial, monthly, years * 12);
+            return regime.simulateSchedule(deps, monthlyRateNet, years, params || {});
+        };
+        return regime;
+    }
+
+    /** Slutsaldo för ett schema (ingen skatt). */
+    function runBalance(deps, monthlyRate, months) {
+        var g = 1 + monthlyRate;
+        var bal = deps[0];
+        for (var m = 1; m <= months; m++) bal = bal * g + deps[m];
+        return bal;
+    }
+
+    /**
+     * Kapitalvinstskatt med landsparametrar.
+     * partialExemption (t.ex. tysk Teilfreistellung 30 %) minskar den
+     * skattepliktiga vinsten innan fribelopp/brytpunkter tillämpas.
+     */
     function _applyCGT(gain, params) {
+        if (gain > 0 && params.partialExemption) {
+            gain = gain * (1 - params.partialExemption);
+        }
         if (params.capitalGainsTaxBrackets) {
             return computeCapitalGainsTax(gain, params.capitalGainsTaxBrackets);
         }
@@ -32,20 +87,45 @@ var TAX_REGIMES = (function() {
             params.capitalGainsTaxHigh);
     }
 
+    /**
+     * Gemensam "skatt vid försäljning/uttag"-simulering.
+     * Stöder valfri årlig schablonskatt på fondinnehav (svensk
+     * schablonintäkt på fondandelar: 0,4 % av värdet 1 januari,
+     * beskattas med 30 % ⇒ 0,12 %/år). Den betalas via deklarationen
+     * och minskar inte kontots värde.
+     */
+    function _simulateDeferredCGT(deps, monthlyRate, years, params) {
+        var months = years * 12;
+        var g = 1 + monthlyRate;
+        var bal = deps[0];
+        var levyRate = 0;
+        if (params.fundSchablon) {
+            var levyTax = (params.fundSchablonTax !== undefined) ? params.fundSchablonTax
+                : (params.capitalGainsTax !== undefined ? params.capitalGainsTax : KAPITALVINSTSKATT);
+            levyRate = params.fundSchablon * levyTax;
+        }
+        var levy = 0;
+        for (var yr = 1; yr <= years; yr++) {
+            if (levyRate > 0) levy += Math.max(0, bal) * levyRate;
+            for (var k = 1; k <= 12; k++) {
+                var m = (yr - 1) * 12 + k;
+                bal = bal * g + deps[m];
+            }
+        }
+        var gain = bal - sumSchedule(deps.slice(0, months + 1));
+        var tax = _applyCGT(gain, params);
+        return { balance: bal, totalTax: tax + levy, netValue: bal - tax - levy, annualLevy: levy };
+    }
+
     // ------------------------------------------------------------
-    //  CGT_ONLY — standard kapitalvinstskatt vid uttag
-    //  Används av: alla länders standardkonton
+    //  CGT_ONLY — standard kapitalvinstskatt vid försäljning
+    //  Används av: de flesta länders standardkonton
     // ------------------------------------------------------------
-    var CGT_ONLY = {
+    var CGT_ONLY = withSchedule({
         id: 'CGT_ONLY',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
-            var months = years * 12;
-            var fv = computeFV(initial, monthly, monthlyRateNet, months);
-            var totalIn = initial + monthly * months;
-            var gain = fv - totalIn;
-            var tax = _applyCGT(gain, params);
-            return { balance: fv, totalTax: tax, netValue: fv - tax };
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
+            return _simulateDeferredCGT(deps, monthlyRateNet, years, params);
         },
 
         simulateYear: simulateYearNoOp,
@@ -59,39 +139,39 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
-    //  ISK — svensk schablonbeskattning (kapitalunderlag × ränta)
-    //  Skatten betalas separat, balansen växer oavkortat.
+    //  ISK — svensk schablonbeskattning
+    //  Kapitalunderlag = (värde 1/1 + 1/4 + 1/7 + 1/10
+    //                     + årets insättningar) / 4
+    //  Skatten betalas via deklarationen — kontot växer oavkortat.
     // ------------------------------------------------------------
-    var ISK = {
+    var ISK = withSchedule({
         id: 'ISK',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
             var fribelopp = (params.iskFribelopp !== undefined) ? params.iskFribelopp : ISK_FRIBELOPP_DEFAULT;
             var iskSkatt = (params.iskSkatt !== undefined) ? params.iskSkatt : ISK_SKATT;
             var schablonGolv = (params.iskSchablonGolv !== undefined) ? params.iskSchablonGolv : ISK_SCHABLON_GOLV;
             var schablonRanta = (params.iskSchablonRate !== undefined) ? params.iskSchablonRate
                 : (params.iskSchablonRateDefault !== undefined) ? params.iskSchablonRateDefault : 3.55;
 
-            var balance = initial;
-            var totalISKtax = 0;
-            var insattningarPerAr = monthly * 12;
             var effectiveSchablonRanta = Math.max(schablonRanta, schablonGolv);
-            var growth = 1 + monthlyRateNet;
+            var g = 1 + monthlyRateNet;
+            var balance = deps[0];
+            var totalISKtax = 0;
 
             for (var yr = 1; yr <= years; yr++) {
-                var q1 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
-                var q2 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
-                var q3 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
-                var q4 = balance;
-                for (var m = 0; m < 3; m++) { balance = balance * growth + monthly; }
-
-                var kapitalunderlag = (q1 + q2 + q3 + q4 + insattningarPerAr) / 4;
+                var quarterSum = 0;
+                var depositsThisYear = 0;
+                for (var k = 1; k <= 12; k++) {
+                    if (k === 1 || k === 4 || k === 7 || k === 10) quarterSum += balance;
+                    var m = (yr - 1) * 12 + k;
+                    balance = balance * g + deps[m];
+                    depositsThisYear += deps[m];
+                }
+                var kapitalunderlag = (quarterSum + depositsThisYear) / 4;
                 var beskattningsbartUnderlag = Math.max(0, kapitalunderlag - fribelopp);
                 var schablonintakt = beskattningsbartUnderlag * (effectiveSchablonRanta / 100);
                 totalISKtax += schablonintakt * iskSkatt;
@@ -110,93 +190,68 @@ var TAX_REGIMES = (function() {
                 rateFields: ['iskRate']
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
-    //  LAGER_ANNUAL — dansk ASK: 17 % årlig lagerbeskatning
-    //  Skatten dras direkt från kontot varje år.
-    //  Förluster kan framföras (carry-forward).
+    //  LAGER_ANNUAL — dansk ASK: 17 % årlig lagerbeskattning
+    //  Skatten dras från kontot varje år. Negativ avkastning förs
+    //  fram och kvittas mot framtida avkastning på kontot UTAN
+    //  tidsgräns.
     // ------------------------------------------------------------
-    var LAGER_ANNUAL = {
+    function _carryToNumber(carryState) {
+        if (typeof carryState === 'number') return carryState;
+        if (Array.isArray(carryState)) {
+            return carryState.reduce(function(s, l) { return s + (l && l.amount ? l.amount : 0); }, 0);
+        }
+        return 0;
+    }
+
+    function _lagerYear(gainThisYear, carry, annualTaxRate) {
+        if (gainThisYear > 0 && carry > 0) {
+            var used = Math.min(gainThisYear, carry);
+            gainThisYear -= used;
+            carry -= used;
+        }
+        var tax = 0;
+        if (gainThisYear > 0) {
+            tax = gainThisYear * annualTaxRate;
+        } else if (gainThisYear < 0) {
+            carry += -gainThisYear;
+        }
+        return { tax: tax, carry: carry };
+    }
+
+    var LAGER_ANNUAL = withSchedule({
         id: 'LAGER_ANNUAL',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
             var annualTaxRate = (params.askAnnualTax !== undefined) ? params.askAnnualTax : 0.17;
-            var balance = initial;
+            var g = 1 + monthlyRateNet;
+            var balance = deps[0];
             var totalTax = 0;
-            var losses = []; // [{amount, yearsLeft}] — vars sparas individuellt med egen åldersräknare
-            var growth = 1 + monthlyRateNet;
+            var carry = 0;
 
             for (var yr = 1; yr <= years; yr++) {
                 var balanceBeforeYear = balance;
-                var depositsThisYear = monthly * 12;
-                for (var m = 0; m < 12; m++) {
-                    balance = balance * growth + monthly;
+                var depositsThisYear = 0;
+                for (var k = 1; k <= 12; k++) {
+                    var m = (yr - 1) * 12 + k;
+                    balance = balance * g + deps[m];
+                    depositsThisYear += deps[m];
                 }
-                var gainThisYear = balance - balanceBeforeYear - depositsThisYear;
-
-                // Kvitta vinster mot ackumulerade förluster (FIFO — äldst först)
-                if (gainThisYear > 0) {
-                    for (var i = 0; i < losses.length && gainThisYear > 0; i++) {
-                        var used = Math.min(gainThisYear, losses[i].amount);
-                        gainThisYear -= used;
-                        losses[i].amount -= used;
-                        if (losses[i].amount <= 0) {
-                            losses.splice(i, 1);
-                            i--;
-                        }
-                    }
-                }
-
-                // Åldra kvarvarande förluster EFTER kvittning
-                for (var i = losses.length - 1; i >= 0; i--) {
-                    losses[i].yearsLeft--;
-                    if (losses[i].yearsLeft <= 0) {
-                        losses.splice(i, 1);
-                    }
-                }
-
-                if (gainThisYear > 0) {
-                    var tax = gainThisYear * annualTaxRate;
-                    balance -= tax;
-                    totalTax += tax;
-                } else if (gainThisYear < 0) {
-                    // Ny förlust — 5 års framföranderätt från nästa år
-                    losses.push({ amount: -gainThisYear, yearsLeft: 5 });
-                }
+                var res = _lagerYear(balance - balanceBeforeYear - depositsThisYear, carry, annualTaxRate);
+                carry = res.carry;
+                balance -= res.tax;
+                totalTax += res.tax;
             }
             return { balance: balance, totalTax: totalTax, netValue: balance };
         },
 
         simulateYear: function(balanceBefore, balanceAfter, deposits, carryState, params) {
+            params = params || {};
             var annualTaxRate = (params.askAnnualTax !== undefined) ? params.askAnnualTax : 0.17;
-            var gainThisYear = balanceAfter - balanceBefore - deposits;
-            var losses = Array.isArray(carryState)
-                ? carryState.map(function(l) { return { amount: l.amount, yearsLeft: l.yearsLeft }; })
-                : [];
-
-            if (gainThisYear > 0) {
-                for (var i = 0; i < losses.length && gainThisYear > 0; i++) {
-                    var used = Math.min(gainThisYear, losses[i].amount);
-                    gainThisYear -= used;
-                    losses[i].amount -= used;
-                    if (losses[i].amount <= 0) { losses.splice(i, 1); i--; }
-                }
-            }
-
-            for (var i = losses.length - 1; i >= 0; i--) {
-                losses[i].yearsLeft--;
-                if (losses[i].yearsLeft <= 0) { losses.splice(i, 1); }
-            }
-
-            if (gainThisYear > 0) {
-                var tax = gainThisYear * annualTaxRate;
-                return { newBalance: balanceAfter - tax, taxPaid: tax, carryState: losses };
-            } else if (gainThisYear < 0) {
-                losses.push({ amount: -gainThisYear, yearsLeft: 5 });
-                return { newBalance: balanceAfter, taxPaid: 0, carryState: losses };
-            }
-            return { newBalance: balanceAfter, taxPaid: 0, carryState: losses };
+            var res = _lagerYear(balanceAfter - balanceBefore - deposits, _carryToNumber(carryState), annualTaxRate);
+            return { newBalance: balanceAfter - res.tax, taxPaid: res.tax, carryState: res.carry };
         },
 
         getUI: function() {
@@ -208,42 +263,54 @@ var TAX_REGIMES = (function() {
                 rateFields: ['askRate']
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
-    //  DEFERRED_SKJERMING — norsk ASK med skjermingsfradrag
-    //  Skatten är uppskjuten till uttag. Skjermingsfradraget
-    //  (riskfri avkastning) dras av från vinsten.
+    //  DEFERRED_SKJERMING — norsk beskattning med skjermingsfradrag
+    //
+    //  Skjermingsgrunnlag = insatt kapital + oanvänd skjerming från
+    //  tidigare år (oanvänd skjerming växer alltså med räntan).
+    //
+    //  skjermingBasis:
+    //    'lowest'  (ASK, default) — lägsta innskudd under året, dvs.
+    //              insatt kapital vid årets början. Årets nya
+    //              insättningar ger skjerming först nästa år.
+    //    'yearEnd' (vanligt konto) — innehav 31 december; aktier/
+    //              fonder köpta under året ger skjerming hela året.
+    //
+    //  Skatten (37,84 %) tas ut vid uttag/försäljning på vinst minus
+    //  ackumulerad skjerming (aldrig under 0).
     // ------------------------------------------------------------
-    var DEFERRED_SKJERMING = {
+    var DEFERRED_SKJERMING = withSchedule({
         id: 'DEFERRED_SKJERMING',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
             var capitalGainsTax = (params.capitalGainsTax !== undefined) ? params.capitalGainsTax : 0.3784;
-            var skjermingsrente = (params.skjermingsrente !== undefined) ? params.skjermingsrente : 2.5;
-            var skjermingsrate = skjermingsrente / 100;
-            var balance = initial;
-            var costBasis = initial;
-            var accumulatedFradrag = 0;
-            var growth = 1 + monthlyRateNet;
+            var skjermingsrente = (params.skjermingsrente !== undefined) ? params.skjermingsrente : 3.6;
+            var rate = skjermingsrente / 100;
+            var yearEnd = params.skjermingBasis === 'yearEnd';
+            var g = 1 + monthlyRateNet;
+
+            var balance = deps[0];
+            var costBasis = deps[0];
+            var unusedSkjerming = 0;
 
             for (var yr = 1; yr <= years; yr++) {
-                var basisBefore = costBasis;
-                for (var m = 0; m < 12; m++) {
-                    balance = balance * growth + monthly;
-                    costBasis += monthly;
+                var costAtStart = costBasis;
+                for (var k = 1; k <= 12; k++) {
+                    var m = (yr - 1) * 12 + k;
+                    balance = balance * g + deps[m];
+                    costBasis += deps[m];
                 }
-                accumulatedFradrag += basisBefore * skjermingsrate;
-                if (monthly > 0) {
-                    accumulatedFradrag += monthly * 12 * 0.5 * skjermingsrate;
-                }
+                var grunnlag = (yearEnd ? costBasis : costAtStart) + unusedSkjerming;
+                unusedSkjerming += grunnlag * rate;
             }
 
             var gain = balance - costBasis;
-            var taxableGain = Math.max(0, gain - accumulatedFradrag);
+            var taxableGain = Math.max(0, gain - unusedSkjerming);
             var tax = taxableGain * capitalGainsTax;
 
-            return { balance: balance, totalTax: tax, netValue: balance - tax };
+            return { balance: balance, totalTax: tax, netValue: balance - tax, skjerming: unusedSkjerming };
         },
 
         simulateYear: simulateYearNoOp,
@@ -257,23 +324,18 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
     //  DEFERRED_PLAIN — uppskjuten skatt utan avdrag
-    //  Finsk OSK och generell uppskjuten skatt.
+    //  Finsk OSK, baltiska investeringskonton.
     //  Beskattas vid uttag med CGT (ev. progressiv).
     // ------------------------------------------------------------
-    var DEFERRED_PLAIN = {
+    var DEFERRED_PLAIN = withSchedule({
         id: 'DEFERRED_PLAIN',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
-            var months = years * 12;
-            var fv = computeFV(initial, monthly, monthlyRateNet, months);
-            var totalIn = initial + monthly * months;
-            var gain = fv - totalIn;
-            var tax = _applyCGT(gain, params);
-            return { balance: fv, totalTax: tax, netValue: fv - tax };
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
+            return _simulateDeferredCGT(deps, monthlyRateNet, years, params);
         },
 
         simulateYear: simulateYearNoOp,
@@ -287,46 +349,66 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
     //  TIME_TEST_CGT — kapitalvinstskatt med tidsberoende
     //
-    //  Två varianter:
-    //    1. Enkel tröskel (CZ, SK, HR, LU):
-    //       timeTestThreshold — efter X års innehav → 0 % skatt.
-    //       Under tröskeln tillämpas standard CGT.
+    //  timeTestPerLot (CZ, IT PIR):
+    //    Varje insättning har sin egen innehavstid. Bara de poster
+    //    som hållits ≥ timeTestThreshold år är skattefria; senare
+    //    insättningar beskattas med standard-CGT.
     //
-    //    2. Graderad (SI):
-    //       timeTestGraded — array med { years, rate }-par.
-    //       Varje bracket anger rate för innehav upp till (ej nått) years.
-    //       Sista bracket kan sakna years (gäller allt därefter).
+    //  Utan timeTestPerLot (FR PEA):
+    //    Tiden räknas från kontots öppnande, dvs. hela
+    //    placeringshorisonten avgör vilken sats som gäller.
+    //
+    //  Varianter:
+    //    timeTestThreshold — efter X år → 0 % skatt.
+    //    timeTestGraded    — [{ years, rate }, ..., { rate }]:
+    //                        rate gäller för innehav < years.
     // ------------------------------------------------------------
-    var TIME_TEST_CGT = {
+    function _gradedRate(graded, heldYears, params) {
+        for (var i = 0; i < graded.length; i++) {
+            var b = graded[i];
+            if (b.years === undefined || heldYears < b.years) return b.rate;
+        }
+        if (typeof console !== 'undefined')
+            console.warn('TIME_TEST_CGT: timeTestGraded saknar öppen sista bracket — kontrollera landkonfigurationen');
+        return (params.capitalGainsTax !== undefined) ? params.capitalGainsTax : 0.25;
+    }
+
+    var TIME_TEST_CGT = withSchedule({
         id: 'TIME_TEST_CGT',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
             var months = years * 12;
-            var fv = computeFV(initial, monthly, monthlyRateNet, months);
-            var totalIn = initial + monthly * months;
-            var gain = fv - totalIn;
+            var g = 1 + monthlyRateNet;
+            var fv = runBalance(deps, monthlyRateNet, months);
+            var totalIn = sumSchedule(deps.slice(0, months + 1));
+            var tax;
 
-            if (params.timeTestGraded) {
-                var rate = null;
-                for (var i = 0; i < params.timeTestGraded.length; i++) {
-                    var b = params.timeTestGraded[i];
-                    if (b.years === undefined || years < b.years) {
-                        rate = b.rate;
-                        break;
+            if (params.timeTestPerLot) {
+                var taxableGain = 0;
+                var gradedTax = 0;
+                for (var m = 0; m <= months; m++) {
+                    if (!deps[m]) continue;
+                    var heldMonths = months - m;
+                    var lotGain = deps[m] * (Math.pow(g, heldMonths) - 1);
+                    if (params.timeTestGraded) {
+                        gradedTax += lotGain * _gradedRate(params.timeTestGraded, heldMonths / 12, params);
+                    } else if (params.timeTestThreshold === undefined || heldMonths < params.timeTestThreshold * 12) {
+                        taxableGain += lotGain;
                     }
                 }
-                if (rate === null) {
-                    if (typeof console !== 'undefined')
-                        console.warn('TIME_TEST_CGT: timeTestGraded saknar öppen sista bracket — kontrollera landkonfigurationen');
-                    rate = params.capitalGainsTax || 0.25;
-                }
-                if (rate === 0) return { balance: fv, totalTax: 0, netValue: fv };
-                var tax = gain * rate;
+                tax = params.timeTestGraded ? Math.max(0, gradedTax) : _applyCGT(taxableGain, params);
+                return { balance: fv, totalTax: tax, netValue: fv - tax };
+            }
+
+            var gain = fv - totalIn;
+            if (params.timeTestGraded) {
+                var rate = _gradedRate(params.timeTestGraded, years, params);
+                tax = gain > 0 ? gain * rate : 0;
                 return { balance: fv, totalTax: tax, netValue: fv - tax };
             }
 
@@ -334,7 +416,7 @@ var TAX_REGIMES = (function() {
                 return { balance: fv, totalTax: 0, netValue: fv };
             }
 
-            var tax = _applyCGT(gain, params);
+            tax = _applyCGT(gain, params);
             return { balance: fv, totalTax: tax, netValue: fv - tax };
         },
 
@@ -349,19 +431,17 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
     //  TAX_FREE_WRAPPER — helt skattefri investeringsform
-    //  UK ISA, polsk IKE.
-    //  Ingen skatt alls — varken årlig eller vid uttag.
+    //  UK ISA, polsk IKE. Insättningstak hanteras av simulateAccount.
     // ------------------------------------------------------------
-    var TAX_FREE_WRAPPER = {
+    var TAX_FREE_WRAPPER = withSchedule({
         id: 'TAX_FREE_WRAPPER',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
-            var months = years * 12;
-            var fv = computeFV(initial, monthly, monthlyRateNet, months);
+        simulateSchedule: function(deps, monthlyRateNet, years) {
+            var fv = runBalance(deps, monthlyRateNet, years * 12);
             return { balance: fv, totalTax: 0, netValue: fv };
         },
 
@@ -376,31 +456,30 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
 
     // ------------------------------------------------------------
     //  DUTCH_BOX3 — nederländsk förmögenhetsskatt (Box 3)
-    //  Beskattar en schablonmässig avkastning på nettoförmögenheten
-    //  årligen, oavsett faktisk avkastning. Skatten betalas separat.
-    //  Effektiv skatt ~2,17 % av portföljvärdet/år (2024).
+    //  Schablonavkastning på värdet 1 januari över fribeloppet,
+    //  beskattas årligen. Skatten betalas separat.
+    //  2026: €59 357 fribelopp, 6,00 % schablon, 36 % skatt.
     // ------------------------------------------------------------
-    var DUTCH_BOX3 = {
+    var DUTCH_BOX3 = withSchedule({
         id: 'DUTCH_BOX3',
 
-        simulate: function(initial, monthly, monthlyRateNet, years, params) {
-            var deemedReturn = (params.deemedReturn !== undefined) ? params.deemedReturn : 0.0604;
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
+            var deemedReturn = (params.deemedReturn !== undefined) ? params.deemedReturn : 0.06;
             var taxRate = (params.taxRate !== undefined) ? params.taxRate : 0.36;
-            var exemption = (params.exemption !== undefined) ? params.exemption : 57000;
-            var balance = initial;
+            var exemption = (params.exemption !== undefined) ? params.exemption : 59357;
+            var g = 1 + monthlyRateNet;
+            var balance = deps[0];
             var totalTax = 0;
-            var growth = 1 + monthlyRateNet;
 
             for (var yr = 1; yr <= years; yr++) {
-                var balanceJan1 = balance;
-                for (var m = 0; m < 12; m++) {
-                    balance = balance * growth + monthly;
+                totalTax += Math.max(0, balance - exemption) * deemedReturn * taxRate;
+                for (var k = 1; k <= 12; k++) {
+                    balance = balance * g + deps[(yr - 1) * 12 + k];
                 }
-                totalTax += Math.max(0, balanceJan1 - exemption) * deemedReturn * taxRate;
             }
             return { balance: balance, totalTax: totalTax, netValue: balance - totalTax };
         },
@@ -416,7 +495,71 @@ var TAX_REGIMES = (function() {
                 rateFields: []
             };
         }
-    };
+    });
+
+    // ------------------------------------------------------------
+    //  EXIT_TAX — irländsk exit tax på fonder/ETF:er
+    //  38 % (från 2026) på vinsten, inget årligt fribelopp.
+    //  Deemed disposal: vart 8:e år efter varje köp beskattas
+    //  orealiserad vinst som om den sålts. Skatten antas betalas
+    //  genom att andelar säljs (dras från kontot) och postens
+    //  anskaffningsvärde återställs till marknadsvärdet.
+    // ------------------------------------------------------------
+    var EXIT_TAX = withSchedule({
+        id: 'EXIT_TAX',
+
+        simulateSchedule: function(deps, monthlyRateNet, years, params) {
+            var rate = (params.exitTax !== undefined) ? params.exitTax : 0.38;
+            var ddMonths = ((params.deemedDisposalYears !== undefined) ? params.deemedDisposalYears : 8) * 12;
+            var months = years * 12;
+            var g = 1 + monthlyRateNet;
+            var price = 1;
+            var units = new Array(months + 1);
+            var basis = new Array(months + 1);
+            var deemedTax = 0;
+
+            for (var m = 0; m <= months; m++) {
+                if (m > 0) price *= g;
+                units[m] = deps[m] / price;
+                basis[m] = deps[m];
+                if (ddMonths > 0) {
+                    for (var k = m - ddMonths; k >= 0; k -= ddMonths) {
+                        if (!units[k]) continue;
+                        var value = units[k] * price;
+                        var lotGain = value - basis[k];
+                        if (lotGain > 0) {
+                            var tax = lotGain * rate;
+                            deemedTax += tax;
+                            units[k] -= tax / price;
+                            basis[k] = units[k] * price;
+                        }
+                    }
+                }
+            }
+
+            var balance = 0;
+            var finalTax = 0;
+            for (var j = 0; j <= months; j++) {
+                if (!units[j]) continue;
+                var v = units[j] * price;
+                balance += v;
+                if (v > basis[j]) finalTax += (v - basis[j]) * rate;
+            }
+            return { balance: balance, totalTax: deemedTax + finalTax, netValue: balance - finalTax, deemedDisposalTax: deemedTax };
+        },
+
+        simulateYear: simulateYearNoOp,
+
+        getUI: function() {
+            return {
+                balanceI18n: 'labelGrossAccountValue',
+                taxI18n: 'taxTypeExitTax',
+                legendI18n: 'legendTax',
+                taxDeductedFromAccount: true,
+                rateFields: []
+            };
+        }
+    });
 
     // ---- Registrera alla regimer ----
     return {
@@ -427,21 +570,128 @@ var TAX_REGIMES = (function() {
         DEFERRED_PLAIN: DEFERRED_PLAIN,
         TIME_TEST_CGT: TIME_TEST_CGT,
         TAX_FREE_WRAPPER: TAX_FREE_WRAPPER,
-        DUTCH_BOX3: DUTCH_BOX3
+        DUTCH_BOX3: DUTCH_BOX3,
+        EXIT_TAX: EXIT_TAX
     };
 })();
 
 // ============================================================
-//  Bekvämlighetswrapper — används av binärsökning i Sparmål
-//  och av test.js för bakåtkompatibilitet.
+//  Insättningstak för skattegynnade konton
+//
+//  cap = {
+//    annual:       max insättning per kalenderår (ISA, IKE, PIR)
+//    lifetime:     max summa insättningar totalt (OSK, PEA, PIR)
+//    yearStartValue: årets insättningsutrymme = tak − kontots
+//                  värde vid årets början (dansk ASK)
+//  }
+//  Returnerar { wrapper, overflow, wrapperTotal, overflowTotal }
+//  där wrapper/overflow är insättningsscheman av samma längd.
+// ============================================================
+function splitDepositsByCap(deps, cap, monthlyRate, params) {
+    var n = deps.length;
+    var wrapper = new Array(n);
+    var overflow = new Array(n);
+    var wrapperTotal = 0, overflowTotal = 0;
+    params = params || {};
+
+    if (!cap) {
+        for (var i = 0; i < n; i++) { wrapper[i] = deps[i]; overflow[i] = 0; wrapperTotal += deps[i]; }
+        return { wrapper: wrapper, overflow: overflow, wrapperTotal: wrapperTotal, overflowTotal: 0 };
+    }
+
+    var g = 1 + monthlyRate;
+    var lifetimeRoom = (cap.lifetime !== undefined) ? cap.lifetime : Infinity;
+    var annualRoom = Infinity, valueRoom = Infinity;
+    var proj = 0, projYearStart = 0, depsThisYear = 0;
+    var lagerTax = params.askAnnualTax || 0;
+
+    function startYear() {
+        annualRoom = (cap.annual !== undefined) ? cap.annual : Infinity;
+        valueRoom = (cap.yearStartValue !== undefined) ? Math.max(0, cap.yearStartValue - proj) : Infinity;
+        projYearStart = proj;
+        depsThisYear = 0;
+    }
+
+    startYear();
+    for (var m = 0; m < n; m++) {
+        if (m > 1 && (m - 1) % 12 === 0) {
+            // Årsskifte: approximera ev. årlig lagerskatt i projektionen
+            if (lagerTax > 0) {
+                var yGain = proj - projYearStart - depsThisYear;
+                if (yGain > 0) proj -= yGain * lagerTax;
+            }
+            startYear();
+        }
+        var dep = deps[m] || 0;
+        var allowed = Math.max(0, Math.min(dep, annualRoom, lifetimeRoom, valueRoom));
+        wrapper[m] = allowed;
+        overflow[m] = dep - allowed;
+        annualRoom -= allowed; lifetimeRoom -= allowed; valueRoom -= allowed;
+        wrapperTotal += allowed; overflowTotal += dep - allowed;
+        depsThisYear += allowed;
+        proj = (m === 0) ? allowed : proj * g + allowed;
+    }
+    return { wrapper: wrapper, overflow: overflow, wrapperTotal: wrapperTotal, overflowTotal: overflowTotal };
+}
+
+// ============================================================
+//  simulateAccount — huvudingång för UI:t
+//
+//  useTaxAdv = false → landets standardregim på allt kapital.
+//  useTaxAdv = true  → landets skattegynnade konto upp till
+//                      insättningstaket; överskottet beräknas på
+//                      standardkontot och resultaten summeras.
+//  overrides: användarjusterade parametrar (t.ex. ISK-schablonränta).
+// ============================================================
+function simulateAccount(config, useTaxAdv, initial, monthly, monthlyRateNet, years, overrides) {
+    var months = years * 12;
+    var deps = makeDepositSchedule(initial, monthly, months);
+    var stdRegime = TAX_REGIMES[config.standardRegime];
+    var stdParams = Object.assign({}, config.standardParams);
+
+    if (!useTaxAdv || !config.taxAdvRegime || !TAX_REGIMES[config.taxAdvRegime]) {
+        var r = stdRegime.simulateSchedule(deps, monthlyRateNet, years, stdParams);
+        return {
+            balance: r.balance, totalTax: r.totalTax, netValue: r.netValue,
+            regime: stdRegime, overflowDeposits: 0, wrapperDeposits: 0
+        };
+    }
+
+    var advRegime = TAX_REGIMES[config.taxAdvRegime];
+    var advParams = Object.assign({}, config.taxAdvParams, overrides || {});
+    var split = splitDepositsByCap(deps, config.taxAdvCap, monthlyRateNet, advParams);
+    var w = advRegime.simulateSchedule(split.wrapper, monthlyRateNet, years, advParams);
+
+    if (split.overflowTotal <= 0) {
+        return {
+            balance: w.balance, totalTax: w.totalTax, netValue: w.netValue,
+            regime: advRegime, overflowDeposits: 0, wrapperDeposits: split.wrapperTotal
+        };
+    }
+
+    var o = stdRegime.simulateSchedule(split.overflow, monthlyRateNet, years, stdParams);
+    return {
+        balance: w.balance + o.balance,
+        totalTax: w.totalTax + o.totalTax,
+        netValue: w.netValue + o.netValue,
+        regime: advRegime,
+        overflowDeposits: split.overflowTotal,
+        wrapperDeposits: split.wrapperTotal,
+        wrapperResult: w,
+        overflowResult: o
+    };
+}
+
+// ============================================================
+//  Bekvämlighetswrapper — används av test.js för bakåtkompatibilitet.
 // ============================================================
 function simulateGoal(initial, monthly, monthlyRateNet, years, iskOn, iskSchRate, fribelopp, config) {
     config = config || {};
+    function pick(k, dflt) { return (config[k] !== undefined) ? config[k] : dflt; }
 
-    // Om skattegynnat konto ej är aktiverat → alltid CGT_ONLY
     if (!iskOn) {
         var cgtParams = {
-            capitalGainsTax: config.capitalGainsTax || 0.30,
+            capitalGainsTax: pick('capitalGainsTax', KAPITALVINSTSKATT),
             capitalGainsTaxHigh: config.capitalGainsTaxHigh,
             capitalGainsTaxThreshold: config.capitalGainsTaxThreshold
         };
@@ -452,22 +702,20 @@ function simulateGoal(initial, monthly, monthlyRateNet, years, iskOn, iskSchRate
         return { netValue: r.netValue, tax: r.totalTax };
     }
 
-    // Hitta rätt regim från config
     var regimeId = config.taxAdvantagedType || config.taxRegime || 'ISK';
     var regime = TAX_REGIMES[regimeId] || TAX_REGIMES.ISK;
 
-    // Bygg params från config — alla kända fält kopieras
     var params = {};
     var paramKeys = ['askAnnualTax', 'iskSkatt', 'iskSchablonGolv', 'iskSchablonRateDefault',
-        'skjermingsrente', 'capitalGainsTax', 'capitalGainsTaxHigh',
-        'capitalGainsTaxThreshold', 'capitalGainsTaxBrackets',
-        'timeTestThreshold', 'timeTestGraded', 'deemedReturn', 'taxRate', 'exemption'];
+        'skjermingsrente', 'skjermingBasis', 'capitalGainsTax', 'capitalGainsTaxHigh',
+        'capitalGainsTaxThreshold', 'capitalGainsTaxBrackets', 'partialExemption',
+        'timeTestThreshold', 'timeTestGraded', 'timeTestPerLot', 'deemedReturn', 'taxRate',
+        'exemption', 'exitTax', 'deemedDisposalYears'];
     for (var i = 0; i < paramKeys.length; i++) {
         var k = paramKeys[i];
         if (config[k] !== undefined) params[k] = config[k];
     }
 
-    // ISK-specifika parametrar
     if (regimeId === 'ISK') {
         params.iskSchablonRate = iskSchRate;
         params.iskFribelopp = (fribelopp !== undefined) ? fribelopp : ISK_FRIBELOPP_DEFAULT;

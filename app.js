@@ -135,7 +135,7 @@ var I18N = {
         resultTitle: 'Detaljerade Resultat',
         labelTotalInvested: 'Totalt investerat:',
         labelTaxesResult: 'Skatt p\u00E5 kapitalvinst:',
-        labelGrossValue: 'Bruttov\u00E4rde (ingen skatt/avgift):',
+        labelGrossValue: 'V\u00E4rde f\u00F6re skatt (efter avgifter):',
         labelGrossISKValue: 'ISK-kontots v\u00E4rde:',
         labelGrossASKValue: 'ASK-kontots v\u00E4rde:',
         labelGrossDeferredValue: 'Kontots v\u00E4rde (f\u00F6re skatt):',
@@ -151,7 +151,7 @@ var I18N = {
         thReturnPlus: 'Årlig avkastning',
         thReturnPlusTitle: '\u00C5rets avkastnings\u00F6kning j\u00E4mf\u00F6rt med f\u00F6reg\u00E5ende \u00E5r',
         thGrossValue: 'V\u00E4rde innan skatt',
-        thNetCGT: 'Efter skatt (AF)',
+        thNetCGT: 'Efter skatt (vanligt konto)',
         chartLegendNetCGT: 'Efter skatt (AF)',
         chartTooltipGross: 'V\u00E4rde innan skatt',
         chartTooltipNetCGT: 'Efter skatt (AF)',
@@ -161,6 +161,8 @@ var I18N = {
         taxTypeASK: 'ASK-skatt (dras fr\u00E5n kontot):',
         taxTypeCapitalGains: 'Skatt p\u00E5 kapitalvinst:',
         taxTypeWealth: 'F\u00F6rm\u00F6genhetsskatt:',
+        taxTypeExitTax: 'Exit tax (inkl. deemed disposal):',
+        capOverflowNote: '{account} har ett ins\u00E4ttningstak. {amount} av dina ins\u00E4ttningar ryms inte och har ber\u00E4knats p\u00E5 ett vanligt konto; resultatet visar b\u00E5da kontona tillsammans.',
         taxTypeTaxFree: 'Skatt (skattefri):',
         legendWealthTax: 'F\u00F6rm\u00F6genhetsskatt',
         labelGrossAccountValue: 'Kontots v\u00E4rde:',
@@ -278,7 +280,7 @@ var I18N = {
         resultTitle: 'Detailed Results',
         labelTotalInvested: 'Total invested:',
         labelTaxesResult: 'Capital gains tax:',
-        labelGrossValue: 'Gross value (no tax/fees):',
+        labelGrossValue: 'Value before tax (after fees):',
         labelGrossISKValue: 'ISK account value:',
         labelGrossASKValue: 'ASK account value:',
         labelGrossDeferredValue: 'Account value (pre-tax):',
@@ -294,7 +296,7 @@ var I18N = {
         thReturnPlus: 'Yearly return',
         thReturnPlusTitle: 'Year-on-year increase in return compared to previous year',
         thGrossValue: 'Value before tax',
-        thNetCGT: 'After tax (CGT)',
+        thNetCGT: 'After tax (standard account)',
         chartLegendNetCGT: 'After tax (CGT)',
         chartTooltipGross: 'Value before tax',
         chartTooltipNetCGT: 'After tax (CGT)',
@@ -304,6 +306,8 @@ var I18N = {
         taxTypeASK: 'ASK tax (deducted from account):',
         taxTypeCapitalGains: 'Capital gains tax:',
         taxTypeWealth: 'Wealth tax:',
+        taxTypeExitTax: 'Exit tax (incl. deemed disposal):',
+        capOverflowNote: '{account} has a contribution cap. {amount} of your deposits do not fit and have been calculated in a standard account; the result shows both accounts combined.',
         taxTypeTaxFree: 'Tax (tax-free):',
         legendWealthTax: 'Wealth tax',
         labelGrossAccountValue: 'Account value:',
@@ -518,14 +522,13 @@ function setupTaxAdvToggle(checkboxId, taxGroupId, stateKey, recalcFn, debounceM
     });
 }
 
-function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, params) {
+function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, tbodyId, overrides) {
     years = Math.floor(years);
     var c = getCountry();
     var frag = document.createDocumentFragment();
     var chartData = [];
     var loc = c.locale;
     var curr = c.currency;
-    var cgtCountryParams = Object.assign({}, c.standardParams);
     var prevGrossGain = 0;
     var showRegimeCol = !!(c.taxAdvRegime && TAX_REGIMES[c.taxAdvRegime]);
 
@@ -561,30 +564,14 @@ function buildYearTimeline(years, startCapital, monthlyAmount, monthlyRateNet, t
         var delta = grossGain - prevGrossGain;
         prevGrossGain = grossGain;
 
-        var cgtTax = 0;
-        if (cgtCountryParams.capitalGainsTaxBrackets) {
-            cgtTax = computeCapitalGainsTax(grossGain, cgtCountryParams.capitalGainsTaxBrackets);
-        } else if (cgtCountryParams.capitalGainsTax !== undefined) {
-            if (cgtCountryParams.timeTestThreshold !== undefined && year >= cgtCountryParams.timeTestThreshold) {
-                cgtTax = 0;
-            } else {
-                cgtTax = computeCapitalGainsTax(grossGain,
-                    cgtCountryParams.capitalGainsTax,
-                    cgtCountryParams.capitalGainsTaxThreshold,
-                    cgtCountryParams.capitalGainsTaxHigh);
-            }
-        }
-        var netCGT = grossBalance - cgtTax;
+        // Netto på vanligt konto — landets standardregim (CGT, Box 3, exit tax, tidstest …)
+        var stdRes = simulateAccount(c, false, startCapital, monthlyAmount, monthlyRateNet, year);
+        var netCGT = isValidNumber(stdRes.netValue) ? stdRes.netValue : grossBalance;
 
-        // Regimspecifikt netto (ISK, ASK, etc.) — alltid landets skattegynnade regim
+        // Netto på landets skattegynnade konto (inkl. insättningstak)
         var netRegime = netCGT;
-        if (c.taxAdvRegime && TAX_REGIMES[c.taxAdvRegime]) {
-            var advRegime = TAX_REGIMES[c.taxAdvRegime];
-            var advParams = Object.assign({}, c.taxAdvParams);
-            // Slå ihop användarjusterade slider-värden om de finns i params
-            if (params.iskSchablonRate !== undefined) advParams.iskSchablonRate = params.iskSchablonRate;
-            if (params.iskFribelopp !== undefined) advParams.iskFribelopp = params.iskFribelopp;
-            var rRes = advRegime.simulate(startCapital, monthlyAmount, monthlyRateNet, year, advParams);
+        if (showRegimeCol) {
+            var rRes = simulateAccount(c, true, startCapital, monthlyAmount, monthlyRateNet, year, overrides || {});
             if (rRes && isValidNumber(rRes.netValue)) netRegime = rRes.netValue;
         }
 
@@ -815,20 +802,32 @@ function parseFees(elementId) {
 function parseInflation(elementId) {
     return Math.max(0, Math.min(10, parseFloat($(elementId).value) || 0));
 }
-function pickRegimeAndParams(c, taxAdvStateKey, sliderId) {
-    var activeRegime, activeParams;
-    if (state[taxAdvStateKey] && c.taxAdvRegime) {
-        activeRegime = TAX_REGIMES[c.taxAdvRegime];
-        activeParams = Object.assign({}, c.taxAdvParams);
-        if (c.taxAdvRegime === 'ISK') {
-            var sliderVal = parseFloat(document.getElementById(sliderId).value);
-            activeParams.iskSchablonRate = isNaN(sliderVal) ? (c.taxAdvParams.iskSchablonRateDefault || 3.55) : sliderVal;
-        }
-    } else {
-        activeRegime = TAX_REGIMES[c.standardRegime];
-        activeParams = Object.assign({}, c.standardParams);
+// Användarjusterade parametrar för det skattegynnade kontot (t.ex. ISK-schablonränta)
+function getTaxAdvOverrides(c, sliderId) {
+    var o = {};
+    if (c.taxAdvRegime === 'ISK') {
+        var sliderVal = parseFloat(document.getElementById(sliderId).value);
+        o.iskSchablonRate = isNaN(sliderVal) ? (c.taxAdvParams.iskSchablonRateDefault || 3.55) : sliderVal;
     }
-    return { regime: activeRegime, params: activeParams };
+    return o;
+}
+function useTaxAdv(c, taxAdvStateKey) {
+    return !!(state[taxAdvStateKey] && c.taxAdvRegime && TAX_REGIMES[c.taxAdvRegime]);
+}
+// Visar en notis när insättningarna överskrider det skattegynnade kontots tak
+function showCapNote(elId, c, result) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    if (result && result.overflowDeposits > 0.5) {
+        var ui = c.ui[state.lang] || c.ui.sv;
+        el.textContent = t('capOverflowNote')
+            .replace('{account}', ui.taxAdvLabel || '')
+            .replace('{amount}', formatCurrency(result.overflowDeposits, c.locale, c.currency));
+        el.classList.add('show');
+    } else {
+        el.textContent = '';
+        el.classList.remove('show');
+    }
 }
 function calculateAdvanced() {
     hideCalc();
@@ -863,11 +862,10 @@ function calculateAdvanced() {
     var totalFees = grossValue - netAfterFees;
 
     var netValue, taxesOwed, accountBalance = null;
-    var rp = pickRegimeAndParams(c, 'taxAdvOn', 'advRateSlider');
-    var activeRegime = rp.regime;
-    var activeParams = rp.params;
-
-    var result = activeRegime.simulate(initialCapital, monthlyAmount, monthlyRateNet, years, activeParams);
+    var advOn = useTaxAdv(c, 'taxAdvOn');
+    var overrides = getTaxAdvOverrides(c, 'advRateSlider');
+    var result = simulateAccount(c, advOn, initialCapital, monthlyAmount, monthlyRateNet, years, overrides);
+    var activeRegime = result.regime;
     accountBalance = result.balance;
     netValue = result.netValue;
     taxesOwed = result.totalTax;
@@ -893,7 +891,7 @@ function calculateAdvanced() {
     grossLabelEl.textContent = t(regimeUI.balanceI18n);
 
     document.getElementById('advTotalInvested').textContent = formatCurrency(totalInvested, loc, curr);
-    document.getElementById('advGrossValue').textContent    = (state.taxAdvOn || activeRegime.id !== 'CGT_ONLY') ? formatCurrency(accountBalance, loc, curr) : formatCurrency(grossValue, loc, curr);
+    document.getElementById('advGrossValue').textContent    = formatCurrency(accountBalance, loc, curr);
     document.getElementById('advTotalFees').textContent     = formatCurrency(totalFees, loc, curr);
     document.getElementById('advTaxes').textContent         = formatCurrency(taxesOwed, loc, curr);
     document.getElementById('advNetValue').textContent      = formatCurrency(netValue, loc, curr);
@@ -909,11 +907,12 @@ function calculateAdvanced() {
 
     // F\u00F6rdelningsdiagram
     renderBreakdown('advChart', 'advLegend', grossValue, totalInvested, netValue, totalFees, taxesOwed, t(regimeUI.legendI18n));
+    showCapNote('advCapNote', c, result);
 
     ['advSummary', 'advTimeline'].forEach(function(id) { document.getElementById(id).classList.add('show'); });
 
     // Tidslinje
-    var chartData = buildYearTimeline(years, initialCapital, monthlyAmount, monthlyRateNet, 'timelineBody', activeParams);
+    var chartData = buildYearTimeline(years, initialCapital, monthlyAmount, monthlyRateNet, 'timelineBody', overrides);
     state.advChartData = chartData;
     if (state._advRafId) cancelAnimationFrame(state._advRafId);
     state._advRafId = requestAnimationFrame(function() { drawTimelineChart(chartData, 'timelineChart', 'chartTooltip', loc, curr, !!(c.taxAdvRegime)); });
@@ -1172,7 +1171,7 @@ function runAppTests() {
         var tmpTbody = document.createElement('tbody');
         tmpTbody.id = '_appTestTbody';
         document.body.appendChild(tmpTbody);
-        var cd = buildYearTimeline(3, 10000, 500, 0.07 / 12, '_appTestTbody', { capitalGainsTax: 0.30 });
+        var cd = buildYearTimeline(3, 10000, 500, 0.07 / 12, '_appTestTbody', {});
         tst('buildYearTimeline: returnerar chartData med 4 punkter (\u00E5r 0\u20133)', cd.length === 4, 'fick ' + cd.length);
         tst('buildYearTimeline: chartData[0] har year=0, gain=0', cd[0].year === 0 && cd[0].gain === 0);
         tst('buildYearTimeline: chartData[3] har year, invested, gain, gross, netCGT, netRegime',
@@ -1335,10 +1334,13 @@ function calculateGoal() {
     var nominalTarget   = realTerms ? targetRaw * inflationFactor : targetRaw;
     var realEquiv       = realTerms ? targetRaw : targetRaw / inflationFactor;
 
-    // V\u00E4lj regim baserat p\u00E5 toggle
-    var rp = pickRegimeAndParams(c, 'goalTaxAdvOn', 'goalAdvRateSlider');
-    var activeRegime = rp.regime;
-    var activeParams = rp.params;
+    // V\u00E4lj konto baserat p\u00E5 toggle (inkl. ins\u00E4ttningstak)
+    var goalAdvOn = useTaxAdv(c, 'goalTaxAdvOn');
+    var overrides = getTaxAdvOverrides(c, 'goalAdvRateSlider');
+    var activeRegime = TAX_REGIMES[goalAdvOn ? c.taxAdvRegime : c.standardRegime];
+    function sim(initial, monthly) {
+        return simulateAccount(c, goalAdvOn, initial, monthly, monthlyRateNet, years, overrides);
+    }
 
     var resultsEl     = document.getElementById('goalSummary');
     var timelineEl    = document.getElementById('goalTimeline');
@@ -1347,7 +1349,7 @@ function calculateGoal() {
     var monthlyNoteEl = document.getElementById('goalMonthlyNote');
 
     // Kontrollera om startkapital r\u00E4cker
-    var netFromZero = activeRegime.simulate(initialCap, 0, monthlyRateNet, years, activeParams).netValue;
+    var netFromZero = sim(initialCap, 0).netValue;
 
     if (netFromZero >= nominalTarget) {
         // Startkapital r\u00E4cker — inget m\u00E5nadssparande beh\u00F6vs
@@ -1362,7 +1364,8 @@ function calculateGoal() {
         var fvWithFeesNoTax = computeFV(initialCap, 0, monthlyRateNet, months);
         var totalFees = Math.max(grossNoFees - fvWithFeesNoTax, 0);
 
-        var finalRes = activeRegime.simulate(initialCap, 0, monthlyRateNet, years, activeParams);
+        var finalRes = sim(initialCap, 0);
+        showCapNote('goalCapNote', c, finalRes);
 
         if (!isValidNumber(finalRes.netValue)) {
             resultsEl.classList.remove('show');
@@ -1386,7 +1389,7 @@ function calculateGoal() {
 
         renderBreakdown('goalChart', 'goalLegend', nominalTarget, initialCap, finalRes.netValue, totalFees, finalRes.totalTax, t(activeRegime.getUI().legendI18n));
 
-        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', activeParams);
+        var noSaveChartData = buildYearTimeline(years, initialCap, 0, monthlyRateNet, 'goalTableBody', overrides);
         state.goalChartData = noSaveChartData;
         if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
         state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(noSaveChartData, 'goalTimelineChart', 'goalChartTooltip'); });
@@ -1399,7 +1402,7 @@ function calculateGoal() {
     var lastResult = null;
     for (var i = 0; i < 80; i++) {
         var mid = (lo + hi) / 2;
-        var res = activeRegime.simulate(initialCap, mid, monthlyRateNet, years, activeParams);
+        var res = sim(initialCap, mid);
         if (res.netValue < nominalTarget) {
             lo = mid;
         } else {
@@ -1411,7 +1414,8 @@ function calculateGoal() {
     var requiredMonthly = (lo + hi) / 2;
 
     var totalIn  = initialCap + requiredMonthly * months;
-    var finalRes = lastResult || activeRegime.simulate(initialCap, requiredMonthly, monthlyRateNet, years, activeParams);
+    var finalRes = lastResult || sim(initialCap, requiredMonthly);
+    showCapNote('goalCapNote', c, finalRes);
     var finalNet = finalRes.netValue;
     var actualTax = finalRes.totalTax;
 
@@ -1459,7 +1463,7 @@ function calculateGoal() {
 
     renderBreakdown('goalChart', 'goalLegend', nominalTarget, totalIn, finalNet, totalFeesResult, actualTax, t(activeRegime.getUI().legendI18n));
 
-    var goalChartData = buildYearTimeline(years, initialCap, requiredMonthly, monthlyRateNet, 'goalTableBody', activeParams);
+    var goalChartData = buildYearTimeline(years, initialCap, requiredMonthly, monthlyRateNet, 'goalTableBody', overrides);
     state.goalChartData = goalChartData;
     if (state._goalRafId) cancelAnimationFrame(state._goalRafId);
     state._goalRafId = requestAnimationFrame(function() { drawTimelineChart(goalChartData, 'goalTimelineChart', 'goalChartTooltip', loc, curr, !!(c.taxAdvRegime)); });

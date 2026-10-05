@@ -40,7 +40,7 @@ try {
         '    computeFV, computeGrossValue, computeNetAfterFees,\n' +
         '    computeCapitalGainsTax, isValidNumber, formatCurrency, formatAmountHint,\n' +
 '        TAX_REGIMES, simulateGoal, runTests, getCountryConfig, COUNTRY_CONFIG,\n' +
-'        getCurrencySymbol,\n' +
+'        getCurrencySymbol, simulateAccount, splitDepositsByCap,\n' +
 '        KAPITALVINSTSKATT, ISK_SKATT, ISK_SCHABLON_GOLV, ISK_FRIBELOPP_DEFAULT\n' +
         '};'
     );
@@ -61,6 +61,8 @@ var TAX_REGIMES             = calc.TAX_REGIMES;
 var getCurrencySymbol       = calc.getCurrencySymbol;
 var getCountryConfig        = calc.getCountryConfig;
 var COUNTRY_CONFIG          = calc.COUNTRY_CONFIG;
+var simulateAccount         = calc.simulateAccount;
+var splitDepositsByCap      = calc.splitDepositsByCap;
 
 // -- Hj\u00E4lpfunktioner -----------------------------------------------------------
 
@@ -421,8 +423,8 @@ section('Svit 2: Regressionstest med pinnade facit');
 {
     var r = TAX_REGIMES.DUTCH_BOX3.simulate(100000, 0, 0.07 / 12, 1, {});
     assert(
-        'DUTCH_BOX3: 100k @ 7%, 1 ar -> skatt ~= 935 kr, netto ~= 106 294 kr',
-        approx(r.totalTax, 935, 5) && approx(r.netValue, 106294, 5),
+        'DUTCH_BOX3 (2026): 100k @ 7%, 1 ar -> skatt = (100k - 59 357) x 6 % x 36 % ~= 878, netto ~= 106 351',
+        approx(r.totalTax, 877.89, 0.5) && approx(r.netValue, 106351, 5),
         'fick skatt ' + r.totalTax.toFixed(0) + ', netto ' + r.netValue.toFixed(0)
     );
 }
@@ -439,7 +441,7 @@ section('Svit 2: Regressionstest med pinnade facit');
 {
     var r = TAX_REGIMES.DUTCH_BOX3.simulate(20000, 0, 0, 5, {});
     assert(
-        'DUTCH_BOX3: 20k (under exemption 57k), 5 ar -> skatt = 0',
+        'DUTCH_BOX3: 20k (under fribelopp 59 357), 5 ar -> skatt = 0',
         r.totalTax === 0,
         'fick skatt ' + r.totalTax.toFixed(0)
     );
@@ -517,8 +519,8 @@ section('Svit 2: Regressionstest med pinnade facit');
 {
     var y1 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(100000, 95000, 0, null, { askAnnualTax: 0.17 });
     assert(
-        'LAGER_ANNUAL.simulateYear: forlustar 95k fran 100k -> carryState [{ amount: 5000, yearsLeft: 5 }]',
-        y1.taxPaid === 0 && Array.isArray(y1.carryState) && y1.carryState.length === 1 && y1.carryState[0].amount === 5000 && y1.carryState[0].yearsLeft === 5,
+        'LAGER_ANNUAL.simulateYear: forlustar 95k fran 100k -> carryState 5000 (framforbar forlust)',
+        y1.taxPaid === 0 && y1.carryState === 5000,
         'fick taxPaid ' + y1.taxPaid + ', carryState ' + JSON.stringify(y1.carryState)
     );
 }
@@ -527,7 +529,7 @@ section('Svit 2: Regressionstest med pinnade facit');
     var y2 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(95000, 105000, 0, [{ amount: 5000, yearsLeft: 5 }], { askAnnualTax: 0.17 });
     assert(
         'LAGER_ANNUAL.simulateYear: vinstar 105k fran 95k med 5k carry -> skatt pa 5k',
-        approx(y2.taxPaid, 850, 0.01) && Array.isArray(y2.carryState) && y2.carryState.length === 0,
+        approx(y2.taxPaid, 850, 0.01) && y2.carryState === 0,
         'fick taxPaid ' + y2.taxPaid + ', carryState ' + JSON.stringify(y2.carryState)
     );
 }
@@ -554,7 +556,7 @@ section('Svit 2: Regressionstest med pinnade facit');
     );
 }
 
-// -- LAGER_ANNUAL 6-year loss carry-forward expiry (Bug 1 verification) --------
+// -- LAGER_ANNUAL: forluster forfaller INTE (dansk ASK, ingen tidsgrans) ------
 
 {
     var c = null;
@@ -565,8 +567,8 @@ section('Svit 2: Regressionstest med pinnade facit');
     }
     var r7 = TAX_REGIMES.LAGER_ANNUAL.simulateYear(90000, 105000, 0, c, { askAnnualTax: 0.17 });
     assert(
-        'LAGER_ANNUAL.simulateYear: forlust fran ar 1 kan INTE kvittas ar 7 (carry ar 2-6, borta ar 7)',
-        Math.abs(r7.taxPaid - 15000 * 0.17) < 0.01,
+        'LAGER_ANNUAL.simulateYear: forlust fran ar 1 kvittas fortfarande ar 7 (ingen tidsgrans)',
+        Math.abs(r7.taxPaid - 5000 * 0.17) < 0.01,
         'fick taxPaid ' + r7.taxPaid
     );
 }
@@ -821,6 +823,127 @@ section('Svit 2: Regressionstest med pinnade facit');
         approx(r.netValue, 106294, 5),
         'fick netto ' + r.netValue.toFixed(0) + ', skatt ' + r.tax.toFixed(0)
     );
+}
+
+
+// -- Skattesatser 2026 (pinnade) ----------------------------------------------
+
+section('Svit 2b: Skattesatser 2026 och regelmodeller');
+
+{
+    var es = COUNTRY_CONFIG.ES.standardParams.capitalGainsTaxBrackets;
+    var t = computeCapitalGainsTax(400000, es);
+    // 6000*.19 + 44000*.21 + 150000*.23 + 100000*.27 + 100000*.30 = 1140+9240+34500+27000+30000
+    assert('ES 2026: 400k vinst -> 101 880 (19/21/23/27/30 %)', approx(t, 101880, 0.01), 'fick ' + t);
+}
+{
+    assert('FR 2026: PFU 31,4 %', COUNTRY_CONFIG.FR.standardParams.capitalGainsTax === 0.314);
+    var g = COUNTRY_CONFIG.FR.taxAdvParams.timeTestGraded;
+    assert('FR 2026: PEA 31,4 % < 5 ar, 18,6 % darefter', g[0].rate === 0.314 && g[1].rate === 0.186);
+}
+{
+    var b = COUNTRY_CONFIG.DK.standardParams.capitalGainsTaxBrackets;
+    assert('DK 2026: progressionsgrans 79 400', b[0].threshold === 79400 && COUNTRY_CONFIG.DK.standardParams.capitalGainsTaxThreshold === 79400);
+}
+{
+    var p = COUNTRY_CONFIG.NL.standardParams;
+    assert('NL 2026: Box 3 €59 357, 6 %, 36 %', p.exemption === 59357 && p.deemedReturn === 0.06 && p.taxRate === 0.36);
+}
+{
+    assert('LV: 25,5 % (standard + investeringskonto)', COUNTRY_CONFIG.LV.standardParams.capitalGainsTax === 0.255 && COUNTRY_CONFIG.LV.taxAdvParams.capitalGainsTax === 0.255);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.GR, false, 100000, 1000, 0.07 / 12, 10);
+    assert('GR: noterade aktier/UCITS -> 0 skatt', r.totalTax === 0, 'fick ' + r.totalTax);
+}
+{
+    // DE Teilfreistellung: vinst 10 000 -> 7 000 skattepliktigt - 1 000 fribelopp = 6 000 x 26,375 %
+    assert('DE: Teilfreistellung 30 % fore Sparerpauschbetrag', approx(computeCapitalGainsTax(10000 * 0.7, COUNTRY_CONFIG.DE.standardParams.capitalGainsTaxBrackets), 1582.5, 0.01));
+    var d = TAX_REGIMES.CGT_ONLY.simulate(100000, 0, Math.pow(1.10, 1 / 12) - 1, 1, Object.assign({}, COUNTRY_CONFIG.DE.standardParams));
+    assert('DE: 100k +10 % -> skatt 1 582,50', approx(d.totalTax, 1582.5, 0.05), 'fick ' + d.totalTax);
+}
+{
+    // SE AF med fonder: schablon 0,4 % x 30 % = 0,12 % av vardet 1 januari
+    var r = simulateAccount(COUNTRY_CONFIG.SE, false, 100000, 0, 0, 1);
+    assert('SE AF: fondschablon 0,12 % -> 120 kr pa 100k vid nollavkastning', approx(r.totalTax, 120, 0.001), 'fick ' + r.totalTax);
+    var r2 = simulateAccount(COUNTRY_CONFIG.SE, false, 100000, 0, 0, 3);
+    assert('SE AF: fondschablon tas ut varje ar (3 ar -> 360 kr)', approx(r2.totalTax, 360, 0.001), 'fick ' + r2.totalTax);
+}
+{
+    // NO ASK: oanvand skjerming vaxer; arets insattningar ger skjerming forst nasta ar
+    var r = TAX_REGIMES.DEFERRED_SKJERMING.simulate(100000, 0, 0, 2, { capitalGainsTax: 0.3784, skjermingsrente: 3.6 });
+    assert('NO ASK: skjerming 2 ar = 3 600 + 103 600 x 3,6 % = 7 329,60', approx(r.skjerming, 7329.6, 0.01), 'fick ' + r.skjerming);
+    var a = TAX_REGIMES.DEFERRED_SKJERMING.simulate(0, 1000, 0, 1, { skjermingsrente: 3.6, skjermingBasis: 'lowest' });
+    var b = TAX_REGIMES.DEFERRED_SKJERMING.simulate(0, 1000, 0, 1, { skjermingsrente: 3.6, skjermingBasis: 'yearEnd' });
+    assert('NO: ASK ger ingen skjerming forsta aret pa nya insattningar, vanligt konto ger 12 000 x 3,6 %',
+        a.skjerming === 0 && approx(b.skjerming, 432, 0.001), 'ASK ' + a.skjerming + ', vanligt ' + b.skjerming);
+}
+{
+    // CZ: tidstest per kop
+    var g = 1 + 0.07 / 12, exp = 0;
+    for (var m = 1; m <= 120; m++) { var held = 120 - m; if (held < 36) exp += 5000 * (Math.pow(g, held) - 1) * 0.15; }
+    var r = simulateAccount(COUNTRY_CONFIG.CZ, false, 0, 5000, 0.07 / 12, 10);
+    assert('CZ: insattningar senaste 3 aren beskattas (per kop)', approx(r.totalTax, exp, 0.01) && r.totalTax > 2900, 'fick ' + r.totalTax.toFixed(2) + ', vantat ' + exp.toFixed(2));
+    var r0 = simulateAccount(COUNTRY_CONFIG.CZ, false, 100000, 0, 0.07 / 12, 4);
+    assert('CZ: engangsbelopp hallet 4 ar -> 0 skatt', r0.totalTax === 0);
+}
+{
+    // IT PIR: per kop, 5 ar
+    var r = TAX_REGIMES.TIME_TEST_CGT.simulate(0, 1000, 0.07 / 12, 10, COUNTRY_CONFIG.IT.taxAdvParams);
+    assert('IT PIR: manadssparande i 10 ar -> skatt > 0 (senaste 5 arens kop)', r.totalTax > 0);
+}
+{
+    // IE exit tax: 5 ar (ingen deemed disposal) -> 38 % pa vinsten
+    var r = TAX_REGIMES.EXIT_TAX.simulate(100000, 0, 0.07 / 12, 5, COUNTRY_CONFIG.IE.standardParams);
+    var gain = computeFV(100000, 0, 0.07 / 12, 60) - 100000;
+    assert('IE: 5 ar -> exit tax 38 % pa vinsten', approx(r.totalTax, gain * 0.38, 0.01) && r.deemedDisposalTax === 0, 'fick ' + r.totalTax);
+    var r10 = TAX_REGIMES.EXIT_TAX.simulate(100000, 0, 0.07 / 12, 10, COUNTRY_CONFIG.IE.standardParams);
+    var gain8 = computeFV(100000, 0, 0.07 / 12, 96) - 100000;
+    assert('IE: deemed disposal ar 8 = 38 % av 8-arsvinsten', approx(r10.deemedDisposalTax, gain8 * 0.38, 0.01), 'fick ' + r10.deemedDisposalTax);
+    assert('IE: deemed disposal minskar slutvardet (andelar saljs)', r10.balance < computeFV(100000, 0, 0.07 / 12, 120));
+}
+
+// -- Insattningstak -----------------------------------------------------------
+
+{
+    var r = simulateAccount(COUNTRY_CONFIG.GB, true, 30000, 0, 0, 1);
+    assert('GB ISA: 30k startkapital -> 10k overskott till vanligt konto', approx(r.overflowDeposits, 10000, 0.001) && approx(r.wrapperDeposits, 20000, 0.001));
+    var r2 = simulateAccount(COUNTRY_CONFIG.GB, true, 0, 2000, 0, 2);
+    assert('GB ISA: 2 000/man -> 4 000/ar overskott (8 000 pa 2 ar)', approx(r2.overflowDeposits, 8000, 0.001), 'fick ' + r2.overflowDeposits);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.FI, true, 80000, 1000, 0, 5);
+    assert('FI OSK: totalt 140k insatt -> 40k utanfor taket 100k', approx(r.overflowDeposits, 40000, 0.001), 'fick ' + r.overflowDeposits);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.FR, true, 200000, 0, 0.05 / 12, 6);
+    assert('FR PEA: 200k -> 50k till CTO, skatt pa CTO-delen 31,4 %', approx(r.overflowDeposits, 50000, 0.001) && r.overflowResult.totalTax > 0);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.IT, true, 0, 5000, 0, 5);
+    // 60 000/ar, tak 40 000/ar -> 20 000/ar over; total wrapper 200 000 (tak) -> 100 000 over
+    assert('IT PIR: arstak 40k och totaltak 200k', approx(r.wrapperDeposits, 200000, 0.001) && approx(r.overflowDeposits, 100000, 0.001), 'fick wrapper ' + r.wrapperDeposits + ', over ' + r.overflowDeposits);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.PL, true, 0, 3000, 0, 1);
+    assert('PL IKE: 36 000/ar -> 7 740 over taket 28 260', approx(r.overflowDeposits, 36000 - 28260, 0.001));
+}
+{
+    // DK ASK: utrymme = 174 200 - varde vid arets borjan
+    var split = splitDepositsByCap(makeSched(150000, 5000, 24), { yearStartValue: 174200 }, 0, {});
+    function makeSched(i, mo, n) { var a = [i]; for (var k = 0; k < n; k++) a.push(mo); return a; }
+    // Ar 1: 150k + 24 200 ryms; ar 2: varde 174 200 vid arets borjan -> 0 utrymme
+    assert('DK ASK: tak 174 200 baserat pa vardet vid arets borjan', approx(split.wrapperTotal, 174200, 0.001), 'fick ' + split.wrapperTotal);
+}
+{
+    var r = simulateAccount(COUNTRY_CONFIG.SE, true, 1e7, 1e5, 0.07 / 12, 10, { iskSchablonRate: 3.55 });
+    assert('SE ISK: inget tak -> inget overskott', r.overflowDeposits === 0);
+}
+{
+    var c = COUNTRY_CONFIG.NO;
+    var a = simulateAccount(c, false, 100000, 1000, 0.07 / 12, 10);
+    var b = TAX_REGIMES[c.standardRegime].simulate(100000, 1000, 0.07 / 12, 10, c.standardParams);
+    assert('simulateAccount(false) = landets standardregim', approx(a.netValue, b.netValue, 1e-6));
 }
 
 // Snapshot efter Svit 2
