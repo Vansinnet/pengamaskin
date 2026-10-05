@@ -1,0 +1,10 @@
+{
+  "name": "pengamaskinen",
+  "private": true,
+  "type": "module",
+  "description": "Investeringskalkylator för europeiska sparare. Inga beroenden, inget byggsteg.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "MIT"
+}

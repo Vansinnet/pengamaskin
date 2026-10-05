@@ -3,15 +3,15 @@
 #
 #  Alla headers sätts på samtliga routes (/*).
 #  Verktyget laddar enbart same-origin-resurser:
-#    index.html, styles.css, app.js,
-#    calc/constants.js, calc/utils.js, calc/core.js,
-#    calc/tax-regimes.js, calc/countries.js
+#    index.html, styles.css, src/**/*.js (ES-moduler), fonts/*.woff2
 #  Inga externa skript, fonter, bilder eller API:er.
+#  Hashen i script-src gäller JSON-LD-blocket i index.html — räkna om den
+#  om blocket ändras (se README).
 # ============================================================
 
 /*
   # --- Content Security Policy (primär — meta-taggen är fallback) ---
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-OadHFs9E68V4Ppz+Z/IE+vFaitpd5HD9mS1vSLYNK5A='; style-src 'self' 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-ZzvA/cIj6aXdcVN9VJ4xW2fDiZozW4l62bLT6BmkUBE='; style-src 'self'; font-src 'self'; img-src data:; form-action 'none'; base-uri 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
   # --- Förhindra MIME-type-sniffing ---
   X-Content-Type-Options: nosniff
